@@ -1,11 +1,17 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { X, Plus, Trash2, Zap, Sparkles, Terminal, Database, MessageSquare, ChevronRight } from "lucide-react";
+import { X, Plus, Trash2, Zap, Sparkles, Terminal, Database, MessageSquare, ChevronRight, Cpu } from "lucide-react";
 
 interface MCPServer {
     id: string;
     name: string;
+}
+
+interface Tool {
+    name: string;
+    description: string;
+    mcp_server?: string; // We'll infer this in main.py or here
 }
 
 interface CustomAgent {
@@ -26,6 +32,7 @@ interface CustomAgentManagerModalProps {
 export default function CustomAgentManagerModal({ isOpen, onClose, onChanged }: CustomAgentManagerModalProps) {
     const [agents, setAgents] = useState<CustomAgent[]>([]);
     const [mcpServers, setMcpServers] = useState<MCPServer[]>([]);
+    const [allTools, setAllTools] = useState<Tool[]>([]);
     const [loading, setLoading] = useState(true);
     const [view, setView] = useState<'list' | 'create'>('list');
 
@@ -43,16 +50,19 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged }: 
     const fetchAllData = useCallback(async () => {
         setLoading(true);
         try {
-            const [agentsRes, serversRes] = await Promise.all([
+            const [agentsRes, serversRes, toolsRes] = await Promise.all([
                 fetch(`${apiUrl}/api/agents/custom`),
-                fetch(`${apiUrl}/api/mcp/servers`)
+                fetch(`${apiUrl}/api/mcp/servers`),
+                fetch(`${apiUrl}/api/tools`)
             ]);
-            const [agentsData, serversData] = await Promise.all([
+            const [agentsData, serversData, toolsData] = await Promise.all([
                 agentsRes.json(),
-                serversRes.json()
+                serversRes.json(),
+                toolsRes.json()
             ]);
             setAgents(agentsData);
             setMcpServers(serversData);
+            setAllTools(toolsData);
         } catch (err) {
             console.error("Failed to fetch data:", err);
         } finally {
@@ -105,6 +115,31 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged }: 
                 ? prev.mcp_servers.filter(id => id !== serverId)
                 : [...prev.mcp_servers, serverId]
         }));
+    };
+
+    const toggleStaticTool = (toolName: string) => {
+        setFormData(prev => ({
+            ...prev,
+            static_tools: prev.static_tools.includes(toolName)
+                ? prev.static_tools.filter(name => name !== toolName)
+                : [...prev.static_tools, toolName]
+        }));
+    };
+
+    // Heuristic: tools that are NOT in the static registry list often come from MCP servers.
+    // In our case, the backend /api/tools returns all.
+    // Let's identify static tools as those that aren't mapped to known MCP servers in the scheduler.
+    // For simplicity, we'll let the user choose from "Standard" vs "MCP Bridges".
+    const standardTools = ["shell_execute", "filesystem_read", "memory_access"];
+    const availableStaticTools = allTools.filter(t => standardTools.includes(t.name));
+
+    const getToolsPerServer = (serverId: string) => {
+        // This is a rough estimate since we don't have server-to-tool mapping in the /api/tools response yet
+        // In a real scenario, /api/tools should return the server ID.
+        // For now, if it's Filesystem or Memory, we know they are prominent.
+        if (serverId === 'filesystem') return allTools.filter(t => t.name.includes('file') || t.name.includes('dir')).length;
+        if (serverId === 'memory') return allTools.filter(t => t.name.includes('memory') || t.name.includes('entities')).length;
+        return 0;
     };
 
     if (!isOpen) return null;
@@ -224,22 +259,54 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged }: 
                                 />
                             </div>
 
+                            {/* Standard Capabilities Selection */}
+                            <div className="space-y-4">
+                                <h4 className="text-[10px] text-neutral-500 uppercase font-black ml-1 flex items-center gap-1.5"><Cpu size={10} /> Standard Capabilities</h4>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {availableStaticTools.length > 0 ? availableStaticTools.map(t => (
+                                        <div
+                                            key={t.name}
+                                            onClick={() => toggleStaticTool(t.name)}
+                                            className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center justify-between group ${formData.static_tools.includes(t.name) ? "bg-emerald-500/10 border-emerald-500/30" : "bg-neutral-950 border-neutral-800 hover:border-neutral-700"}`}
+                                        >
+                                            <div className="min-w-0">
+                                                <div className={`text-xs font-bold ${formData.static_tools.includes(t.name) ? "text-emerald-200" : "text-neutral-500 group-hover:text-neutral-300"}`}>{t.name}</div>
+                                                <div className="text-[9px] text-neutral-600 truncate">{t.description}</div>
+                                            </div>
+                                            <div className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all ${formData.static_tools.includes(t.name) ? "bg-emerald-500 border-emerald-400" : "bg-transparent border-neutral-800"}`}>
+                                                {formData.static_tools.includes(t.name) && <Plus size={10} className="text-white" />}
+                                            </div>
+                                        </div>
+                                    )) : (
+                                        <div className="col-span-2 py-4 text-center text-neutral-700 text-[10px] uppercase font-mono tracking-widest bg-neutral-950 rounded-2xl border border-neutral-900">
+                                            Scanning system tools...
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
                             {/* MCP Bridges Selection */}
                             <div className="space-y-4">
                                 <h4 className="text-[10px] text-neutral-500 uppercase font-black ml-1 flex items-center gap-1.5"><Database size={10} /> Enabled Neural Bridges (MCP Servers)</h4>
                                 <div className="grid grid-cols-2 gap-3">
-                                    {mcpServers.map(s => (
-                                        <div
-                                            key={s.id}
-                                            onClick={() => toggleMcpServer(s.id)}
-                                            className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center justify-between group ${formData.mcp_servers.includes(s.id) ? "bg-blue-500/10 border-blue-500/30" : "bg-neutral-950 border-neutral-800 hover:border-neutral-700"}`}
-                                        >
-                                            <span className={`text-xs font-bold ${formData.mcp_servers.includes(s.id) ? "text-blue-200" : "text-neutral-500 group-hover:text-neutral-300"}`}>{s.name}</span>
-                                            <div className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all ${formData.mcp_servers.includes(s.id) ? "bg-blue-500 border-blue-400" : "bg-transparent border-neutral-800"}`}>
-                                                {formData.mcp_servers.includes(s.id) && <Plus size={10} className="text-white" />}
+                                    {mcpServers.map(s => {
+                                        const toolCount = getToolsPerServer(s.id);
+                                        return (
+                                            <div
+                                                key={s.id}
+                                                onClick={() => toggleMcpServer(s.id)}
+                                                className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center justify-between group ${formData.mcp_servers.includes(s.id) ? "bg-blue-500/10 border-blue-500/30" : "bg-neutral-950 border-neutral-800 hover:border-neutral-700"}`}
+                                            >
+                                                <div className="min-w-0">
+                                                    <div className={`text-xs font-bold ${formData.mcp_servers.includes(s.id) ? "text-blue-200" : "text-neutral-500 group-hover:text-neutral-300"}`}>{s.name}</div>
+                                                    <div className="text-[9px] text-blue-500/50 font-bold uppercase tracking-tight">{toolCount > 0 ? `${toolCount} Tools Available` : "Server Bridge"}</div>
+                                                </div>
+                                                <div className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all ${formData.mcp_servers.includes(s.id) ? "bg-blue-500 border-blue-400" : "bg-transparent border-neutral-800"}`}>
+                                                    {formData.mcp_servers.includes(s.id) && <Plus size={10} className="text-white" />}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
 

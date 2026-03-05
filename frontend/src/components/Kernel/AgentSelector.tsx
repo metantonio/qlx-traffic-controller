@@ -36,7 +36,12 @@ export default function AgentSelector({ onSelect, currentAgentId }: AgentSelecto
     }, [apiUrl]);
 
     useEffect(() => {
-        fetchAgents();
+        let isMounted = true;
+        const load = async () => {
+            if (isMounted) await fetchAgents();
+        };
+        load();
+        return () => { isMounted = false; };
     }, [fetchAgents]);
 
     const selectedAgent = agents.find(a => a.id === currentAgentId) || null;
