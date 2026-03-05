@@ -32,17 +32,19 @@ export default function ModelSelector({ onSelect, currentProvider, currentModel 
                 const res = await fetch(`${apiUrl}/api/llm/models`);
                 const data = await res.json();
                 setProviders(data);
-
-                // Auto-select first model if none provided
-                if (!currentProvider && data.length > 0 && data[0].models.length > 0) {
-                    handleSelect(data[0].provider, data[0].models[0]);
-                }
             } catch (err) {
                 console.error("Failed to fetch LLM models:", err);
             }
         };
         fetchModels();
-    }, [currentProvider, handleSelect]);
+    }, []); // Run ONLY once on mount
+
+    // Separate effect for initial selection to avoid loop
+    useEffect(() => {
+        if (!currentProvider && providers.length > 0 && providers[0].models.length > 0) {
+            handleSelect(providers[0].provider, providers[0].models[0]);
+        }
+    }, [currentProvider, providers, handleSelect]);
 
     const handleModelChange = (p: string, m: string) => {
         handleSelect(p, m);
