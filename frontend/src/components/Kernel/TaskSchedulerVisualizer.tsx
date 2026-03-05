@@ -1,14 +1,20 @@
 "use client";
 
+import { KernelMetrics } from "@/app/page";
+
 interface TaskSchedulerVisualizerProps {
-    events: any[];
+    metrics: KernelMetrics | null;
 }
 
-export default function TaskSchedulerVisualizer({ events }: TaskSchedulerVisualizerProps) {
+export default function TaskSchedulerVisualizer({ metrics }: TaskSchedulerVisualizerProps) {
+    const qState = metrics?.queues || { HIGH: 0, MEDIUM: 0, LOW: 0 };
+    const maxConcurrent = 3; // From Kernel defaults
+    const activeRunning = metrics?.active_count || 0;
+
     const queues = [
-        { priority: "HIGH", count: 1, limit: 3, color: "bg-rose-500", text: "text-rose-400" },
-        { priority: "MEDIUM", count: 2, limit: 5, color: "bg-blue-500", text: "text-blue-400" },
-        { priority: "LOW", count: 0, limit: 10, color: "bg-neutral-500", text: "text-neutral-400" },
+        { priority: "HIGH", count: qState.HIGH, limit: 3, color: "bg-rose-500", text: "text-rose-400" },
+        { priority: "MEDIUM", count: qState.MEDIUM, limit: 5, color: "bg-blue-500", text: "text-blue-400" },
+        { priority: "LOW", count: qState.LOW, limit: 10, color: "bg-neutral-500", text: "text-neutral-400" },
     ];
 
     return (
@@ -42,11 +48,11 @@ export default function TaskSchedulerVisualizer({ events }: TaskSchedulerVisuali
             <div className="mt-4 p-3 bg-neutral-900/50 border border-neutral-800 rounded text-xs text-neutral-400 flex flex-col gap-1">
                 <div className="flex justify-between">
                     <span>Max Concurrent Processes:</span>
-                    <span className="text-neutral-200">3</span>
+                    <span className="text-neutral-200">{maxConcurrent}</span>
                 </div>
                 <div className="flex justify-between">
                     <span>Current Load:</span>
-                    <span className="text-cyan-400 font-bold">100% (3 Running)</span>
+                    <span className="text-cyan-400 font-bold">{Math.round((activeRunning / maxConcurrent) * 100)}% ({activeRunning} Running)</span>
                 </div>
             </div>
         </div>

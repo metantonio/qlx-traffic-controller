@@ -3,6 +3,7 @@ import logging
 from enum import IntEnum
 from typing import Dict, List
 from backend.kernel.process import AIProcess, ProcessState, system_process_table
+from backend.kernel.memory_bus import system_memory_bus, MessagePayload
 
 logger = logging.getLogger("TrafficController.Kernel.Scheduler")
 
@@ -36,7 +37,33 @@ class TaskScheduler:
         logger.info("Task Scheduler started.")
         while self._running:
             await self._dispatch()
+            await self._broadcast_metrics()
             await asyncio.sleep(0.5)  # Tick rate
+            
+    async def _broadcast_metrics(self):
+        """Send state to dashboard htop UI."""
+        queues_state = {
+            "HIGH": self.queues[Priority.HIGH].qsize(),
+            "MEDIUM": self.queues[Priority.MEDIUM].qsize(),
+            "LOW": self.queues[Priority.LOW].qsize()
+        }
+        
+        procs_list = []
+        for pid, proc in system_process_table.processes.items():
+            procs_list.append({
+                "pid": proc.pid,
+                "agent": proc.agent_name,
+                "state": proc.state.value,
+                "mem": f"{proc.metrics['tokens_used']} Tk",
+                "cpu": "100%" if proc.state == ProcessState.RUNNING else "0%"
+            })
+            
+        await system_memory_bus.publish(MessagePayload(
+            source_pid="kernel",
+            target_pid="BROADCAST",
+            event_type="system_metrics",
+            data={"queues": queues_state, "processes": procs_list, "active_count": len(self.active_processes)}
+        ))
             
     def stop_scheduler(self):
         self._running = False

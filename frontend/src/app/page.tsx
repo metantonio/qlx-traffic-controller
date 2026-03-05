@@ -1,25 +1,53 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import ProcessMonitor from "@/components/Kernel/ProcessMonitor";
 import TaskSchedulerVisualizer from "@/components/Kernel/TaskSchedulerVisualizer";
 import CommandMonitor from "@/components/Monitoring/CommandMonitor";
 
+// Define a basic Kernel Metrics type
+export interface ProcessData {
+  pid: string;
+  agent: string;
+  state: string;
+  mem: string;
+  cpu: string;
+}
+
+export interface KernelMetrics {
+  queues: { HIGH: number; MEDIUM: number; LOW: number };
+  processes: ProcessData[];
+  active_count: number;
+}
+
 export default function Dashboard() {
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<Record<string, unknown>[]>([]);
+  const [kernelMetrics, setKernelMetrics] = useState<KernelMetrics | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     // Scaffold standard WebSockets connection to Control Tower
     const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://127.0.0.1:8000/ws";
     const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      setEvents((prev) => [data, ...prev].slice(0, 50));
+      if (data.type === "system_metrics") {
+        setKernelMetrics(data.payload);
+      } else {
+        setEvents((prev) => [data, ...prev].slice(0, 50));
+      }
     };
 
     return () => ws.close();
   }, []);
+
+  const handleSpawnAgent = () => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ action: "spawn", agent_name: `worker_${Math.floor(Math.random() * 1000)}` }));
+    }
+  };
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white p-6 font-sans antialiased selection:bg-blue-500/30">
@@ -30,12 +58,20 @@ export default function Dashboard() {
           </h1>
           <p className="text-neutral-400 mt-1">Autonomous Multi-Process Automation</p>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="relative flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-          </span>
-          <span className="text-sm text-neutral-300 font-medium tracking-wide font-mono">KERNEL ONLINE</span>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={handleSpawnAgent}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-sm font-semibold rounded-lg shadow-lg border border-blue-500/50 transition-all active:scale-95"
+          >
+            + Spawn process
+          </button>
+          <div className="flex items-center gap-3 bg-neutral-900/50 py-2 px-4 rounded-full border border-neutral-800">
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+            </span>
+            <span className="text-sm text-neutral-300 font-medium tracking-wide font-mono">KERNEL ONLINE</span>
+          </div>
         </div>
       </header>
 
@@ -43,7 +79,7 @@ export default function Dashboard() {
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-neutral-900/50 border border-neutral-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl">
             <h2 className="text-xl font-semibold mb-4 text-neutral-200">Process Monitor (htop)</h2>
-            <ProcessMonitor events={events} />
+            <ProcessMonitor metrics={kernelMetrics} />
           </div>
 
           <div className="bg-neutral-900/50 border border-neutral-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl">
@@ -60,7 +96,7 @@ export default function Dashboard() {
               <span>Task Scheduler</span>
               <span className="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded border border-emerald-500/20 font-mono">SYNCED</span>
             </h2>
-            <TaskSchedulerVisualizer events={events} />
+            <TaskSchedulerVisualizer metrics={kernelMetrics} />
           </div>
 
           <div className="bg-neutral-900/50 border border-neutral-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl h-full">

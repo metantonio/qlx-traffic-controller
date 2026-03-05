@@ -1,16 +1,13 @@
 "use client";
 
+import { KernelMetrics } from "@/app/page";
+
 interface ProcessMonitorProps {
-    events: any[];
+    metrics: KernelMetrics | null;
 }
 
-export default function ProcessMonitor({ events }: ProcessMonitorProps) {
-    // Mocking process table out, in reality we map this from websocket payload
-    const activeProcesses = [
-        { pid: "a1b2c3d4", agent: "research_agent", state: "running", mem: "142MB", cpu: "12%" },
-        { pid: "f8e7d6c5", agent: "document_agent", state: "queued", mem: "0MB", cpu: "0%" },
-        { pid: "x9y8z7w6", agent: "writer_agent", state: "paused", mem: "450MB", cpu: "0%" },
-    ];
+export default function ProcessMonitor({ metrics }: ProcessMonitorProps) {
+    const activeProcesses = metrics?.processes || [];
 
     const getStatusColor = (state: string) => {
         switch (state) {
