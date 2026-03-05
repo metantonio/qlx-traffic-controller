@@ -272,3 +272,37 @@
 2026-03-05 14:20:11 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
 2026-03-05 14:20:11 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
 2026-03-05 14:20:35 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 14:23:15 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 14:23:15 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 14:24:17 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 14:24:24 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 14:24:24 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 14:24:58 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 14:24:58 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 14:25:36 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 14:25:52 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 14:25:52 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 14:26:29 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"kernel_agent","task":"qué archivos hay?","allowed_tools":["shell_execute","filesystem_read"]}
+2026-03-05 14:26:29 [ERROR] AgentOS.Main: Failed to process WS command: 'TaskScheduler' object has no attribute 'add_task'
+2026-03-05 14:27:09 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 14:27:18 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 14:27:18 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 14:27:43 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 14:27:59 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 14:27:59 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 14:28:49 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"kernel_agent","task":"qué archivos hay en el backend?","allowed_tools":["shell_execute","filesystem_read"]}
+2026-03-05 14:28:49 [INFO] AgentOS.Kernel.Scheduler: Process f4457e9e (kernel_agent) queued at MEDIUM priority.
+2026-03-05 14:28:49 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process f4457e9e (kernel_agent)
+2026-03-05 14:28:52 [INFO] AgentOS.Kernel.Scheduler: MCP filesystem tools: ['read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 14:28:52 [INFO] AgentOS.Kernel.Scheduler: Process f4457e9e running with tools: ['shell_execute', 'read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 14:29:10 [INFO] AgentOS.Kernel.Scheduler: Process f4457e9e completed successfully.
+2026-03-05 14:30:00 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"kernel_agent","task":"haz una lista de los archivos","allowed_tools":["shell_execute","filesystem_read"]}
+2026-03-05 14:30:00 [INFO] AgentOS.Kernel.Scheduler: Process c544be0c (kernel_agent) queued at MEDIUM priority.
+2026-03-05 14:30:01 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process c544be0c (kernel_agent)
+2026-03-05 14:30:04 [INFO] AgentOS.Kernel.Scheduler: MCP filesystem tools: ['read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 14:30:04 [INFO] AgentOS.Kernel.Scheduler: Process c544be0c running with tools: ['shell_execute', 'read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 14:30:09 [INFO] AgentOS.Kernel.Scheduler: Process c544be0c completed successfully.
+2026-03-05 14:30:57 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"kernel_agent","task":"lista los archivos","allowed_tools":[]}
+2026-03-05 14:30:57 [INFO] AgentOS.Kernel.Scheduler: Process eaa2256d (kernel_agent) queued at MEDIUM priority.
+2026-03-05 14:30:57 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process eaa2256d (kernel_agent)
+2026-03-05 14:30:58 [INFO] AgentOS.Kernel.Scheduler: Process eaa2256d running with NO TOOLS.

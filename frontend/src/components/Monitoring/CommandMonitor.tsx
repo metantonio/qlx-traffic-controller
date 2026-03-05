@@ -5,7 +5,7 @@ import { useState } from "react";
 export interface CommandEvent {
     type: string;
     source: string;
-    payload: Record<string, any>;
+    payload: Record<string, unknown>;
     timestamp?: number;
 }
 
@@ -64,8 +64,8 @@ export default function CommandMonitor({ events }: CommandMonitorProps) {
                                             {formatTime(event.timestamp)}
                                         </span>
                                         <span className={`font-black tracking-tighter uppercase px-2 py-0.5 rounded text-[9px] ${event.type === 'security_alert' ? 'bg-red-500/10 text-red-400' :
-                                                event.type === 'agent_output' ? 'bg-blue-500/10 text-blue-400' :
-                                                    'bg-emerald-500/10 text-emerald-400'
+                                            event.type === 'agent_output' ? 'bg-blue-500/10 text-blue-400' :
+                                                'bg-emerald-500/10 text-emerald-400'
                                             }`}>
                                             {event.source}
                                         </span>
@@ -75,14 +75,14 @@ export default function CommandMonitor({ events }: CommandMonitorProps) {
                                     </span>
                                 </div>
                                 <div className={`${event.type === 'security_alert' ? 'text-red-300' :
-                                        event.type === 'agent_output' ? 'text-neutral-200' : 'text-neutral-400'
+                                    event.type === 'agent_output' ? 'text-neutral-200' : 'text-neutral-400'
                                     } break-words whitespace-pre-wrap`}>
                                     {event.type === 'security_alert' ? (
                                         <div className="flex items-start gap-2 bg-red-500/5 p-2 rounded border border-red-500/10">
                                             <svg className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                             </svg>
-                                            <span className="font-semibold">{event.payload.message}</span>
+                                            <span className="font-semibold">{(event.payload.message as string)}</span>
                                         </div>
                                     ) : event.type === 'agent_output' ? (
                                         <div className="flex flex-col gap-1.5">
@@ -92,13 +92,13 @@ export default function CommandMonitor({ events }: CommandMonitorProps) {
                                                 <span className="h-px bg-neutral-800 flex-1"></span>
                                             </div>
                                             <span className="text-blue-200 leading-relaxed font-sans text-xs">
-                                                {event.payload.response}
+                                                {(event.payload.response as string)}
                                             </span>
                                         </div>
                                     ) : (
                                         <div className="bg-neutral-900/30 p-2 rounded-lg border border-neutral-800/30">
                                             <span className="text-emerald-500/70 mr-2 opacity-50 font-black">❯</span>
-                                            <span className="text-emerald-400 font-bold">{event.payload.tool}</span>
+                                            <span className="text-emerald-400 font-bold">{(event.payload.tool as string)}</span>
                                             <span className="text-neutral-500 mx-1">(</span>
                                             <span className="text-neutral-300 italic">{JSON.stringify(event.payload.arguments)}</span>
                                             <span className="text-neutral-500">)</span>

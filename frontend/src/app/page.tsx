@@ -5,7 +5,7 @@ import ProcessMonitor from "@/components/Kernel/ProcessMonitor";
 import TaskSchedulerVisualizer from "@/components/Kernel/TaskSchedulerVisualizer";
 import ToolManager from "@/components/Kernel/ToolManager";
 import CommandMonitor, { CommandEvent } from "@/components/Monitoring/CommandMonitor";
-import AgentConversationModal from '@/components/Kernel/AgentConversationModal';
+import AgentConversationModal, { Message } from '@/components/Kernel/AgentConversationModal';
 
 // Define a basic Kernel Metrics type
 export interface ProcessData {
@@ -30,7 +30,7 @@ export default function Dashboard() {
   const [selectedPid, setSelectedPid] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
-  const handleSpawnAgent = useCallback((manualTask?: string, parent_pid?: string, initial_history?: any[]) => {
+  const handleSpawnAgent = useCallback((manualTask?: string, parent_pid?: string, initial_history?: Message[]) => {
     const finalTask = manualTask || taskText;
     if (!finalTask.trim() || !wsRef.current) return;
 
@@ -49,9 +49,13 @@ export default function Dashboard() {
     }
   }, [taskText, enabledTools]);
 
-  const handleContinue = (pid: string, followUp: string, history: any[]) => {
+  const handleContinue = useCallback((pid: string, followUp: string, history: Message[]) => {
     handleSpawnAgent(followUp, pid, history);
-  };
+  }, [handleSpawnAgent]);
+
+  const handleToolsChange = useCallback((tools: string[]) => {
+    setEnabledTools(tools);
+  }, []);
 
   useEffect(() => {
     // Existing WS logic... (I'll keep the rest of the file as is if possible, but I need to be careful with the targetContent)
@@ -173,7 +177,7 @@ export default function Dashboard() {
         <div className="lg:col-span-4 space-y-8">
           <section className="bg-neutral-900/30 border border-white/5 rounded-[2rem] p-8 backdrop-blur-3xl shadow-2xl">
             <h2 className="text-2xl font-bold text-white tracking-tight mb-6">Capabilities</h2>
-            <ToolManager onToolsChange={(tools) => setEnabledTools(tools)} />
+            <ToolManager onToolsChange={handleToolsChange} />
           </section>
 
           <section className="bg-neutral-900/30 border border-white/5 rounded-[2rem] p-8 backdrop-blur-3xl shadow-2xl">

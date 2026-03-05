@@ -3,10 +3,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Send, Terminal, User, Cpu, Activity } from 'lucide-react';
 
-interface Message {
+export interface Message {
     role: 'user' | 'assistant' | 'system' | 'tool';
     content: string;
-    tool_calls?: Record<string, any>[];
+    tool_calls?: Record<string, unknown>[];
     tool_call_id?: string;
 }
 
@@ -96,11 +96,11 @@ export default function AgentConversationModal({ pid, onClose, onContinue }: Age
 
                                         {msg.tool_calls && msg.tool_calls.length > 0 && (
                                             <div className="mt-3 pt-3 border-t border-white/10 space-y-2">
-                                                {msg.tool_calls.map((tc: Record<string, any>, tIdx: number) => (
+                                                {msg.tool_calls.map((tc: Record<string, unknown>, tIdx: number) => (
                                                     <div key={tIdx} className="flex items-center gap-2 text-xs font-mono bg-black/20 p-2 rounded border border-white/5">
                                                         <Activity size={12} className="text-amber-400" />
                                                         <span className="text-amber-200">Executing:</span>
-                                                        {tc.name}({JSON.stringify(tc.args)})
+                                                        {(tc.name as string)}({JSON.stringify(tc.args)})
                                                     </div>
                                                 ))}
                                             </div>

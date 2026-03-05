@@ -33,7 +33,11 @@ export default function ProcessMonitor({ metrics, onProcessClick }: ProcessMonit
                 </thead>
                 <tbody className="divide-y divide-neutral-800/50">
                     {activeProcesses.map((proc) => (
-                        <tr key={proc.pid} className="hover:bg-neutral-800/30 transition-colors group">
+                        <tr
+                            key={proc.pid}
+                            onClick={() => onProcessClick?.(proc.pid)}
+                            className="hover:bg-neutral-800/30 transition-colors group cursor-pointer"
+                        >
                             <td className="py-3 px-3 text-neutral-400">#{proc.pid}</td>
                             <td className="py-3 px-3 text-neutral-200">
                                 <span className="flex items-center gap-2">

@@ -35,7 +35,6 @@ export default function ToolManager({ onToolsChange }: ToolManagerProps) {
                 }
             } catch (error) {
                 console.error("Failed to fetch tools:", error);
-                // Fallback to basic tools if API is down
                 const fallback = [
                     { name: "shell_execute", description: "Execute system commands" },
                     { name: "filesystem_read", description: "Read files via MCP" }
@@ -48,7 +47,7 @@ export default function ToolManager({ onToolsChange }: ToolManagerProps) {
             }
         };
         fetchTools();
-    }, []);
+    }, [onToolsChange]);
 
     const toggleTool = (name: string) => {
         const newEnabled = new Set(enabledTools);

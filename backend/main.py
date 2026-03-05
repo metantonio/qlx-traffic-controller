@@ -81,12 +81,7 @@ async def list_tools():
     # Custom tools
     custom_tools = system_registry.list_tools()
     
-    # Add filesystem tools if available (virtual list for display)
-    fs_tools = [
-        {"name": "filesystem_read", "description": "Read and explore the file system (Managed by MCP Server)"}
-    ]
-    
-    return custom_tools + fs_tools
+    return custom_tools
 
 @app.get("/api/processes/{pid}")
 async def get_process_details(pid: str):
@@ -153,8 +148,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     if initial_history:
                         proc.memory_context["initial_history"] = initial_history
                         
-                    system_process_table.register(proc)
-                    await system_scheduler.add_task(proc, Priority.MEDIUM)
+                    await system_scheduler.submit(proc, Priority.MEDIUM)
                     await websocket.send_json({"type": "info", "message": f"Spawned {proc.pid}: {task_text[:20]}..."})
             except Exception as e:
                 logger.error(f"Failed to process WS command: {e}")
