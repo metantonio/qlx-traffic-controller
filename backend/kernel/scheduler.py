@@ -101,23 +101,27 @@ class TaskScheduler:
         """Asynchronously executes the AI process using local LLM inference."""
         try:
             llm = LLMProvider() # Adheres to DEFAULT_MODEL in .env automatically
-            system_prompt = "You are an AI Kernel Process. You must execute the user task concisely. Return ONLY the final answer."
+            system_prompt = (
+                "You are an AI Kernel Agent with access to real system tools. "
+                "Use the provided tools whenever the user task requires executing commands, reading files, or interacting with the system. "
+                "Always prefer using a tool over guessing. After using a tool, provide a clear summary of the results."
+            )
             
-            # 1. Bind Allowed Tools for this Agent Process
-            bound_tools = []
+            # 1. Collect MCPTool objects for this process (keep as native MCPTool, not StructuredTool)
+            bound_mcp_tools = []
             if process.resource_limits.allowed_tools:
                 for tool_name in process.resource_limits.allowed_tools:
                     mcp_t = system_registry.get_tool(tool_name)
                     if mcp_t:
-                        bound_tools.append(mcp_t.to_langchain_tool())
+                        bound_mcp_tools.append(mcp_t)
             
-            # Start inference (ReAct generic if tools exist, or plain if empty)
-            if len(bound_tools) > 0:
-                logger.info(f"Process {process.pid} executing with tools: {len(bound_tools)}")
+            # 2. Run agent loop
+            if bound_mcp_tools:
+                logger.info(f"Process {process.pid} executing with tools: {[t.name for t in bound_mcp_tools]}")
                 response_text = await llm.aexecute_agent(
                     system_prompt=system_prompt,
                     user_prompt=process.task_description,
-                    tools=bound_tools
+                    mcp_tools=bound_mcp_tools  # MCPTool objects — async execute() called directly
                 )
             else:
                 response_text = await llm.agenerate(
