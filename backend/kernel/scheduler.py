@@ -129,23 +129,28 @@ class TaskScheduler:
             all_tools = custom_tools + mcp_fs_tools
             
             # 3. Run agent loop
+            initial_history = process.memory_context.get("initial_history")
+            
             if all_tools:
                 logger.info(f"Process {process.pid} running with tools: {[t.name for t in all_tools]}")
-                response_text = await llm.aexecute_agent(
+                response_text, history = await llm.aexecute_agent(
                     system_prompt=system_prompt,
                     user_prompt=process.task_description,
                     tools=all_tools,  # unified BaseTool list
-                    source_pid=process.pid # Link to this process for logs
+                    source_pid=process.pid, # Link to this process for logs
+                    initial_history=initial_history
                 )
-
+                process.history = history
             else:
                 logger.info(f"Process {process.pid} running with NO TOOLS.")
-                response_text = await llm.aexecute_agent(
+                response_text, history = await llm.aexecute_agent(
                     system_prompt=system_prompt,
                     user_prompt=process.task_description,
                     tools=[],
-                    source_pid=process.pid
+                    source_pid=process.pid,
+                    initial_history=initial_history
                 )
+                process.history = history
             
             # Mocking token consumption based on response length for testing limits
             process.metrics["tokens_used"] = len(response_text.split())
@@ -162,7 +167,11 @@ class TaskScheduler:
                     source_pid=process.pid,
                     target_pid="BROADCAST",
                     event_type="agent_output",
-                    data={"task": process.task_description, "response": response_text}
+                    data={
+                        "task": process.task_description, 
+                        "response": response_text,
+                        "used_tools": [t.name for t in all_tools] if all_tools else []
+                    }
                 ))
                 
         except Exception as e:

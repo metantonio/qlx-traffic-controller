@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import ProcessMonitor from "@/components/Kernel/ProcessMonitor";
 import TaskSchedulerVisualizer from "@/components/Kernel/TaskSchedulerVisualizer";
 import ToolManager from "@/components/Kernel/ToolManager";
 import CommandMonitor, { CommandEvent } from "@/components/Monitoring/CommandMonitor";
+import AgentConversationModal from '@/components/Kernel/AgentConversationModal';
 
 // Define a basic Kernel Metrics type
 export interface ProcessData {
@@ -26,9 +27,34 @@ export default function Dashboard() {
   const [kernelMetrics, setKernelMetrics] = useState<KernelMetrics | null>(null);
   const [taskText, setTaskText] = useState("");
   const [enabledTools, setEnabledTools] = useState<string[]>([]);
+  const [selectedPid, setSelectedPid] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
+  const handleSpawnAgent = useCallback((manualTask?: string, parent_pid?: string, initial_history?: any[]) => {
+    const finalTask = manualTask || taskText;
+    if (!finalTask.trim() || !wsRef.current) return;
+
+    const payload = {
+      action: 'spawn',
+      agent_name: 'kernel_agent',
+      task: finalTask,
+      allowed_tools: enabledTools,
+      parent_pid: parent_pid,
+      initial_history: initial_history
+    };
+
+    if (wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify(payload));
+      if (!manualTask) setTaskText('');
+    }
+  }, [taskText, enabledTools]);
+
+  const handleContinue = (pid: string, followUp: string, history: any[]) => {
+    handleSpawnAgent(followUp, pid, history);
+  };
+
   useEffect(() => {
+    // Existing WS logic... (I'll keep the rest of the file as is if possible, but I need to be careful with the targetContent)
     // Scaffold standard WebSockets connection to Control Tower
     const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://127.0.0.1:8000/ws";
     const ws = new WebSocket(wsUrl);
@@ -45,18 +71,6 @@ export default function Dashboard() {
 
     return () => ws.close();
   }, []);
-
-  const handleSpawnAgent = () => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && taskText.trim() !== "") {
-      wsRef.current.send(JSON.stringify({
-        action: "spawn",
-        agent_name: `worker_${Math.floor(Math.random() * 1000)}`,
-        task: taskText,
-        allowed_tools: enabledTools
-      }));
-      setTaskText(""); // Clear after sending
-    }
-  };
 
   return (
     <div className="min-h-screen bg-[#0a0a0b] text-neutral-100 p-8 font-sans antialiased selection:bg-blue-500/30 overflow-x-hidden">
@@ -95,7 +109,7 @@ export default function Dashboard() {
               onKeyDown={(e) => e.key === 'Enter' && handleSpawnAgent()}
             />
             <button
-              onClick={handleSpawnAgent}
+              onClick={() => handleSpawnAgent()}
               disabled={!taskText.trim()}
               className={`mr-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 flex items-center gap-2 ${!taskText.trim()
                 ? "bg-neutral-800 text-neutral-600 cursor-not-allowed"
@@ -135,7 +149,10 @@ export default function Dashboard() {
                 <div className="h-1.5 w-1.5 rounded-full bg-neutral-700"></div>
               </div>
             </div>
-            <ProcessMonitor metrics={kernelMetrics} />
+            <ProcessMonitor
+              metrics={kernelMetrics}
+              onProcessClick={(pid) => setSelectedPid(pid)}
+            />
           </section>
 
           <section className="bg-neutral-900/30 border border-white/5 rounded-[2rem] p-8 backdrop-blur-3xl shadow-2xl relative">
@@ -179,6 +196,14 @@ export default function Dashboard() {
           </section>
         </div>
       </main>
+
+      {selectedPid && (
+        <AgentConversationModal
+          pid={selectedPid}
+          onClose={() => setSelectedPid(null)}
+          onContinue={handleContinue}
+        />
+      )}
     </div>
   );
 }

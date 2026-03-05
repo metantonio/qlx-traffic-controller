@@ -74,14 +74,17 @@ class LLMProvider:
         
         return None
 
-    async def aexecute_agent(self, system_prompt: str, user_prompt: str, tools: list[BaseTool], source_pid: str = "kernel") -> str:
+    async def aexecute_agent(
+        self, 
+        system_prompt: str, 
+        user_prompt: str, 
+        tools: list[BaseTool], 
+        source_pid: str = "kernel",
+        initial_history: list[dict] = None
+    ) -> tuple[str, list[dict]]:
         """
         Unified agent loop that works with any LangChain BaseTool objects.
-        Handles native tool_calls (PATH 1) and text JSON/Python tool calls (PATH 2).
-        
-        Args:
-            tools: List of BaseTool (from MCP server, StructuredTool, etc.)
-            source_pid: The PID of the calling process for logging/telemetry.
+        Returns (final_answer, full_history_as_dicts).
         """
         from backend.kernel.memory_bus import system_memory_bus, MessagePayload
         
@@ -90,7 +93,6 @@ class LLMProvider:
         
         llm_with_tools = self._client.bind_tools(tools) if tools else self._client
         
-        # Inject tool descriptions ONLY if tools are available
         if tools:
             tool_desc = "\n".join([f"- {t.name}: {t.description}" for t in tools])
             capability_block = (
@@ -107,11 +109,44 @@ class LLMProvider:
             
         full_system = f"{system_prompt}\n\n{capability_block}"
         
-        messages = [
-            SystemMessage(content=full_system),
-            HumanMessage(content=user_prompt)
-        ]
+        # Load initial history or start fresh
+        messages = []
+        if initial_history:
+            for m in initial_history:
+                if m["role"] == "system": messages.append(SystemMessage(content=m["content"]))
+                elif m["role"] == "user": messages.append(HumanMessage(content=m["content"]))
+                elif m["role"] == "assistant": 
+                    # Handle tool calls in history if present
+                    tc = m.get("tool_calls")
+                    messages.append(AIMessage(content=m["content"], tool_calls=tc or []))
+                elif m["role"] == "tool":
+                    messages.append(ToolMessage(content=m["content"], tool_call_id=m["tool_call_id"]))
+        else:
+            messages = [
+                SystemMessage(content=full_system),
+                HumanMessage(content=user_prompt)
+            ]
         
+        # Helper to convert messages to dicts for persistence
+        def _msgs_to_dicts(msgs):
+            dicts = []
+            for m in msgs:
+                if isinstance(m, SystemMessage): dicts.append({"role": "system", "content": m.content})
+                elif isinstance(m, HumanMessage): dicts.append({"role": "user", "content": m.content})
+                elif isinstance(m, AIMessage): 
+                    dicts.append({
+                        "role": "assistant", 
+                        "content": m.content,
+                        "tool_calls": getattr(m, "tool_calls", [])
+                    })
+                elif isinstance(m, ToolMessage): 
+                    dicts.append({
+                        "role": "tool", 
+                        "content": m.content, 
+                        "tool_call_id": m.tool_call_id
+                    })
+            return dicts
+
         for iteration in range(5):
             response = await llm_with_tools.ainvoke(messages)
             messages.append(response)
@@ -126,7 +161,6 @@ class LLMProvider:
                     
                     logger.info(f"[{source_pid}][Native] Iter {iteration+1}: {tool_name}({tool_args})")
                     
-                    # Emit event to memory bus
                     await system_memory_bus.publish(MessagePayload(
                         source_pid=source_pid,
                         target_pid="BROADCAST",
@@ -138,38 +172,29 @@ class LLMProvider:
                         result_str = f"Error: tool '{tool_name}' not found."
                     else:
                         try:
-                            # arun() handles async properly for all BaseTool subclasses
                             result = await tool_map[tool_name].arun(tool_args)
                             result_str = self._format_tool_result(result)
                             logger.info(f"Tool '{tool_name}' result: {result_str[:300]}")
                         except Exception as e:
                             result_str = f"Tool error: {str(e)}"
-                            logger.error(result_str)
                     
                     messages.append(ToolMessage(content=result_str, tool_call_id=tool_call_id))
                 continue
             
-            # --- PATH 2: Text JSON or Python-style tool call ---
+            # --- PATH 2: Text tool call ---
             parsed = self._parse_text_tool_call(content, tool_names)
             if parsed:
                 tool_name, raw_args = parsed
                 tool = tool_map[tool_name]
                 
-                # Normalize args to dict using tool schema's first field
-                if isinstance(raw_args, dict):
-                    kwargs = raw_args
+                if isinstance(raw_args, dict): kwargs = raw_args
                 else:
                     schema = getattr(tool, "args_schema", None)
-                    first_field = (
-                        list(schema.model_fields.keys())[0]
-                        if schema and hasattr(schema, "model_fields") and schema.model_fields
-                        else "input"
-                    )
+                    first_field = list(schema.model_fields.keys())[0] if schema and schema.model_fields else "input"
                     kwargs = {first_field: str(raw_args)}
                 
                 logger.info(f"[{source_pid}][Text] Iter {iteration+1}: {tool_name}({kwargs})")
                 
-                # Emit event to memory bus
                 await system_memory_bus.publish(MessagePayload(
                     source_pid=source_pid,
                     target_pid="BROADCAST",
@@ -180,32 +205,31 @@ class LLMProvider:
                 try:
                     result = await tool.arun(kwargs)
                     result_str = self._format_tool_result(result)
-                    logger.info(f"Tool '{tool_name}' result: {result_str[:300]}")
                 except Exception as e:
                     result_str = f"Tool error: {str(e)}"
-                    logger.error(result_str)
                 
-                # Direct summarization — avoids qwen confusion with multi-turn HumanMessages
+                # For Text mode, we simulate a ToolMessage in history even if parsed from text
+                # to keep history consistent. Note: we use a pseudo ID.
+                pseudo_id = f"text_to_tool_{iteration}"
+                messages[-1].tool_calls = [{"name": tool_name, "args": kwargs, "id": pseudo_id}]
+                messages.append(ToolMessage(content=result_str, tool_call_id=pseudo_id))
+
                 summary_prompt = (
                     f"Task: {user_prompt}\n\n"
                     f"The tool '{tool_name}' returned:\n---\n{result_str}\n---\n\n"
                     "Provide a clear, helpful answer to the task based on this output."
                 )
-                logger.info("Requesting direct summary from model...")
                 summary = await self._client.ainvoke([
                     SystemMessage(content=full_system),
                     HumanMessage(content=summary_prompt)
                 ])
-                return summary.content or result_str
+                messages.append(summary)
+                return summary.content or result_str, _msgs_to_dicts(messages)
             
-            # --- PATH 3: Final answer (no tool call) ---
-            logger.info(f"Agent done after {iteration + 1} iteration(s).")
-            return content or "Agent completed with no output."
+            # --- PATH 3: Final answer ---
+            return content or "Agent completed.", _msgs_to_dicts(messages)
         
-        logger.warning("Agent hit max iterations.")
-        messages.append(HumanMessage(content="Summarize your findings based on the tool results."))
-        final = await self._client.ainvoke(messages)
-        return final.content or "Agent reached iteration limit."
+        return "Max iterations hit.", _msgs_to_dicts(messages)
 
     def _format_tool_result(self, result: any) -> str:
         """

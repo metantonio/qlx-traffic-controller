@@ -4,9 +4,10 @@ import { KernelMetrics } from "@/app/page";
 
 interface ProcessMonitorProps {
     metrics: KernelMetrics | null;
+    onProcessClick?: (pid: string) => void;
 }
 
-export default function ProcessMonitor({ metrics }: ProcessMonitorProps) {
+export default function ProcessMonitor({ metrics, onProcessClick }: ProcessMonitorProps) {
     const activeProcesses = metrics?.processes || [];
 
     const getStatusColor = (state: string) => {

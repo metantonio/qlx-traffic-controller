@@ -36,6 +36,7 @@ class AIProcess:
             "end_time": None
         }
         self.memory_context: Dict[str, Any] = {}
+        self.history: List[Dict[str, Any]] = []  # Added for conversation persistence
 
     def start(self):
         self.state = ProcessState.RUNNING

@@ -88,6 +88,22 @@ async def list_tools():
     
     return custom_tools + fs_tools
 
+@app.get("/api/processes/{pid}")
+async def get_process_details(pid: str):
+    proc = system_process_table.get(pid)
+    if not proc:
+        return {"error": "Process not found"}
+    
+    return {
+        "pid": proc.pid,
+        "agent_name": proc.agent_name,
+        "task": proc.task_description,
+        "state": proc.state.value,
+        "history": proc.history,
+        "metrics": proc.metrics,
+        "allowed_tools": proc.resource_limits.allowed_tools
+    }
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
@@ -118,12 +134,27 @@ async def websocket_endpoint(websocket: WebSocket):
                     if allowed_tools is None:
                         allowed_tools = ["shell_execute", "filesystem_read"]
                     
+                    # Conversation Resumption logic
+                    parent_pid = msg.get("parent_pid")
+                    initial_history = msg.get("initial_history")
+                    
+                    if parent_pid and not initial_history:
+                        parent = system_process_table.get(parent_pid)
+                        if parent:
+                            initial_history = parent.history
+                    
                     proc = AIProcess(
                         agent_name=agent_name,
                         task_description=task_text,
-                        limits=ResourceLimits(max_runtime_sec=60, allowed_tools=allowed_tools)
+                        limits=ResourceLimits(allowed_tools=allowed_tools)
                     )
-                    await system_scheduler.submit(proc, Priority.MEDIUM)
+                    
+                    # Pass initial history into memory context for scheduler to pick up
+                    if initial_history:
+                        proc.memory_context["initial_history"] = initial_history
+                        
+                    system_process_table.register(proc)
+                    await system_scheduler.add_task(proc, Priority.MEDIUM)
                     await websocket.send_json({"type": "info", "message": f"Spawned {proc.pid}: {task_text[:20]}..."})
             except Exception as e:
                 logger.error(f"Failed to process WS command: {e}")

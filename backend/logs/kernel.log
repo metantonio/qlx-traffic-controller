@@ -235,3 +235,40 @@
 2026-03-05 13:57:55 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
 2026-03-05 13:59:30 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
 2026-03-05 13:59:30 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 14:00:35 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 14:00:45 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"worker_342","task":"que archivos hay?","allowed_tools":["shell_execute","filesystem_read"]}
+2026-03-05 14:00:45 [INFO] AgentOS.Kernel.Scheduler: Process 7eaaf883 (worker_342) queued at MEDIUM priority.
+2026-03-05 14:00:45 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process 7eaaf883 (worker_342)
+2026-03-05 14:00:48 [INFO] AgentOS.Kernel.Scheduler: MCP filesystem tools: ['read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 14:00:48 [INFO] AgentOS.Kernel.Scheduler: Process 7eaaf883 tools: ['shell_execute', 'read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 14:00:55 [INFO] AgentOS.Kernel.Scheduler: Process 7eaaf883 completed successfully.
+2026-03-05 14:01:03 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"worker_815","task":"qué archivos hay?","allowed_tools":[]}
+2026-03-05 14:01:03 [INFO] AgentOS.Kernel.Scheduler: Process dbd94cc2 (worker_815) queued at MEDIUM priority.
+2026-03-05 14:01:03 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process dbd94cc2 (worker_815)
+2026-03-05 14:01:06 [INFO] AgentOS.Kernel.Scheduler: MCP filesystem tools: ['read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 14:01:06 [INFO] AgentOS.Kernel.Scheduler: Process dbd94cc2 tools: ['shell_execute', 'read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 14:01:11 [INFO] AgentOS.Kernel.Scheduler: Process dbd94cc2 completed successfully.
+2026-03-05 14:05:32 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 14:05:32 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 14:06:09 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 14:06:09 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 14:08:47 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 14:11:23 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 14:12:09 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 14:12:09 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 14:14:29 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 14:14:35 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"kernel_agent","task":"list the files","allowed_tools":["shell_execute","filesystem_read"]}
+2026-03-05 14:14:35 [INFO] AgentOS.Kernel.Scheduler: Process 128a8842 (kernel_agent) queued at MEDIUM priority.
+2026-03-05 14:14:36 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process 128a8842 (kernel_agent)
+2026-03-05 14:14:39 [INFO] AgentOS.Kernel.Scheduler: MCP filesystem tools: ['read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 14:14:39 [INFO] AgentOS.Kernel.Scheduler: Process 128a8842 tools: ['shell_execute', 'read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 14:14:45 [INFO] AgentOS.Kernel.Scheduler: Process 128a8842 completed successfully.
+2026-03-05 14:15:40 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"kernel_agent","task":"que archivos hay?","allowed_tools":[]}
+2026-03-05 14:15:40 [INFO] AgentOS.Kernel.Scheduler: Process 298c11db (kernel_agent) queued at MEDIUM priority.
+2026-03-05 14:15:40 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process 298c11db (kernel_agent)
+2026-03-05 14:15:43 [INFO] AgentOS.Kernel.Scheduler: MCP filesystem tools: ['read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 14:15:43 [INFO] AgentOS.Kernel.Scheduler: Process 298c11db tools: ['shell_execute', 'read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 14:15:48 [INFO] AgentOS.Kernel.Scheduler: Process 298c11db completed successfully.
+2026-03-05 14:20:11 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 14:20:11 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 14:20:35 [INFO] AgentOS.Main: Dashboard disconnected
