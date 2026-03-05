@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Send, Terminal, User, Cpu, Activity } from 'lucide-react';
+import MarkdownRenderer from './MarkdownRenderer';
 
 export interface Message {
     role: 'user' | 'assistant' | 'system' | 'tool';
@@ -92,7 +93,7 @@ export default function AgentConversationModal({ pid, onClose, onContinue }: Age
 
                                 <div className={`max-w-[80%] space-y-2`}>
                                     <div className={`p-4 rounded-2xl border ${isUser ? 'bg-blue-600 border-blue-500 text-white' : 'bg-neutral-800/50 border-neutral-700 text-neutral-200'}`}>
-                                        <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                                        <MarkdownRenderer content={msg.content} />
 
                                         {msg.tool_calls && msg.tool_calls.length > 0 && (
                                             <div className="mt-3 pt-3 border-t border-white/10 space-y-2">
