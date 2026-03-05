@@ -112,15 +112,27 @@ class LLMProvider:
         # Load initial history or start fresh
         messages = []
         if initial_history:
+            # Reconstruct history
             for m in initial_history:
-                if m["role"] == "system": messages.append(SystemMessage(content=m["content"]))
-                elif m["role"] == "user": messages.append(HumanMessage(content=m["content"]))
-                elif m["role"] == "assistant": 
-                    # Handle tool calls in history if present
+                role = m.get("role")
+                content = m.get("content")
+                if role == "system": 
+                    # We will replace the system prompt with the fresh one later
+                    continue 
+                elif role == "user": 
+                    messages.append(HumanMessage(content=content))
+                elif role == "assistant": 
                     tc = m.get("tool_calls")
-                    messages.append(AIMessage(content=m["content"], tool_calls=tc or []))
-                elif m["role"] == "tool":
-                    messages.append(ToolMessage(content=m["content"], tool_call_id=m["tool_call_id"]))
+                    messages.append(AIMessage(content=content, tool_calls=tc or []))
+                elif role == "tool":
+                    messages.append(ToolMessage(content=content, tool_call_id=m.get("tool_call_id")))
+            
+            # 1. Ensure fresh System prompt is at the top
+            messages.insert(0, SystemMessage(content=full_system))
+            
+            # 2. Append the NEW user prompt if it's not empty or just a repeat of the last one
+            if user_prompt and (not messages or messages[-1].content != user_prompt):
+                messages.append(HumanMessage(content=user_prompt))
         else:
             messages = [
                 SystemMessage(content=full_system),

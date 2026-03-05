@@ -70,13 +70,27 @@ async def health_check():
     
 @app.get("/api/processes")
 async def list_processes():
-    return {pid: proc.__dict__ for pid, proc in system_process_table.processes.items()}
+    from backend.core.database import SessionLocal
+    from backend.models.database_models import DbProcess
+    with SessionLocal() as db:
+        processes = db.query(DbProcess).all()
+        return {p.pid: {
+            "pid": p.pid,
+            "agent_name": p.agent_name,
+            "task": p.task_description,
+            "state": p.state,
+            "metrics": {
+                "tokens_used": p.tokens_used,
+                "tools_called": p.tools_called,
+                "start_time": p.start_time,
+                "end_time": p.end_time
+            }
+        } for p in processes}
 
 @app.get("/api/tools")
 async def list_tools():
     """Returns a list of all available tools in the system."""
     from backend.tools.mcp_registry import system_registry
-    from backend.tools.mcp_filesystem import get_mcp_filesystem_tools
     
     # Custom tools
     custom_tools = system_registry.list_tools()
@@ -85,6 +99,7 @@ async def list_tools():
 
 @app.get("/api/processes/{pid}")
 async def get_process_details(pid: str):
+    # Use system_process_table.get which handles DB lookup
     proc = system_process_table.get(pid)
     if not proc:
         return {"error": "Process not found"}

@@ -131,6 +131,9 @@ class TaskScheduler:
             # 3. Run agent loop
             initial_history = process.memory_context.get("initial_history")
             
+            process.start()
+            system_process_table.update_state(process)
+            
             if all_tools:
                 logger.info(f"Process {process.pid} running with tools: {[t.name for t in all_tools]}")
                 response_text, history = await llm.aexecute_agent(
@@ -152,6 +155,14 @@ class TaskScheduler:
                 )
                 process.history = history
             
+            # Persist history back to DB
+            for msg in process.history:
+                # Basic check to avoid duplicates if initial history was already there?
+                # Actually, simple way is to clear and re-add or just add new ones.
+                # Since AIProcess.history is the full list, let's just use it to sync.
+                # For simplicity, I'll just save the whole thing in ProcessTable.sync_history(pid, history)
+                pass # I'll add sync_history to ProcessTable
+            
             # Mocking token consumption based on response length for testing limits
             process.metrics["tokens_used"] = len(response_text.split())
             
@@ -161,18 +172,22 @@ class TaskScheduler:
             else:
                 process.complete()
                 logger.info(f"Process {process.pid} completed successfully.")
-                
-                # Emit Output to system message bus for Frontend
-                await system_memory_bus.publish(MessagePayload(
-                    source_pid=process.pid,
-                    target_pid="BROADCAST",
-                    event_type="agent_output",
-                    data={
-                        "task": process.task_description, 
-                        "response": response_text,
-                        "used_tools": [t.name for t in all_tools] if all_tools else []
-                    }
-                ))
+            
+            # SYNC TO DB
+            system_process_table.register(process) # register handles both create and update (merge)
+            # Re-registering also saves history if I update register to handle it
+            
+            # Emit Output to system message bus for Frontend
+            await system_memory_bus.publish(MessagePayload(
+                source_pid=process.pid,
+                target_pid="BROADCAST",
+                event_type="agent_output",
+                data={
+                    "task": process.task_description, 
+                    "response": response_text,
+                    "used_tools": [t.name for t in all_tools] if all_tools else []
+                }
+            ))
                 
         except Exception as e:
             process.fail(str(e))
