@@ -269,11 +269,16 @@ async def websocket_endpoint(websocket: WebSocket):
 
                     if custom_agent:
                         # Build tools list for custom agent
-                        # Custom agent tools = its static tools + all tools from its enabled MCP servers
-                        # We tag server tools as "mcp:<server_id>" to tell the scheduler to load them
                         resolved_tools = custom_agent.static_tools + [f"mcp:{s}" for s in custom_agent.mcp_servers]
                         system_prompt_override = custom_agent.system_prompt
-                        logger.info(f"Using Custom Agent: {custom_agent.name} with tools {resolved_tools}")
+                        
+                        # Use custom agent's LLM if not explicitly overridden by UI
+                        if not llm_provider and custom_agent.provider:
+                            llm_provider = custom_agent.provider
+                        if not llm_model and custom_agent.model:
+                            llm_model = custom_agent.model
+                            
+                        logger.info(f"Using Custom Agent: {custom_agent.name} with tools {resolved_tools}, LLM={llm_provider}/{llm_model}")
                     
                     proc = AIProcess(
                         agent_name=agent_name,

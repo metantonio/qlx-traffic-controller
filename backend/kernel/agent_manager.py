@@ -13,6 +13,8 @@ class CustomAgent(BaseModel):
     system_prompt: Optional[str] = None
     mcp_servers: List[str] = [] # List of server IDs
     static_tools: List[str] = [] # List of static tool names (eg. shell_execute)
+    provider: Optional[str] = None
+    model: Optional[str] = None
 
 class AgentManager:
     def __init__(self, config_path: str):

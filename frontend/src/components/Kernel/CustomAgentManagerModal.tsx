@@ -18,9 +18,18 @@ interface CustomAgent {
     id: string;
     name: string;
     description: string;
-    system_prompt?: string;
+    system_prompt: string;
     mcp_servers: string[];
     static_tools: string[];
+    provider?: string;
+    model?: string;
+}
+
+interface LLMProvider {
+    provider: string;
+    name: string;
+    models: string[];
+    configured: boolean;
 }
 
 interface CustomAgentManagerModalProps {
@@ -33,6 +42,7 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged }: 
     const [agents, setAgents] = useState<CustomAgent[]>([]);
     const [mcpServers, setMcpServers] = useState<MCPServer[]>([]);
     const [allTools, setAllTools] = useState<Tool[]>([]);
+    const [llmProviders, setLlmProviders] = useState<LLMProvider[]>([]);
     const [loading, setLoading] = useState(true);
     const [view, setView] = useState<'list' | 'create'>('list');
 
@@ -42,7 +52,9 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged }: 
         description: '',
         system_prompt: '',
         mcp_servers: [] as string[],
-        static_tools: ['shell_execute']
+        static_tools: ['shell_execute'] as string[],
+        provider: 'ollama',
+        model: ''
     });
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -50,25 +62,37 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged }: 
     const fetchAllData = useCallback(async () => {
         setLoading(true);
         try {
-            const [agentsRes, serversRes, toolsRes] = await Promise.all([
+            const [agentsRes, serversRes, toolsRes, modelsRes] = await Promise.all([
                 fetch(`${apiUrl}/api/agents/custom`),
                 fetch(`${apiUrl}/api/mcp/servers`),
-                fetch(`${apiUrl}/api/tools`)
+                fetch(`${apiUrl}/api/tools`),
+                fetch(`${apiUrl}/api/llm/models`)
             ]);
-            const [agentsData, serversData, toolsData] = await Promise.all([
+            const [agentsData, serversData, toolsData, modelsData] = await Promise.all([
                 agentsRes.json(),
                 serversRes.json(),
-                toolsRes.json()
-            ]);
+                toolsRes.json(),
+                modelsRes.json()
+            ] as [Promise<CustomAgent[]>, Promise<MCPServer[]>, Promise<Tool[]>, Promise<LLMProvider[]>]);
+
             setAgents(agentsData);
             setMcpServers(serversData);
             setAllTools(toolsData);
+            setLlmProviders(modelsData);
+
+            // Set a default model if not set
+            if (modelsData.length > 0 && !formData.model) {
+                const ollamaP = modelsData.find((p: LLMProvider) => p.provider === 'ollama');
+                if (ollamaP && ollamaP.models.length > 0) {
+                    setFormData(prev => ({ ...prev, model: ollamaP.models[0] }));
+                }
+            }
         } catch (err) {
             console.error("Failed to fetch data:", err);
         } finally {
             setLoading(false);
         }
-    }, [apiUrl]);
+    }, [apiUrl, formData.model]);
 
     useEffect(() => {
         if (isOpen) fetchAllData();
@@ -88,7 +112,9 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged }: 
                 description: '',
                 system_prompt: '',
                 mcp_servers: [],
-                static_tools: ['shell_execute']
+                static_tools: ['shell_execute'],
+                provider: 'ollama',
+                model: ''
             });
             setView('list');
             fetchAllData();
@@ -257,6 +283,42 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged }: 
                                     value={formData.system_prompt}
                                     onChange={e => setFormData({ ...formData, system_prompt: e.target.value })}
                                 />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] text-neutral-500 uppercase font-black ml-1 flex items-center gap-1.5"><Cpu size={10} /> LLM Provider</label>
+                                    <select
+                                        className="w-full bg-neutral-950 border border-neutral-800 rounded-2xl px-4 py-3 text-sm text-white focus:border-blue-500/50 outline-none transition-all appearance-none cursor-pointer"
+                                        value={formData.provider}
+                                        onChange={e => {
+                                            const p = llmProviders.find(p => p.provider === e.target.value);
+                                            setFormData({
+                                                ...formData,
+                                                provider: e.target.value,
+                                                model: p && p.models.length > 0 ? p.models[0] : ''
+                                            });
+                                        }}
+                                    >
+                                        {llmProviders.map(p => (
+                                            <option key={p.provider} value={p.provider}>
+                                                {p.name} {!p.configured ? '(Not Configured)' : ''}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] text-neutral-500 uppercase font-black ml-1 flex items-center gap-1.5"><Zap size={10} /> Neural Model</label>
+                                    <select
+                                        className="w-full bg-neutral-950 border border-neutral-800 rounded-2xl px-4 py-3 text-sm text-white focus:border-purple-500/50 outline-none transition-all appearance-none cursor-pointer"
+                                        value={formData.model}
+                                        onChange={e => setFormData({ ...formData, model: e.target.value })}
+                                    >
+                                        {llmProviders.find(p => p.provider === formData.provider)?.models.map(m => (
+                                            <option key={m} value={m}>{m}</option>
+                                        )) || <option value="">No models available</option>}
+                                    </select>
+                                </div>
                             </div>
 
                             {/* Standard Capabilities Selection */}

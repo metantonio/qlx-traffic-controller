@@ -501,3 +501,6 @@
 2026-03-05 18:46:58 [INFO] AgentOS.Kernel.Scheduler: Loaded 23 tools from servers: ['filesystem', 'memory']
 2026-03-05 18:46:59 [INFO] AgentOS.Kernel.Scheduler: Process 0f8d3ffd running with tools: ['shell_execute', 'read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories', 'create_entities', 'create_relations', 'add_observations', 'delete_entities', 'delete_observations', 'delete_relations', 'read_graph', 'search_nodes', 'open_nodes']
 2026-03-05 18:47:17 [INFO] AgentOS.Kernel.Scheduler: Process 0f8d3ffd completed successfully.
+2026-03-05 18:48:41 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 18:49:01 [INFO] AgentOS.Main: Background Task Scheduler initialized.
+2026-03-05 18:49:01 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
