@@ -348,3 +348,4 @@
 2026-03-05 14:45:49 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process 09bb315e (kernel_agent)
 2026-03-05 14:45:51 [INFO] AgentOS.Kernel.Scheduler: MCP filesystem tools: ['read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
 2026-03-05 14:45:51 [INFO] AgentOS.Kernel.Scheduler: Process 09bb315e running with tools: ['shell_execute', 'read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 14:45:59 [INFO] AgentOS.Kernel.Scheduler: Process 09bb315e completed successfully.
