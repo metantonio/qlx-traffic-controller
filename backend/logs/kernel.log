@@ -1,0 +1,16 @@
+2026-03-05 11:34:31 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 11:34:31 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 11:38:08 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 11:38:08 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 11:38:40 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"worker_694","task":"que hay en la carpeta de Documents?"}
+2026-03-05 11:38:40 [INFO] AgentOS.Kernel.Scheduler: Process b7fe5694 (worker_694) queued at MEDIUM priority.
+2026-03-05 11:38:40 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process b7fe5694 (worker_694)
+2026-03-05 11:38:40 [ERROR] AgentOS.Kernel.Scheduler: Process b7fe5694 encountered fatal error: 'NoneType' object has no attribute 'split'
+2026-03-05 11:39:21 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 11:47:26 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 11:47:26 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 11:48:07 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"worker_638","task":"Usa la herramienta shell_execute para ejecutar el comando 'dir' y dime qué hay en el directorio actual"}
+2026-03-05 11:48:07 [INFO] AgentOS.Kernel.Scheduler: Process e06bb050 (worker_638) queued at MEDIUM priority.
+2026-03-05 11:48:07 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process e06bb050 (worker_638)
+2026-03-05 11:48:08 [INFO] AgentOS.Kernel.Scheduler: Process e06bb050 executing with tools: 2
+2026-03-05 11:48:11 [INFO] AgentOS.Kernel.Scheduler: Process e06bb050 completed successfully.

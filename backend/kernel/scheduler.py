@@ -2,10 +2,13 @@ import asyncio
 import logging
 from enum import IntEnum
 from typing import Dict, List
+from backend.core.logger import get_kernel_logger
 from backend.kernel.process import AIProcess, ProcessState, system_process_table
 from backend.kernel.memory_bus import system_memory_bus, MessagePayload
+from backend.llm.provider import LLMProvider
+from backend.tools.mcp_registry import system_registry
 
-logger = logging.getLogger("TrafficController.Kernel.Scheduler")
+logger = get_kernel_logger("AgentOS.Kernel.Scheduler")
 
 class Priority(IntEnum):
     HIGH = 1
@@ -88,25 +91,61 @@ class TaskScheduler:
                 self.active_processes.append(process)
                 logger.info(f"Dispatched Process {process.pid} ({process.agent_name})")
                 
-                # Mock execution bridge - in reality this triggers the Agent loop
-                asyncio.create_task(self._mock_execute(process))
+                # Actual LLM Sandbox execution bridge
+                asyncio.create_task(self._execute_process(process))
                 
             except asyncio.QueueEmpty:
                 continue
 
-    async def _mock_execute(self, process: AIProcess):
-        """Temporary mock wrapper for process execution simulation."""
+    async def _execute_process(self, process: AIProcess):
+        """Asynchronously executes the AI process using local LLM inference."""
         try:
-            # Simulate work
-            await asyncio.sleep(2)
+            llm = LLMProvider() # Adheres to DEFAULT_MODEL in .env automatically
+            system_prompt = "You are an AI Kernel Process. You must execute the user task concisely. Return ONLY the final answer."
+            
+            # 1. Bind Allowed Tools for this Agent Process
+            bound_tools = []
+            if process.resource_limits.allowed_tools:
+                for tool_name in process.resource_limits.allowed_tools:
+                    mcp_t = system_registry.get_tool(tool_name)
+                    if mcp_t:
+                        bound_tools.append(mcp_t.to_langchain_tool())
+            
+            # Start inference (ReAct generic if tools exist, or plain if empty)
+            if len(bound_tools) > 0:
+                logger.info(f"Process {process.pid} executing with tools: {len(bound_tools)}")
+                response_text = await llm.aexecute_agent(
+                    system_prompt=system_prompt,
+                    user_prompt=process.task_description,
+                    tools=bound_tools
+                )
+            else:
+                response_text = await llm.agenerate(
+                    system_prompt=system_prompt,
+                    user_prompt=process.task_description
+                )
+            
+            # Mocking token consumption based on response length for testing limits
+            process.metrics["tokens_used"] = len(response_text.split())
+            
             if not process.check_limits():
-                process.fail("Resource limits exceeded")
+                process.fail("Resource limits exceeded during inference")
                 logger.warning(f"Process {process.pid} failed: Resources exceeded.")
             else:
                 process.complete()
                 logger.info(f"Process {process.pid} completed successfully.")
+                
+                # Emit Output to system message bus for Frontend
+                await system_memory_bus.publish(MessagePayload(
+                    source_pid=process.pid,
+                    target_pid="BROADCAST",
+                    event_type="agent_output",
+                    data={"task": process.task_description, "response": response_text}
+                ))
+                
         except Exception as e:
             process.fail(str(e))
+            logger.error(f"Process {process.pid} encountered fatal error: {str(e)}")
 
 # Global system scheduler
 system_scheduler = TaskScheduler()

@@ -5,12 +5,16 @@ import json
 import logging
 import asyncio
 from backend.core.config import settings
+from backend.core.logger import get_kernel_logger
 from backend.kernel.scheduler import system_scheduler, Priority
 from backend.kernel.memory_bus import system_memory_bus, MessagePayload
 from backend.kernel.process import AIProcess, ResourceLimits, system_process_table
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("TrafficController")
+# Force tool registry load
+import backend.tools.shell
+import backend.tools.filesystem
+
+logger = get_kernel_logger("AgentOS.Main")
 
 app = FastAPI(title="AI Control Tower API", version="0.1.0")
 
@@ -79,13 +83,15 @@ async def websocket_endpoint(websocket: WebSocket):
                 msg = json.loads(data)
                 if msg.get("action") == "spawn":
                     agent_name = msg.get("agent_name", "test_agent")
+                    task_text = msg.get("task", "Simulated WS Task")
+                    
                     proc = AIProcess(
                         agent_name=agent_name,
-                        task_description="Simulated WS Task",
-                        limits=ResourceLimits(max_runtime_sec=30)
+                        task_description=task_text,
+                        limits=ResourceLimits(max_runtime_sec=60, allowed_tools=["shell_execute", "filesystem_read"])
                     )
                     await system_scheduler.submit(proc, Priority.MEDIUM)
-                    await manager.broadcast({"type": "info", "message": f"Spawned {proc.pid}"})
+                    await manager.broadcast({"type": "info", "message": f"Spawned {proc.pid}: {task_text[:20]}..."})
             except Exception as e:
                 logger.error(f"Failed to process WS command: {e}")
 

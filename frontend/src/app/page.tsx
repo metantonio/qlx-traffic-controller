@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import ProcessMonitor from "@/components/Kernel/ProcessMonitor";
 import TaskSchedulerVisualizer from "@/components/Kernel/TaskSchedulerVisualizer";
-import CommandMonitor from "@/components/Monitoring/CommandMonitor";
+import CommandMonitor, { CommandEvent } from "@/components/Monitoring/CommandMonitor";
 
 // Define a basic Kernel Metrics type
 export interface ProcessData {
@@ -21,8 +21,9 @@ export interface KernelMetrics {
 }
 
 export default function Dashboard() {
-  const [events, setEvents] = useState<Record<string, unknown>[]>([]);
+  const [events, setEvents] = useState<CommandEvent[]>([]);
   const [kernelMetrics, setKernelMetrics] = useState<KernelMetrics | null>(null);
+  const [taskText, setTaskText] = useState("");
   const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
@@ -44,8 +45,13 @@ export default function Dashboard() {
   }, []);
 
   const handleSpawnAgent = () => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ action: "spawn", agent_name: `worker_${Math.floor(Math.random() * 1000)}` }));
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && taskText.trim() !== "") {
+      wsRef.current.send(JSON.stringify({
+        action: "spawn",
+        agent_name: `worker_${Math.floor(Math.random() * 1000)}`,
+        task: taskText
+      }));
+      setTaskText(""); // Clear after sending
     }
   };
 
@@ -59,9 +65,20 @@ export default function Dashboard() {
           <p className="text-neutral-400 mt-1">Autonomous Multi-Process Automation</p>
         </div>
         <div className="flex items-center gap-4">
+          <div className="flex bg-neutral-900 border border-neutral-700/50 rounded-lg overflow-hidden focus-within:ring-2 ring-blue-500/50 w-64 transition-all">
+            <input
+              type="text"
+              value={taskText}
+              onChange={(e) => setTaskText(e.target.value)}
+              placeholder="Give the AI a task..."
+              className="bg-transparent border-none text-sm px-3 py-2 w-full focus:outline-none text-neutral-200"
+              onKeyDown={(e) => e.key === 'Enter' && handleSpawnAgent()}
+            />
+          </div>
           <button
             onClick={handleSpawnAgent}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-sm font-semibold rounded-lg shadow-lg border border-blue-500/50 transition-all active:scale-95"
+            disabled={!taskText.trim()}
+            className="px-4 py-2 bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-500 text-sm font-semibold rounded-lg shadow-lg border border-blue-500/50 transition-all active:scale-95"
           >
             + Spawn process
           </button>
