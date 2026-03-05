@@ -138,7 +138,12 @@ class TaskScheduler:
             
             all_tools = custom_tools + mcp_fs_tools + mcp_memory_tools
             
-            # 3. Run agent loop
+            provider_override = process.memory_context.get("llm_provider")
+            model_override = process.memory_context.get("llm_model")
+            
+            llm = LLMProvider(provider=provider_override, model=model_override)
+            
+            # 4. Agent Execution Loop
             initial_history = process.memory_context.get("initial_history")
             
             process.start()

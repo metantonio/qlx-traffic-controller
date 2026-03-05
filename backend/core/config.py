@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     DEFAULT_PROVIDER: str = "ollama"
     DEFAULT_MODEL: str = "qwen2.5-coder:7b"
     OLLAMA_BASE_URL: str = "http://localhost:11434"
+    ANTHROPIC_API_KEY: str = ""
+    GOOGLE_API_KEY: str = ""
 
     # Services
     TELEGRAM_BOT_TOKEN: str = ""

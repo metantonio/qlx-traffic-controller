@@ -1,4 +1,6 @@
 from langchain_ollama import ChatOllama
+from langchain_anthropic import ChatAnthropic
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, ToolMessage
 from langchain_core.tools import BaseTool
 from backend.core.config import settings
@@ -18,10 +20,29 @@ class LLMProvider:
         self._client = self._initialize_client()
         
     def _initialize_client(self):
+        logger.info(f"Initializing LLM Client: {self.provider} / {self.model}")
+        
         if self.provider == "ollama":
             return ChatOllama(model=self.model, base_url=settings.OLLAMA_BASE_URL)
-        elif self.provider in ["openai", "anthropic"]:
-            raise NotImplementedError(f"Provider {self.provider} support is pending.")
+            
+        elif self.provider == "anthropic":
+            if not settings.ANTHROPIC_API_KEY:
+                raise ValueError("ANTHROPIC_API_KEY not found in settings")
+            return ChatAnthropic(
+                model=self.model, 
+                anthropic_api_key=settings.ANTHROPIC_API_KEY,
+                timeout=None,
+                stop=None
+            )
+            
+        elif self.provider == "google":
+            if not settings.GOOGLE_API_KEY:
+                raise ValueError("GOOGLE_API_KEY not found in settings")
+            return ChatGoogleGenerativeAI(
+                model=self.model, 
+                google_api_key=settings.GOOGLE_API_KEY
+            )
+            
         else:
             raise ValueError(f"Unknown LLM Provider {self.provider}")
             
@@ -45,13 +66,8 @@ class LLMProvider:
 
     def _parse_text_tool_call(self, content: str, tool_names: set) -> tuple | None:
         """
-        Parse tool calls from text in all 3 formats local LLMs produce:
-          A) JSON: {"name": "tool", "arguments": {"arg": "val"}}
-          B) JSON: {"tool": "tool", "input": "val"}
-          C) Python: tool_name("val")
-        Returns (tool_name, raw_arg_value_or_dict) or None.
+        Parse tool calls from text in all 3 formats local LLMs produce.
         """
-        # Format A & B: JSON block
         try:
             start = content.find("{")
             end = content.rfind("}") + 1
@@ -65,7 +81,6 @@ class LLMProvider:
         except (json.JSONDecodeError, KeyError, IndexError):
             pass
         
-        # Format C: Python function call
         for tool_name in tool_names:
             match = re.search(rf'{re.escape(tool_name)}\(["\'](.+?)["\']\)', content)
             if match:
@@ -84,13 +99,13 @@ class LLMProvider:
     ) -> tuple[str, list[dict]]:
         """
         Unified agent loop that works with any LangChain BaseTool objects.
-        Returns (final_answer, full_history_as_dicts).
         """
         from backend.kernel.memory_bus import system_memory_bus, MessagePayload
         
         tool_map = {t.name: t for t in tools}
         tool_names = set(tool_map.keys())
         
+        # Anthropic/Google handle tool binding slightly differently but bind_tools is standard in LangChain
         llm_with_tools = self._client.bind_tools(tools) if tools else self._client
         
         if tools:
@@ -101,36 +116,25 @@ class LLMProvider:
                 "Do not say you cannot do something if a tool can help."
             )
         else:
-            capability_block = (
-                "NO TOOLS ARE CURRENTLY AUTHORIZED for this session. \n"
-                "You must perform the task using only your internal knowledge. \n"
-                "If you need tools to complete the task, inform the user they are missing."
-            )
+            capability_block = "NO TOOLS ARE CURRENTLY AUTHORIZED for this session."
             
         full_system = f"{system_prompt}\n\n{capability_block}"
         
-        # Load initial history or start fresh
+        # Build message history
         messages = []
         if initial_history:
-            # Reconstruct history
             for m in initial_history:
                 role = m.get("role")
                 content = m.get("content")
-                if role == "system": 
-                    # We will replace the system prompt with the fresh one later
-                    continue 
-                elif role == "user": 
-                    messages.append(HumanMessage(content=content))
+                if role == "system": continue 
+                elif role == "user": messages.append(HumanMessage(content=content))
                 elif role == "assistant": 
                     tc = m.get("tool_calls")
                     messages.append(AIMessage(content=content, tool_calls=tc or []))
                 elif role == "tool":
                     messages.append(ToolMessage(content=content, tool_call_id=m.get("tool_call_id")))
             
-            # 1. Ensure fresh System prompt is at the top
             messages.insert(0, SystemMessage(content=full_system))
-            
-            # 2. Append the NEW user prompt if it's not empty or just a repeat of the last one
             if user_prompt and (not messages or messages[-1].content != user_prompt):
                 messages.append(HumanMessage(content=user_prompt))
         else:
@@ -139,7 +143,6 @@ class LLMProvider:
                 HumanMessage(content=user_prompt)
             ]
         
-        # Helper to convert messages to dicts for persistence
         def _msgs_to_dicts(msgs):
             dicts = []
             for m in msgs:
@@ -159,12 +162,11 @@ class LLMProvider:
                     })
             return dicts
 
-        for iteration in range(5):
+        for iteration in range(10): # Increased iteration count for more complex tasks
             response = await llm_with_tools.ainvoke(messages)
             messages.append(response)
             content = response.content or ""
             
-            # --- PATH 1: Native tool_calls ---
             if response.tool_calls:
                 for tc in response.tool_calls:
                     tool_name = tc["name"]
@@ -174,10 +176,8 @@ class LLMProvider:
                     logger.info(f"[{source_pid}][Native] Iter {iteration+1}: {tool_name}({tool_args})")
                     
                     await system_memory_bus.publish(MessagePayload(
-                        source_pid=source_pid,
-                        target_pid="BROADCAST",
-                        event_type="tool_requested",
-                        data={"tool": tool_name, "arguments": tool_args}
+                        source_pid=source_pid, target_pid="BROADCAST",
+                        event_type="tool_requested", data={"tool": tool_name, "arguments": tool_args}
                     ))
                     
                     if tool_name not in tool_map:
@@ -186,87 +186,50 @@ class LLMProvider:
                         try:
                             result = await tool_map[tool_name].arun(tool_args)
                             result_str = self._format_tool_result(result)
-                            logger.info(f"Tool '{tool_name}' result: {result_str[:300]}")
                         except Exception as e:
                             result_str = f"Tool error: {str(e)}"
                     
                     messages.append(ToolMessage(content=result_str, tool_call_id=tool_call_id))
                 continue
             
-            # --- PATH 2: Text tool call ---
-            parsed = self._parse_text_tool_call(content, tool_names)
-            if parsed:
-                tool_name, raw_args = parsed
-                tool = tool_map[tool_name]
-                
-                if isinstance(raw_args, dict): kwargs = raw_args
-                else:
-                    schema = getattr(tool, "args_schema", None)
-                    first_field = list(schema.model_fields.keys())[0] if schema and schema.model_fields else "input"
-                    kwargs = {first_field: str(raw_args)}
-                
-                logger.info(f"[{source_pid}][Text] Iter {iteration+1}: {tool_name}({kwargs})")
-                
-                await system_memory_bus.publish(MessagePayload(
-                    source_pid=source_pid,
-                    target_pid="BROADCAST",
-                    event_type="tool_requested",
-                    data={"tool": tool_name, "arguments": kwargs}
-                ))
+            # Text based fallback for Ollama
+            if self.provider == "ollama":
+                parsed = self._parse_text_tool_call(content, tool_names)
+                if parsed:
+                    tool_name, raw_args = parsed
+                    tool = tool_map[tool_name]
+                    kwargs = raw_args if isinstance(raw_args, dict) else {"input": str(raw_args)}
+                    
+                    logger.info(f"[{source_pid}][Text] Iter {iteration+1}: {tool_name}({kwargs})")
+                    await system_memory_bus.publish(MessagePayload(
+                        source_pid=source_pid, target_pid="BROADCAST",
+                        event_type="tool_requested", data={"tool": tool_name, "arguments": kwargs}
+                    ))
 
-                try:
-                    result = await tool.arun(kwargs)
-                    result_str = self._format_tool_result(result)
-                except Exception as e:
-                    result_str = f"Tool error: {str(e)}"
-                
-                # For Text mode, we simulate a ToolMessage in history even if parsed from text
-                # to keep history consistent. Note: we use a pseudo ID.
-                pseudo_id = f"text_to_tool_{iteration}"
-                messages[-1].tool_calls = [{"name": tool_name, "args": kwargs, "id": pseudo_id}]
-                messages.append(ToolMessage(content=result_str, tool_call_id=pseudo_id))
+                    try:
+                        result = await tool.arun(kwargs)
+                        result_str = self._format_tool_result(result)
+                    except Exception as e:
+                        result_str = f"Tool error: {str(e)}"
+                    
+                    pseudo_id = f"text_to_tool_{iteration}"
+                    messages[-1].tool_calls = [{"name": tool_name, "args": kwargs, "id": pseudo_id}]
+                    messages.append(ToolMessage(content=result_str, tool_call_id=pseudo_id))
+                    continue # Continue to let it summarize or use more tools
 
-                summary_prompt = (
-                    f"Task: {user_prompt}\n\n"
-                    f"The tool '{tool_name}' returned:\n---\n{result_str}\n---\n\n"
-                    "Provide a clear, helpful answer to the task based on this output."
-                )
-                summary = await self._client.ainvoke([
-                    SystemMessage(content=full_system),
-                    HumanMessage(content=summary_prompt)
-                ])
-                messages.append(summary)
-                return summary.content or result_str, _msgs_to_dicts(messages)
-            
-            # --- PATH 3: Final answer ---
             return content or "Agent completed.", _msgs_to_dicts(messages)
         
         return "Max iterations hit.", _msgs_to_dicts(messages)
 
     def _format_tool_result(self, result: any) -> str:
-        """
-        Helper to format complex tool results into clean strings for the model.
-        Handles:
-          - Dicts (like shell_execute results) -> returns stdout
-          - Lists of TextContent (MCP official server) -> returns joined text
-          - Base types -> returns str()
-        """
         if isinstance(result, dict):
-            # For shell_execute: extract stdout
-            if "stdout" in result:
-                return result["stdout"]
+            if "stdout" in result: return result["stdout"]
             return json.dumps(result, indent=2)
-            
         if isinstance(result, list):
-            # For official MCP server results: [TextContent(text='...'), ...]
             texts = []
             for item in result:
-                if hasattr(item, "text"):
-                    texts.append(item.text)
-                elif isinstance(item, dict) and "text" in item:
-                    texts.append(item["text"])
-                else:
-                    texts.append(str(item))
+                if hasattr(item, "text"): texts.append(item.text)
+                elif isinstance(item, dict) and "text" in item: texts.append(item["text"])
+                else: texts.append(str(item))
             return "\n".join(texts)
-            
         return str(result)

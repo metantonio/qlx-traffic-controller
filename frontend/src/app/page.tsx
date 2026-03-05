@@ -6,10 +6,9 @@ import TaskSchedulerVisualizer from "@/components/Kernel/TaskSchedulerVisualizer
 import ToolManager from "@/components/Kernel/ToolManager";
 import CommandMonitor, { CommandEvent } from "@/components/Monitoring/CommandMonitor";
 import AgentConversationModal, { Message } from '@/components/Kernel/AgentConversationModal';
-
 import KnowledgeGraphExplorer from "@/components/Kernel/KnowledgeGraphExplorer";
+import ModelSelector from "@/components/Kernel/ModelSelector";
 
-// Define a basic Kernel Metrics type
 export interface ProcessData {
   pid: string;
   agent: string;
@@ -30,6 +29,8 @@ export default function Dashboard() {
   const [taskText, setTaskText] = useState("");
   const [enabledTools, setEnabledTools] = useState<string[]>([]);
   const [selectedPid, setSelectedPid] = useState<string | null>(null);
+  const [llmProvider, setLlmProvider] = useState<string>("");
+  const [llmModel, setLlmModel] = useState<string>("");
   const wsRef = useRef<WebSocket | null>(null);
 
   const handleSpawnAgent = useCallback((manualTask?: string, parent_pid?: string, initial_history?: Message[]) => {
@@ -42,14 +43,16 @@ export default function Dashboard() {
       task: finalTask,
       allowed_tools: enabledTools,
       parent_pid: parent_pid,
-      initial_history: initial_history
+      initial_history: initial_history,
+      provider: llmProvider,
+      model: llmModel
     };
 
     if (wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(payload));
       if (!manualTask) setTaskText('');
     }
-  }, [taskText, enabledTools]);
+  }, [taskText, enabledTools, llmProvider, llmModel]);
 
   const handleContinue = useCallback((pid: string, followUp: string, history: Message[]) => {
     handleSpawnAgent(followUp, pid, history);
@@ -60,8 +63,6 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    // Existing WS logic... (I'll keep the rest of the file as is if possible, but I need to be careful with the targetContent)
-    // Scaffold standard WebSockets connection to Control Tower
     const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://127.0.0.1:8000/ws";
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
@@ -80,7 +81,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0b] text-neutral-100 p-8 font-sans antialiased selection:bg-blue-500/30 overflow-x-hidden">
-      {/* Dynamic Background elements */}
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden -z-10">
         <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] rounded-full"></div>
         <div className="absolute bottom-[0%] -right-[5%] w-[30%] h-[50%] bg-purple-600/5 blur-[100px] rounded-full"></div>
@@ -98,107 +98,85 @@ export default function Dashboard() {
           <p className="text-neutral-500 text-sm mt-1 font-medium tracking-wide">Autonomous Neural-Process Orchestrator</p>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-4 w-full md:w-auto">
-          {/* Unified Request Container */}
-          <div className="group relative flex items-center bg-neutral-900/40 border border-neutral-800 rounded-2xl overflow-hidden focus-within:border-blue-500/50 focus-within:ring-4 ring-blue-500/10 w-full max-w-md transition-all backdrop-blur-md shadow-2xl">
-            <div className="pl-4 text-neutral-600">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
+        <div className="flex flex-wrap items-center gap-4">
+          <ModelSelector
+            onSelect={(p, m) => {
+              setLlmProvider(p);
+              setLlmModel(m);
+            }}
+            currentProvider={llmProvider}
+            currentModel={llmModel}
+          />
+          <div className="h-10 w-px bg-neutral-800 hidden md:block" />
+          <div className="flex gap-4 p-1 bg-neutral-900 border border-neutral-800 rounded-2xl">
+            <div className="px-3 py-1 bg-neutral-800/50 rounded-xl border border-neutral-700/30">
+              <span className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest block mb-0.5">Processes</span>
+              <span className="text-lg font-mono text-emerald-400 leading-none">{kernelMetrics?.active_count || 0}</span>
             </div>
-            <input
-              type="text"
-              value={taskText}
-              onChange={(e) => setTaskText(e.target.value)}
-              placeholder="What should the kernel execute?"
-              className="bg-transparent border-none text-base px-3 py-4 w-full focus:outline-none text-white placeholder:text-neutral-600 font-medium"
-              onKeyDown={(e) => e.key === 'Enter' && handleSpawnAgent()}
-            />
-            <button
-              onClick={() => handleSpawnAgent()}
-              disabled={!taskText.trim()}
-              className={`mr-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 flex items-center gap-2 ${!taskText.trim()
-                ? "bg-neutral-800 text-neutral-600 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_20px_rgba(37,99,235,0.35)]"
-                }`}
-            >
-              <span>Spawn</span>
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-              </svg>
-            </button>
-          </div>
-
-          <div className="flex items-center gap-3 bg-neutral-900/80 py-2.5 px-5 rounded-2xl border border-neutral-800/80 backdrop-blur-md">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <span className="text-[10px] text-neutral-400 font-black tracking-widest uppercase font-mono">Kernel.Online</span>
+            <div className="px-3 py-1 bg-neutral-800/50 rounded-xl border border-neutral-700/30">
+              <span className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest block mb-0.5">Uptime</span>
+              <span className="text-lg font-mono text-blue-400 leading-none">04:12:01</span>
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Main Column */}
-        <div className="lg:col-span-8 space-y-8">
-          <section className="bg-neutral-900/30 border border-white/5 rounded-[2rem] p-8 backdrop-blur-3xl shadow-2xl overflow-hidden relative group">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500/20 to-transparent"></div>
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h2 className="text-2xl font-bold text-white tracking-tight">Active Processes</h2>
-                <p className="text-neutral-500 text-xs font-medium uppercase tracking-widest mt-1">Real-time Kernel htop</p>
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+        <div className="xl:col-span-8 space-y-8 min-w-0">
+          <section className="relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-8 opacity-5">
+              <Cpu className="w-64 h-64 text-blue-400" />
+            </div>
+            <div className="p-8 bg-neutral-900/60 border border-neutral-800/80 rounded-[2rem] shadow-2xl backdrop-blur-xl relative">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-blue-600/10 text-blue-500 border border-blue-500/20">
+                  <Zap size={20} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold tracking-tight">Main Command Interface</h2>
+                  <p className="text-xs text-neutral-500 font-mono tracking-tighter">Enter task parameters for the neural scheduler</p>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-neutral-700"></div>
-                <div className="h-1.5 w-1.5 rounded-full bg-neutral-700"></div>
-                <div className="h-1.5 w-1.5 rounded-full bg-neutral-700"></div>
+              <div className="relative group">
+                <textarea
+                  value={taskText}
+                  onChange={(e) => setTaskText(e.target.value)}
+                  placeholder="Initiate a new autonomous thread (e.g. 'Analyze logs in current folder and summarize errors')"
+                  className="w-full bg-neutral-950/50 border border-neutral-800 text-white rounded-3xl py-5 px-6 outline-none focus:border-blue-500/50 transition-all focus:ring-1 focus:ring-blue-500/10 min-h-[140px] text-lg placeholder:text-neutral-700 font-medium leading-relaxed group-hover:border-neutral-700"
+                />
+                <button
+                  onClick={() => handleSpawnAgent()}
+                  className="absolute bottom-4 right-4 bg-blue-600 hover:bg-blue-500 text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg shadow-blue-600/20 transition-all transform active:scale-95 flex items-center gap-2 group/btn"
+                >
+                  <Cpu size={18} className="group-hover/btn:rotate-12 transition-transform" />
+                  Initiate Sequence
+                </button>
               </div>
             </div>
-            <ProcessMonitor
-              metrics={kernelMetrics}
-              onProcessClick={(pid) => setSelectedPid(pid)}
-            />
           </section>
 
-          <section className="bg-neutral-900/30 border border-white/5 rounded-[2rem] p-8 backdrop-blur-3xl shadow-2xl relative">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-bold text-white tracking-tight">Knowledge Graph Explorer</h2>
-              <span className="text-[10px] font-bold py-1 px-3 rounded-full bg-neutral-800 text-neutral-400 border border-neutral-700 uppercase">Neural Persistence</span>
+          <TaskSchedulerVisualizer metrics={kernelMetrics} />
+          <CommandMonitor events={events} />
+        </div>
+
+        <div className="xl:col-span-4 space-y-8">
+          <ToolManager onToolsChange={handleToolsChange} />
+
+          <div className="bg-neutral-900/40 border border-neutral-800/50 rounded-[2rem] p-6 backdrop-blur-md">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-md font-bold text-neutral-300">Knowledge Graph</h2>
+                <p className="text-[10px] text-neutral-500 font-mono tracking-widest uppercase">Memory Context Layer</p>
+              </div>
             </div>
-            <div className="h-[400px] w-full">
+            <div className="h-[400px]">
               <KnowledgeGraphExplorer />
             </div>
-          </section>
+          </div>
+
+          <ProcessMonitor processes={kernelMetrics?.processes || []} onSelect={setSelectedPid} />
         </div>
-
-        {/* Sidebar Column */}
-        <div className="lg:col-span-4 space-y-8">
-          <section className="bg-neutral-900/30 border border-white/5 rounded-[2rem] p-8 backdrop-blur-3xl shadow-2xl">
-            <h2 className="text-2xl font-bold text-white tracking-tight mb-6">Capabilities</h2>
-            <ToolManager onToolsChange={handleToolsChange} />
-          </section>
-
-          <section className="bg-neutral-900/30 border border-white/5 rounded-[2rem] p-8 backdrop-blur-3xl shadow-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-white tracking-tight">Queue</h2>
-              <span className="animate-pulse flex h-2 w-2 rounded-full bg-amber-500/50"></span>
-            </div>
-            <TaskSchedulerVisualizer metrics={kernelMetrics} />
-          </section>
-
-          <section className="bg-neutral-900/30 border border-white/5 rounded-[2rem] p-8 backdrop-blur-3xl shadow-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-white tracking-tight">Router Logs</h2>
-              <div className="flex items-center gap-2 group cursor-help">
-                <span className="h-1.5 w-1.5 rounded-full bg-red-500"></span>
-                <span className="text-[10px] font-black tracking-widest text-red-500/70 border-b border-red-500/10">SECURE</span>
-              </div>
-            </div>
-            <CommandMonitor events={events} />
-          </section>
-        </div>
-      </main>
+      </div>
 
       {selectedPid && (
         <AgentConversationModal
@@ -208,5 +186,53 @@ export default function Dashboard() {
         />
       )}
     </div>
+  );
+}
+
+// Missing icons from view_file before update
+function Zap(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M4 14.71 12 2.29l1 9.06L20 9.29l-8 12.42-1-9.06L4 14.71z" />
+    </svg>
+  );
+}
+
+function Cpu(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect width="16" height="16" x="4" y="4" rx="2" />
+      <rect width="6" height="6" x="9" y="9" rx="1" />
+      <path d="M15 2v2" />
+      <path d="M15 20v2" />
+      <path d="M2 15h2" />
+      <path d="M2 9h2" />
+      <path d="M20 15h2" />
+      <path d="M20 9h2" />
+      <path d="M9 2v2" />
+      <path d="M9 20v2" />
+    </svg>
   );
 }

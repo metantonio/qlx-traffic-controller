@@ -37,71 +37,69 @@ class ConnectionManager:
         self.active_connections.append(websocket)
 
     def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
 
     async def broadcast(self, message: dict):
-        text = json.dumps(message)
         for connection in self.active_connections:
-            await connection.send_text(text)
+            try:
+                await connection.send_json(message)
+            except:
+                pass
 
 manager = ConnectionManager()
 
-@app.on_event("startup")
-async def startup_event():
-    logger.info("Starting AI Kernel subsystems...")
-    asyncio.create_task(system_scheduler.start_scheduler())
-    
-    # Bridge the Kernel Memory Bus to WebSockets
-    async def bridge_to_ws(msg: MessagePayload):
-        # Format for backward compatibility with the Dashboard components
-        await manager.broadcast({
-            "type": msg.event_type,
-            "source": msg.source_pid or "kernel",
-            "payload": msg.data,
-            "target": msg.target_pid
-        })
-    system_memory_bus.subscribe("*", bridge_to_ws)
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    system_scheduler.stop_scheduler()
-
-@app.get("/health")
-async def health_check():
-    return {"status": "ok", "message": "AgentOS Kernel is running securely."}
-    
 @app.get("/api/processes")
 async def list_processes():
-    from backend.core.database import SessionLocal
-    from backend.models.database_models import DbProcess
-    with SessionLocal() as db:
-        processes = db.query(DbProcess).all()
-        return {p.pid: {
-            "pid": p.pid,
-            "agent_name": p.agent_name,
-            "task": p.task_description,
-            "state": p.state,
-            "metrics": {
-                "tokens_used": p.tokens_used,
-                "tools_called": p.tools_called,
-                "start_time": p.start_time,
-                "end_time": p.end_time
-            }
-        } for p in processes}
+    processes = system_process_table.list_all()
+    return [{
+        "pid": p.pid,
+        "agent_name": p.agent_name,
+        "task": p.task_description,
+        "state": p.state.value,
+        "metrics": p.metrics
+    } for p in processes]
 
 @app.get("/api/tools")
 async def list_tools():
-    """Returns a list of all available tools in the system."""
     from backend.tools.mcp_registry import system_registry
+    tools = system_registry.list_tools()
     
-    # Custom tools
-    custom_tools = system_registry.list_tools()
-    
+    custom_tools = []
+    for tool in tools:
+        custom_tools.append({
+            "name": tool.name,
+            "description": tool.description,
+            "schema": tool.args_schema.model_json_schema() if hasattr(tool, "args_schema") and tool.args_schema else {}
+        })
     return custom_tools
+
+@app.get("/api/llm/models")
+async def list_llm_models():
+    """Returns supported providers and common models."""
+    return [
+        {
+            "provider": "ollama",
+            "name": "Ollama (Local)",
+            "models": ["qwen2.5-coder:7b", "llama3.1", "mistral", "codellama"],
+            "configured": True
+        },
+        {
+            "provider": "anthropic",
+            "name": "Anthropic Claude",
+            "models": ["claude-3-5-sonnet-20240620", "claude-3-opus-20240229", "claude-3-haiku-20240307"],
+            "configured": bool(settings.ANTHROPIC_API_KEY)
+        },
+        {
+            "provider": "google",
+            "name": "Google Gemini",
+            "models": ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-3.1-pro-preview", "gemini-2.5-flash"],
+            "configured": bool(settings.GOOGLE_API_KEY)
+        }
+    ]
 
 @app.get("/api/processes/{pid}")
 async def get_process_details(pid: str):
-    # Use system_process_table.get which handles DB lookup
     proc = system_process_table.get(pid)
     if not proc:
         return {"error": "Process not found"}
@@ -118,7 +116,6 @@ async def get_process_details(pid: str):
 
 @app.get("/api/memory")
 async def get_knowledge_graph():
-    """Returns the current Knowledge Graph from the memory MCP server."""
     memory_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "memory.json"))
     if not os.path.exists(memory_path):
         return {"entities": [], "relations": []}
@@ -134,14 +131,13 @@ async def get_knowledge_graph():
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     try:
-        # Bridge the Kernel Memory Bus to this specific WebSocket
         async def bridge_to_ws(msg: MessagePayload):
             await websocket.send_json({
                 "type": msg.event_type,
                 "source": msg.source_pid or "kernel",
                 "payload": msg.data,
                 "target": msg.target_pid,
-                "timestamp": msg.timestamp # Include real timestamp
+                "timestamp": msg.timestamp
             })
         
         system_memory_bus.subscribe("*", bridge_to_ws)
@@ -155,12 +151,10 @@ async def websocket_endpoint(websocket: WebSocket):
                     agent_name = msg.get("agent_name", "test_agent")
                     task_text = msg.get("task", "Simulated WS Task")
                     
-                    # Robust handling: only default if key is missing or None
                     allowed_tools = msg.get("allowed_tools")
                     if allowed_tools is None:
                         allowed_tools = ["shell_execute", "filesystem_read"]
                     
-                    # Conversation Resumption logic
                     parent_pid = msg.get("parent_pid")
                     initial_history = msg.get("initial_history")
                     
@@ -169,15 +163,22 @@ async def websocket_endpoint(websocket: WebSocket):
                         if parent:
                             initial_history = parent.history
                     
+                    # LLM Overrides
+                    llm_provider = msg.get("provider")
+                    llm_model = msg.get("model")
+                    
                     proc = AIProcess(
                         agent_name=agent_name,
                         task_description=task_text,
                         limits=ResourceLimits(allowed_tools=allowed_tools)
                     )
                     
-                    # Pass initial history into memory context for scheduler to pick up
                     if initial_history:
                         proc.memory_context["initial_history"] = initial_history
+                    
+                    # Store LLM overrides in memory_context for scheduler
+                    if llm_provider: proc.memory_context["llm_provider"] = llm_provider
+                    if llm_model: proc.memory_context["llm_model"] = llm_model
                         
                     await system_scheduler.submit(proc, Priority.MEDIUM)
                     await websocket.send_json({"type": "info", "message": f"Spawned {proc.pid}: {task_text[:20]}..."})
