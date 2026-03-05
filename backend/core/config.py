@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     # App Settings
-    API_HOST: str = "127.0.0.1"
+    API_HOST: str = "0.0.0.0"
     API_PORT: int = 8000
     CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
 

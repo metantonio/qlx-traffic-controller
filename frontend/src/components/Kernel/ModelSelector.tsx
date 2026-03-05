@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { ChevronDown, Cpu, Globe, Zap } from "lucide-react";
 
 interface LLMProviderInfo {
@@ -12,15 +12,18 @@ interface LLMProviderInfo {
 
 interface ModelSelectorProps {
     onSelect: (provider: string, model: string) => void;
-    currentProvider?: string;
-    currentModel?: string;
+    currentProvider: string;
+    currentModel: string;
 }
 
 export default function ModelSelector({ onSelect, currentProvider, currentModel }: ModelSelectorProps) {
     const [providers, setProviders] = useState<LLMProviderInfo[]>([]);
     const [isOpen, setIsOpen] = useState(false);
-    const [selectedProvider, setSelectedProvider] = useState<string>("");
-    const [selectedModel, setSelectedModel] = useState<string>("");
+
+    // Memoize onSelect to avoid unnecessary re-renders if it changes
+    const handleSelect = useCallback((p: string, m: string) => {
+        onSelect(p, m);
+    }, [onSelect]);
 
     useEffect(() => {
         const fetchModels = async () => {
@@ -30,32 +33,21 @@ export default function ModelSelector({ onSelect, currentProvider, currentModel 
                 const data = await res.json();
                 setProviders(data);
 
-                // Default selection if none provided
-                if (!currentProvider && data.length > 0) {
-                    setSelectedProvider(data[0].provider);
-                    setSelectedModel(data[0].models[0]);
-                    onSelect(data[0].provider, data[0].models[0]);
+                // Auto-select first model if none provided
+                if (!currentProvider && data.length > 0 && data[0].models.length > 0) {
+                    handleSelect(data[0].provider, data[0].models[0]);
                 }
             } catch (err) {
                 console.error("Failed to fetch LLM models:", err);
             }
         };
         fetchModels();
-    }, []);
-
-    useEffect(() => {
-        if (currentProvider) setSelectedProvider(currentProvider);
-        if (currentModel) setSelectedModel(currentModel);
-    }, [currentProvider, currentModel]);
+    }, [currentProvider, handleSelect]);
 
     const handleModelChange = (p: string, m: string) => {
-        setSelectedProvider(p);
-        setSelectedModel(m);
-        onSelect(p, m);
+        handleSelect(p, m);
         setIsOpen(false);
     };
-
-    const currentProviderInfo = providers.find((p) => p.provider === selectedProvider);
 
     return (
         <div className="relative">
@@ -64,21 +56,21 @@ export default function ModelSelector({ onSelect, currentProvider, currentModel 
                 className="flex items-center gap-3 px-4 py-2 bg-neutral-900 border border-neutral-800 rounded-xl hover:bg-neutral-800 transition-all text-sm font-medium text-neutral-300 group"
             >
                 <div className="flex items-center gap-2">
-                    {selectedProvider === "ollama" ? (
+                    {currentProvider === "ollama" ? (
                         <Cpu className="w-4 h-4 text-emerald-400" />
-                    ) : selectedProvider === "anthropic" ? (
+                    ) : currentProvider === "anthropic" ? (
                         <Zap className="w-4 h-4 text-orange-400" />
                     ) : (
                         <Globe className="w-4 h-4 text-blue-400" />
                     )}
-                    <span className="capitalize">{selectedProvider}:</span>
-                    <span className="text-white font-mono">{selectedModel}</span>
+                    <span className="capitalize">{currentProvider || "ollama"}:</span>
+                    <span className="text-white font-mono">{currentModel || "..."}</span>
                 </div>
                 <ChevronDown className={`w-4 h-4 text-neutral-500 transition-transform ${isOpen ? "rotate-180" : ""}`} />
             </button>
 
             {isOpen && (
-                <div className="absolute top-full mt-2 left-0 w-80 bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 backdrop-blur-xl">
+                <div className="absolute top-full mt-2 right-0 w-80 bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 backdrop-blur-xl">
                     <div className="p-2 space-y-1">
                         {providers.map((p) => (
                             <div key={p.provider} className="p-1">
@@ -94,7 +86,7 @@ export default function ModelSelector({ onSelect, currentProvider, currentModel 
                                         disabled={!p.configured && p.provider !== "ollama"}
                                         onClick={() => handleModelChange(p.provider, m)}
                                         className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center justify-between transition-colors
-                      ${selectedProvider === p.provider && selectedModel === m
+                      ${currentProvider === p.provider && currentModel === m
                                                 ? "bg-emerald-600/10 text-emerald-400 border border-emerald-500/20"
                                                 : "text-neutral-400 hover:bg-neutral-800 hover:text-white"
                                             }
@@ -102,7 +94,7 @@ export default function ModelSelector({ onSelect, currentProvider, currentModel 
                     `}
                                     >
                                         <span className="font-mono">{m}</span>
-                                        {selectedProvider === p.provider && selectedModel === m && (
+                                        {currentProvider === p.provider && currentModel === m && (
                                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                                         )}
                                     </button>

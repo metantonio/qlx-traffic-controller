@@ -80,13 +80,15 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0b] text-neutral-100 p-8 font-sans antialiased selection:bg-blue-500/30 overflow-x-hidden">
+    <div className="min-h-screen bg-[#0a0a0b] text-neutral-100 p-8 font-sans antialiased selection:bg-blue-500/30 overflow-x-hidden flex flex-col">
+      {/* Background elements */}
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden -z-10">
         <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] rounded-full"></div>
         <div className="absolute bottom-[0%] -right-[5%] w-[30%] h-[50%] bg-purple-600/5 blur-[100px] rounded-full"></div>
       </div>
 
-      <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12 border-b border-neutral-800/50 pb-8">
+      {/* Header */}
+      <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8 border-b border-neutral-800/50 pb-6 shrink-0">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <div className="h-2 w-2 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.6)]"></div>
@@ -113,69 +115,82 @@ export default function Dashboard() {
               <span className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest block mb-0.5">Processes</span>
               <span className="text-lg font-mono text-emerald-400 leading-none">{kernelMetrics?.active_count || 0}</span>
             </div>
-            <div className="px-3 py-1 bg-neutral-800/50 rounded-xl border border-neutral-700/30">
-              <span className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest block mb-0.5">Uptime</span>
-              <span className="text-lg font-mono text-blue-400 leading-none">04:12:01</span>
-            </div>
           </div>
         </div>
       </header>
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
-        <div className="xl:col-span-8 space-y-8 min-w-0">
-          <section className="relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-8 opacity-5">
-              <Cpu className="w-64 h-64 text-blue-400" />
+      {/* Main Content Area */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 flex-grow overflow-hidden mb-8">
+        {/* TOP LEFT: Workers (Process Monitor) */}
+        <div className="xl:col-span-4 space-y-6 overflow-y-auto custom-scrollbar pr-2">
+          <div className="bg-neutral-900/60 border border-neutral-800/80 rounded-3xl p-6 shadow-xl backdrop-blur-xl">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <h2 className="text-sm font-bold text-neutral-400 uppercase tracking-widest">Active Workers</h2>
             </div>
-            <div className="p-8 bg-neutral-900/60 border border-neutral-800/80 rounded-[2rem] shadow-2xl backdrop-blur-xl relative">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-blue-600/10 text-blue-500 border border-blue-500/20">
-                  <Zap size={20} />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold tracking-tight">Main Command Interface</h2>
-                  <p className="text-xs text-neutral-500 font-mono tracking-tighter">Enter task parameters for the neural scheduler</p>
-                </div>
+            <ProcessMonitor metrics={kernelMetrics} onProcessClick={setSelectedPid} />
+          </div>
+
+          <ToolManager onToolsChange={handleToolsChange} />
+        </div>
+
+        {/* TOP RIGHT / MIDDLE: Metrics & Vis */}
+        <div className="xl:col-span-8 space-y-6 overflow-y-auto custom-scrollbar pr-2">
+          <TaskSchedulerVisualizer metrics={kernelMetrics} />
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-neutral-900/40 border border-neutral-800/50 rounded-[2rem] p-6 backdrop-blur-md">
+              <h2 className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-4">Knowledge Graph</h2>
+              <div className="h-[300px]">
+                <KnowledgeGraphExplorer />
               </div>
-              <div className="relative group">
+            </div>
+            <div className="bg-neutral-900/40 border border-neutral-800/50 rounded-[2rem] p-6 backdrop-blur-md overflow-hidden">
+              <h2 className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-4">System Events</h2>
+              <div className="h-[300px]">
+                <CommandMonitor events={events} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* BOTTOM CENTER: Chat / Command Interface */}
+      <div className="max-w-4xl w-full mx-auto shrink-0 pb-4">
+        <section className="relative overflow-hidden group">
+          <div className="p-6 bg-neutral-900/80 border border-neutral-800/80 rounded-[2.5rem] shadow-2xl backdrop-blur-2xl relative border-t-neutral-700/50 shadow-blue-500/5">
+            <div className="relative flex items-end gap-4">
+              <div className="flex-grow relative">
                 <textarea
                   value={taskText}
                   onChange={(e) => setTaskText(e.target.value)}
-                  placeholder="Initiate a new autonomous thread (e.g. 'Analyze logs in current folder and summarize errors')"
-                  className="w-full bg-neutral-950/50 border border-neutral-800 text-white rounded-3xl py-5 px-6 outline-none focus:border-blue-500/50 transition-all focus:ring-1 focus:ring-blue-500/10 min-h-[140px] text-lg placeholder:text-neutral-700 font-medium leading-relaxed group-hover:border-neutral-700"
+                  placeholder="Initiate a new autonomous thread..."
+                  className="w-full bg-neutral-950/80 border border-neutral-800 text-white rounded-3xl py-4 px-6 outline-none focus:border-blue-500/50 transition-all min-h-[80px] text-md placeholder:text-neutral-700 font-medium leading-relaxed resize-none"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSpawnAgent();
+                    }
+                  }}
                 />
-                <button
-                  onClick={() => handleSpawnAgent()}
-                  className="absolute bottom-4 right-4 bg-blue-600 hover:bg-blue-500 text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg shadow-blue-600/20 transition-all transform active:scale-95 flex items-center gap-2 group/btn"
-                >
-                  <Cpu size={18} className="group-hover/btn:rotate-12 transition-transform" />
-                  Initiate Sequence
-                </button>
               </div>
+              <button
+                onClick={() => handleSpawnAgent()}
+                className="h-14 w-14 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold shadow-lg shadow-blue-600/20 transition-all transform active:scale-95 flex items-center justify-center group/btn shrink-0"
+                title="Initiate Sequence"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform">
+                  <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+                </svg>
+              </button>
             </div>
-          </section>
-
-          <TaskSchedulerVisualizer metrics={kernelMetrics} />
-          <CommandMonitor events={events} />
-        </div>
-
-        <div className="xl:col-span-4 space-y-8">
-          <ToolManager onToolsChange={handleToolsChange} />
-
-          <div className="bg-neutral-900/40 border border-neutral-800/50 rounded-[2rem] p-6 backdrop-blur-md">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-md font-bold text-neutral-300">Knowledge Graph</h2>
-                <p className="text-[10px] text-neutral-500 font-mono tracking-widest uppercase">Memory Context Layer</p>
-              </div>
-            </div>
-            <div className="h-[400px]">
-              <KnowledgeGraphExplorer />
+            <div className="flex items-center gap-4 mt-3 px-4">
+              <span className="text-[10px] text-neutral-600 font-mono">READY // {llmProvider}:{llmModel}</span>
+              <div className="h-px flex-grow bg-neutral-800/50" />
+              <span className="text-[10px] text-neutral-600 font-mono capitalize">{enabledTools.length} Tools Enabled</span>
             </div>
           </div>
-
-          <ProcessMonitor processes={kernelMetrics?.processes || []} onSelect={setSelectedPid} />
-        </div>
+        </section>
       </div>
 
       {selectedPid && (
@@ -186,53 +201,5 @@ export default function Dashboard() {
         />
       )}
     </div>
-  );
-}
-
-// Missing icons from view_file before update
-function Zap(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M4 14.71 12 2.29l1 9.06L20 9.29l-8 12.42-1-9.06L4 14.71z" />
-    </svg>
-  );
-}
-
-function Cpu(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect width="16" height="16" x="4" y="4" rx="2" />
-      <rect width="6" height="6" x="9" y="9" rx="1" />
-      <path d="M15 2v2" />
-      <path d="M15 20v2" />
-      <path d="M2 15h2" />
-      <path d="M2 9h2" />
-      <path d="M20 15h2" />
-      <path d="M20 9h2" />
-      <path d="M9 2v2" />
-      <path d="M9 20v2" />
-    </svg>
   );
 }

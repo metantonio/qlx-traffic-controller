@@ -22,16 +22,29 @@ _DEFAULT_ALLOWED = [
 ]
 
 
+import time
+
+# Cache for tools
+_FS_TOOLS_CACHE = None
+_FS_CACHE_TIME = 0
+_CACHE_TTL = 300  # 5 minutes
+
 async def get_mcp_filesystem_tools(allowed_directories: List[str] = None) -> list:
     """
     Returns filesystem tools from the official MCP server.
     Uses MultiServerMCPClient to provide tools that handle their own session lifecycle.
+    Caches tools for 5 minutes to avoid frequent npx spawns.
     """
+    global _FS_TOOLS_CACHE, _FS_CACHE_TIME
+    
+    now = time.time()
+    if _FS_TOOLS_CACHE is not None and (now - _FS_CACHE_TIME) < _CACHE_TTL:
+        return _FS_TOOLS_CACHE
+
     dirs = allowed_directories or _DEFAULT_ALLOWED
     for d in dirs:
         os.makedirs(d, exist_ok=True)
 
-    # Note: MultiServerMCPClient will start a new session for each tool invocation.
     client = MultiServerMCPClient(
         {
             "filesystem": {
@@ -43,10 +56,11 @@ async def get_mcp_filesystem_tools(allowed_directories: List[str] = None) -> lis
     )
 
     try:
-        # get_tools returns a list of BaseTool objects
         tools = await client.get_tools()
         logger.info(f"MCP filesystem tools loaded: {[t.name for t in tools]}")
+        _FS_TOOLS_CACHE = tools
+        _FS_CACHE_TIME = now
         return tools
     except Exception as e:
         logger.error(f"Failed to load MCP filesystem tools: {e}")
-        return []
+        return _FS_TOOLS_CACHE if _FS_TOOLS_CACHE else []

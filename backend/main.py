@@ -63,25 +63,64 @@ async def list_processes():
 @app.get("/api/tools")
 async def list_tools():
     from backend.tools.mcp_registry import system_registry
-    tools = system_registry.list_tools()
+    from backend.tools.mcp_filesystem import get_mcp_filesystem_tools
+    from backend.tools.mcp_memory import get_mcp_memory_tools
+    
+    # 1. Static tools from registry (these are dicts)
+    static_tools = system_registry.list_tools()
+    
+    # 2. Dynamic tools from MCP servers (these are BaseTool objects)
+    fs_tools = await get_mcp_filesystem_tools()
+    mem_tools = await get_mcp_memory_tools()
     
     custom_tools = []
-    for tool in tools:
+    
+    # Add static tools
+    for tool in static_tools:
+        custom_tools.append({
+            "name": tool["name"],
+            "description": tool["description"],
+            "schema": tool.get("parameters", {})
+        })
+        
+    # Add dynamic tools
+    for tool in fs_tools + mem_tools:
+        schema = {}
+        if hasattr(tool, "args_schema") and tool.args_schema:
+            if hasattr(tool.args_schema, "model_json_schema"):
+                schema = tool.args_schema.model_json_schema()
+            else:
+                schema = tool.args_schema # already a dict or fallback
+                
         custom_tools.append({
             "name": tool.name,
             "description": tool.description,
-            "schema": tool.args_schema.model_json_schema() if hasattr(tool, "args_schema") and tool.args_schema else {}
+            "schema": schema
         })
+        
     return custom_tools
+
+import ollama
 
 @app.get("/api/llm/models")
 async def list_llm_models():
     """Returns supported providers and common models."""
+    ollama_models = []
+    try:
+        # Fetch local models from Ollama
+        response = ollama.list()
+        # Newer versions of ollama-python return an object with a 'models' attribute
+        ollama_models = [m.model for m in response.models]
+    except Exception as e:
+        logger.error(f"Failed to fetch local Ollama models: {e}")
+        # Fallback to defaults if Ollama is unreachable
+        ollama_models = ["qwen2.5-coder:7b", "llama3.1", "mistral"]
+
     return [
         {
             "provider": "ollama",
             "name": "Ollama (Local)",
-            "models": ["qwen2.5-coder:7b", "llama3.1", "mistral", "codellama"],
+            "models": ollama_models,
             "configured": True
         },
         {
@@ -189,6 +228,28 @@ async def websocket_endpoint(websocket: WebSocket):
         manager.disconnect(websocket)
         logger.info("Dashboard disconnected")
 
+def check_port(host: str, port: int):
+    import socket
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        try:
+            s.bind((host, port))
+        except socket.error:
+            logger.error(f"PORT CONFLICT: Port {port} is already in use by another process.")
+            logger.error(f"Common culprits: Edge browser, another instance of this app, or a zombie python process.")
+            logger.error(f"Please close the conflicting application and restart.")
+            return False
+    return True
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host=settings.API_HOST, port=settings.API_PORT, reload=True)
+    # 1. Diagnostic check for port availability
+    if not check_port(settings.API_HOST, settings.API_PORT):
+        # We don't exit to allow uvicorn to show its own error, but we log the warning
+        print("\n" + "!"*60)
+        print(f"CRITICAL: PORT {settings.API_PORT} IS ALREADY IN USE.")
+        print("Please close Edge or other processes using this port.")
+        print("!"*60 + "\n")
+
+    # 2. Use full module path if run from project root, otherwise local
+    module = "backend.main:app" if os.path.exists("backend/main.py") else "main:app"
+    uvicorn.run(module, host=settings.API_HOST, port=settings.API_PORT, reload=True)

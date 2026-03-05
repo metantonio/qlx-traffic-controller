@@ -391,3 +391,25 @@
 2026-03-05 15:56:49 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
 2026-03-05 15:56:49 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
 2026-03-05 15:58:01 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 16:01:29 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 16:02:20 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 16:04:51 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 16:06:48 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 16:08:03 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"kernel_agent","task":"que archivos hay?\n","allowed_tools":["shell_execute","filesystem_read"],"provider":"ollama","model":"maternion/LightOnOCR-2:1b"}
+2026-03-05 16:08:03 [INFO] AgentOS.Kernel.Scheduler: Process b1348e9c (kernel_agent) queued at MEDIUM priority.
+2026-03-05 16:08:41 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 16:08:49 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"kernel_agent","task":"qué archivos hay?\n","allowed_tools":["shell_execute","filesystem_read"],"provider":"ollama","model":"maternion/LightOnOCR-2:1b"}
+2026-03-05 16:08:49 [INFO] AgentOS.Kernel.Scheduler: Process 8775e419 (kernel_agent) queued at MEDIUM priority.
+2026-03-05 16:10:20 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"kernel_agent","task":"qué arhicvos hay?\n","allowed_tools":["shell_execute","filesystem_read"],"provider":"ollama","model":"maternion/LightOnOCR-2:1b"}
+2026-03-05 16:10:20 [INFO] AgentOS.Kernel.Scheduler: Process 842f03ad (kernel_agent) queued at MEDIUM priority.
+2026-03-05 16:12:32 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 17:14:13 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 17:43:54 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 17:48:27 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 17:48:45 [ERROR] AgentOS.Main: PORT CONFLICT: Port 8000 is already in use by another process.
+2026-03-05 17:48:45 [ERROR] AgentOS.Main: Common culprits: Edge browser, another instance of this app, or a zombie python process.
+2026-03-05 17:48:45 [ERROR] AgentOS.Main: Please close the conflicting application and restart.
+2026-03-05 17:50:41 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"kernel_agent","task":"que archivos hay?","allowed_tools":["shell_execute","filesystem_read","memory_access","read_file","read_text_file","read_media_file","read_multiple_files","write_file","edit_file","create_directory","list_directory","list_directory_with_sizes","directory_tree","move_file","search_files","get_file_info","list_allowed_directories","create_entities","create_relations","add_observations","delete_entities","delete_observations","read_graph","search_nodes","open_nodes","delete_relations"],"provider":"ollama","model":"maternion/LightOnOCR-2:1b"}
+2026-03-05 17:50:41 [INFO] AgentOS.Kernel.Scheduler: Process 80c58364 (kernel_agent) queued at MEDIUM priority.
+2026-03-05 17:51:38 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"kernel_agent","task":"qué archivos hay?","allowed_tools":["shell_execute","filesystem_read","memory_access","read_file","read_text_file","read_media_file","read_multiple_files","write_file","edit_file","create_directory","list_directory","list_directory_with_sizes","directory_tree","move_file","search_files","get_file_info","list_allowed_directories","create_entities","create_relations","add_observations","delete_entities","delete_observations","read_graph","search_nodes","open_nodes","delete_relations"],"provider":"ollama","model":"qwen2.5-coder:7b"}
+2026-03-05 17:51:38 [INFO] AgentOS.Kernel.Scheduler: Process c2cd502d (kernel_agent) queued at MEDIUM priority.
