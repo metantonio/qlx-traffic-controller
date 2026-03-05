@@ -364,3 +364,10 @@
 2026-03-05 15:06:38 [INFO] AgentOS.Main: Dashboard disconnected
 2026-03-05 15:06:45 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
 2026-03-05 15:06:45 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 15:08:38 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"kernel_agent","task":"que archivos hay?","allowed_tools":["shell_execute","filesystem_read","memory_access"]}
+2026-03-05 15:08:38 [INFO] AgentOS.Kernel.Scheduler: Process 7c62b17b (kernel_agent) queued at MEDIUM priority.
+2026-03-05 15:08:39 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process 7c62b17b (kernel_agent)
+2026-03-05 15:08:42 [INFO] AgentOS.Kernel.Scheduler: MCP filesystem tools: ['read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 15:08:43 [INFO] AgentOS.Kernel.Scheduler: MCP memory tools: ['create_entities', 'create_relations', 'add_observations', 'delete_entities', 'delete_observations', 'delete_relations', 'read_graph', 'search_nodes', 'open_nodes']
+2026-03-05 15:08:43 [INFO] AgentOS.Kernel.Scheduler: Process 7c62b17b running with tools: ['shell_execute', 'memory_access', 'read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories', 'create_entities', 'create_relations', 'add_observations', 'delete_entities', 'delete_observations', 'delete_relations', 'read_graph', 'search_nodes', 'open_nodes']
+2026-03-05 15:08:51 [INFO] AgentOS.Kernel.Scheduler: Process 7c62b17b completed successfully.
