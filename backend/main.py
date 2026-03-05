@@ -72,10 +72,38 @@ async def health_check():
 async def list_processes():
     return {pid: proc.__dict__ for pid, proc in system_process_table.processes.items()}
 
+@app.get("/api/tools")
+async def list_tools():
+    """Returns a list of all available tools in the system."""
+    from backend.tools.mcp_registry import system_registry
+    from backend.tools.mcp_filesystem import get_mcp_filesystem_tools
+    
+    # Custom tools
+    custom_tools = system_registry.list_tools()
+    
+    # Add filesystem tools if available (virtual list for display)
+    fs_tools = [
+        {"name": "filesystem_read", "description": "Read and explore the file system (Managed by MCP Server)"}
+    ]
+    
+    return custom_tools + fs_tools
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     try:
+        # Bridge the Kernel Memory Bus to this specific WebSocket
+        async def bridge_to_ws(msg: MessagePayload):
+            await websocket.send_json({
+                "type": msg.event_type,
+                "source": msg.source_pid or "kernel",
+                "payload": msg.data,
+                "target": msg.target_pid,
+                "timestamp": msg.timestamp # Include real timestamp
+            })
+        
+        system_memory_bus.subscribe("*", bridge_to_ws)
+
         while True:
             data = await websocket.receive_text()
             logger.info(f"Dashboard WS message: {data}")
@@ -84,14 +112,15 @@ async def websocket_endpoint(websocket: WebSocket):
                 if msg.get("action") == "spawn":
                     agent_name = msg.get("agent_name", "test_agent")
                     task_text = msg.get("task", "Simulated WS Task")
+                    allowed_tools = msg.get("allowed_tools", ["shell_execute", "filesystem_read"])
                     
                     proc = AIProcess(
                         agent_name=agent_name,
                         task_description=task_text,
-                        limits=ResourceLimits(max_runtime_sec=60, allowed_tools=["shell_execute", "filesystem_read"])
+                        limits=ResourceLimits(max_runtime_sec=60, allowed_tools=allowed_tools)
                     )
                     await system_scheduler.submit(proc, Priority.MEDIUM)
-                    await manager.broadcast({"type": "info", "message": f"Spawned {proc.pid}: {task_text[:20]}..."})
+                    await websocket.send_json({"type": "info", "message": f"Spawned {proc.pid}: {task_text[:20]}..."})
             except Exception as e:
                 logger.error(f"Failed to process WS command: {e}")
 
