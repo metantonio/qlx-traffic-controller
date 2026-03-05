@@ -2,7 +2,6 @@ from typing import List, Dict, Callable, Any, Type
 from langchain_core.tools import StructuredTool
 from pydantic import BaseModel, Field, create_model
 import asyncio
-import nest_asyncio
 
 
 class MCPTool:
@@ -39,6 +38,7 @@ class MCPTool:
             """Sync wrapper that runs the async handler correctly inside an active asyncio loop."""
             coro = mcp_self.execute(**kwargs)
             try:
+                import nest_asyncio  # lazy import — avoids startup failure if not installed
                 nest_asyncio.apply()
                 loop = asyncio.get_event_loop()
                 return str(loop.run_until_complete(coro))
