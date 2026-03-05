@@ -5,7 +5,7 @@ python-telegram-bot
 ollama==0.6.1
 langgraph==0.5.4
 langchain==0.3.13
-langchain-core==0.3.59
+langchain-core==1.2.17
 langchain-community==0.3.13
 langchain-ollama==1.0.1
 pymupdf

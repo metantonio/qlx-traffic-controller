@@ -1,6 +1,9 @@
-from typing import List, Dict, Callable, Any
-from langchain.tools import Tool
+from typing import List, Dict, Callable, Any, Type
+from langchain_core.tools import StructuredTool
+from pydantic import BaseModel, Field, create_model
 import asyncio
+import nest_asyncio
+
 
 class MCPTool:
     """Represents a capability accessible by an Agent via the Model Context Protocol."""
@@ -12,37 +15,43 @@ class MCPTool:
         self._handler = handler
         
     async def execute(self, **kwargs) -> Any:
-        # Here we could potentially add pre-execution hooks or logging
         return await self._handler(**kwargs)
         
-    def to_langchain_tool(self) -> Tool:
-        """Converts the MCPTool to a native LangChain Tool structure."""
+    def _build_args_schema(self) -> Type[BaseModel]:
+        """
+        Dynamically build a Pydantic model from the MCP parameter spec.
+        This is what LangChain passes to bind_tools() so the model knows parameter names.
+        """
+        fields = {}
+        for param_name, param_info in self.parameters.items():
+            description = param_info.get("description", param_name)
+            fields[param_name] = (str, Field(..., description=description))
+        return create_model(f"{self.name}_schema", **fields)
         
-        # LangChain tools expect synchronous calls by default in this context
-        # We wrap the asyncio handler in a synchronous runner
-        def sync_wrapper(tool_input: str) -> str:
-            # Simple assumption: for now, shell and fs tools take a single primary param
-            first_param = list(self.parameters.keys())[0] if self.parameters else "input"
-            coro = self.execute(**{first_param: tool_input})
-            
+    def to_langchain_tool(self) -> StructuredTool:
+        """Converts the MCPTool to a StructuredTool with proper schema for bind_tools()."""
+        
+        # Capture reference to self
+        mcp_self = self
+        args_schema = self._build_args_schema()
+        
+        def sync_wrapper(**kwargs) -> str:
+            """Sync wrapper that runs the async handler correctly inside an active asyncio loop."""
+            coro = mcp_self.execute(**kwargs)
             try:
+                nest_asyncio.apply()
                 loop = asyncio.get_event_loop()
-                if loop.is_running():
-                    # Running inside an active loop (e.g. FastAPI)
-                    # For safety in nested loops, we might need nest_asyncio or running as an ainvoke task
-                    import nest_asyncio
-                    nest_asyncio.apply()
-                    return str(loop.run_until_complete(coro))
-                else:
-                    return str(asyncio.run(coro))
+                return str(loop.run_until_complete(coro))
             except Exception as e:
-                return f"Error executing tool {self.name}: {str(e)}"
+                return f"Error executing tool {mcp_self.name}: {str(e)}"
 
-        return Tool(
+        return StructuredTool.from_function(
             name=self.name,
-            description=f"{self.description} Usage params: {list(self.parameters.keys())}",
-            func=sync_wrapper
+            description=self.description,
+            func=sync_wrapper,
+            args_schema=args_schema,
         )
+
 
 class ToolRegistry:
     """Central registry of all tools available to the system."""

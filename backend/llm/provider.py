@@ -1,6 +1,7 @@
 from langchain_ollama import ChatOllama
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, ToolMessage
 from langchain_core.tools import BaseTool
+from langchain_core.tools import tool as lc_tool
 from backend.core.config import settings
 import logging
 import json
@@ -44,70 +45,55 @@ class LLMProvider:
 
     async def aexecute_agent(self, system_prompt: str, user_prompt: str, tools: list[BaseTool]) -> str:
         """
-        Manual ReAct loop using only stable langchain-core primitives.
-        Compatible with langchain-core 0.3.x + langchain-ollama.
+        Agent loop using Ollama native function calling (bind_tools).
+        Works with qwen2.5, llama3, mistral and other tool-capable models.
         """
         tool_map = {t.name: t for t in tools}
-        
-        # Build a tool schema description for the system prompt
-        tool_descriptions = "\n".join([
-            f"- {t.name}: {t.description}" for t in tools
-        ])
-        
-        full_system = (
-            f"{system_prompt}\n\n"
-            "You have access to the following tools:\n"
-            f"{tool_descriptions}\n\n"
-            "To use a tool, respond ONLY with a JSON block in this format:\n"
-            '{"tool": "<tool_name>", "input": "<argument>"}\n'
-            "After receiving the tool result, continue reasoning and provide a Final Answer.\n"
-            "When you have enough information, respond with:\n"
-            "Final Answer: <your answer here>"
-        )
+        llm_with_tools = self._client.bind_tools(tools)
         
         messages = [
-            SystemMessage(content=full_system),
+            SystemMessage(content=system_prompt),
             HumanMessage(content=user_prompt)
         ]
         
-        for iteration in range(5):  # Max 5 ReAct iterations
-            response = await self._client.ainvoke(messages)
-            content = response.content.strip()
+        for iteration in range(5):  # Max 5 tool call iterations
+            response = await llm_with_tools.ainvoke(messages)
+            messages.append(response)  # Append AIMessage with possible tool_calls
             
-            logger.debug(f"Agent iteration {iteration+1}: {content[:200]}")
+            # If the model made no tool calls, we're done
+            if not response.tool_calls:
+                logger.info(f"Agent finished after {iteration+1} iterations (no more tool calls).")
+                return response.content or "Agent completed with no text output."
             
-            # Check for Final Answer
-            if "Final Answer:" in content:
-                final = content.split("Final Answer:", 1)[-1].strip()
-                logger.info(f"Agent produced final answer after {iteration+1} iterations.")
-                return final
-            
-            # Check for a tool call (JSON block)
-            try:
-                # Try to parse a JSON tool call from the response
-                json_start = content.find("{")
-                json_end = content.rfind("}") + 1
-                if json_start != -1 and json_end > json_start:
-                    tool_call = json.loads(content[json_start:json_end])
-                    tool_name = tool_call.get("tool")
-                    tool_input = tool_call.get("input", "")
-                    
-                    if tool_name and tool_name in tool_map:
-                        logger.info(f"Agent invoking tool: {tool_name}({tool_input!r})")
-                        tool_result = tool_map[tool_name].run(tool_input)
-                        
-                        # Append assistant message + tool result to conversation
-                        messages.append(AIMessage(content=content))
-                        messages.append(HumanMessage(content=f"Tool result for {tool_name}:\n{tool_result}"))
-                        continue  # Next iteration
-            except (json.JSONDecodeError, KeyError):
-                pass
-            
-            # No tool call detected and no Final Answer — treat content as answer
-            logger.info("Agent returned answer without explicit Final Answer marker.")
-            return content
+            # Execute each requested tool call
+            for tc in response.tool_calls:
+                tool_name = tc["name"]
+                tool_args = tc["args"]
+                tool_call_id = tc["id"]
+                
+                logger.info(f"[Iteration {iteration+1}] Agent calling tool: {tool_name}({tool_args})")
+                
+                if tool_name not in tool_map:
+                    result = f"Error: tool '{tool_name}' not found in registry."
+                    logger.warning(result)
+                else:
+                    try:
+                        # Tools expect a single string arg; pass the first value
+                        first_arg = list(tool_args.values())[0] if tool_args else ""
+                        result = tool_map[tool_name].run(first_arg)
+                        logger.info(f"Tool '{tool_name}' returned: {str(result)[:200]}")
+                    except Exception as e:
+                        result = f"Tool execution error: {str(e)}"
+                        logger.error(result)
+                
+                # Append tool result back to message chain
+                messages.append(ToolMessage(
+                    content=str(result),
+                    tool_call_id=tool_call_id
+                ))
         
-        # Exhausted iterations — return last response
-        last_content = messages[-1].content if messages else "No response from agent."
-        logger.warning("Agent reached max iterations without Final Answer.")
-        return last_content
+        # Fallback: ask for a final summary after all tool results
+        logger.warning("Agent reached max iterations. Requesting final summary.")
+        messages.append(HumanMessage(content="Please summarize your findings based on the tool results above."))
+        final_response = await llm_with_tools.ainvoke(messages)
+        return final_response.content or "Agent reached iteration limit."

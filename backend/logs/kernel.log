@@ -14,3 +14,21 @@
 2026-03-05 11:48:07 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process e06bb050 (worker_638)
 2026-03-05 11:48:08 [INFO] AgentOS.Kernel.Scheduler: Process e06bb050 executing with tools: 2
 2026-03-05 11:48:11 [INFO] AgentOS.Kernel.Scheduler: Process e06bb050 completed successfully.
+2026-03-05 11:51:05 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"worker_932","task":"imprime la dirección de ruta"}
+2026-03-05 11:51:05 [INFO] AgentOS.Kernel.Scheduler: Process c90ed10b (worker_932) queued at MEDIUM priority.
+2026-03-05 11:51:05 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process c90ed10b (worker_932)
+2026-03-05 11:51:06 [INFO] AgentOS.Kernel.Scheduler: Process c90ed10b executing with tools: 2
+2026-03-05 11:51:07 [INFO] AgentOS.Kernel.Scheduler: Process c90ed10b completed successfully.
+2026-03-05 11:51:30 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"worker_784","task":"en donde está example.txt?"}
+2026-03-05 11:51:30 [INFO] AgentOS.Kernel.Scheduler: Process b1b81280 (worker_784) queued at MEDIUM priority.
+2026-03-05 11:51:30 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process b1b81280 (worker_784)
+2026-03-05 11:51:31 [INFO] AgentOS.Kernel.Scheduler: Process b1b81280 executing with tools: 2
+2026-03-05 11:51:35 [INFO] AgentOS.Kernel.Scheduler: Process b1b81280 completed successfully.
+2026-03-05 11:54:16 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 11:54:24 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 11:54:24 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 11:56:17 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"worker_979","task":"\"ejecuta el comando 'dir' y dime qué archivos hay\""}
+2026-03-05 11:56:17 [INFO] AgentOS.Kernel.Scheduler: Process fd205a8a (worker_979) queued at MEDIUM priority.
+2026-03-05 11:56:17 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process fd205a8a (worker_979)
+2026-03-05 11:56:18 [INFO] AgentOS.Kernel.Scheduler: Process fd205a8a executing with tools: 2
+2026-03-05 11:56:19 [INFO] AgentOS.Kernel.Scheduler: Process fd205a8a completed successfully.
