@@ -7,6 +7,8 @@ import ToolManager from "@/components/Kernel/ToolManager";
 import CommandMonitor, { CommandEvent } from "@/components/Monitoring/CommandMonitor";
 import AgentConversationModal, { Message } from '@/components/Kernel/AgentConversationModal';
 
+import KnowledgeGraphExplorer from "@/components/Kernel/KnowledgeGraphExplorer";
+
 // Define a basic Kernel Metrics type
 export interface ProcessData {
   pid: string;
@@ -161,14 +163,11 @@ export default function Dashboard() {
 
           <section className="bg-neutral-900/30 border border-white/5 rounded-[2rem] p-8 backdrop-blur-3xl shadow-2xl relative">
             <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-bold text-white tracking-tight">Memory Bus Explorer</h2>
-              <span className="text-[10px] font-bold py-1 px-3 rounded-full bg-neutral-800 text-neutral-400 border border-neutral-700 uppercase">Latency: 2ms</span>
+              <h2 className="text-2xl font-bold text-white tracking-tight">Knowledge Graph Explorer</h2>
+              <span className="text-[10px] font-bold py-1 px-3 rounded-full bg-neutral-800 text-neutral-400 border border-neutral-700 uppercase">Neural Persistence</span>
             </div>
-            <div className="h-64 flex flex-col items-center justify-center text-neutral-600 border border-dashed border-neutral-800 rounded-3xl bg-neutral-950/20 group hover:border-blue-500/20 transition-all">
-              <svg className="w-12 h-12 mb-4 opacity-10 group-hover:opacity-20 group-hover:text-blue-500 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              <span className="font-mono text-sm tracking-tighter opacity-40 capitalize">Awaiting high-load activity to map bus...</span>
+            <div className="h-[400px] w-full">
+              <KnowledgeGraphExplorer />
             </div>
           </section>
         </div>

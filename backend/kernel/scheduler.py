@@ -125,8 +125,18 @@ class TaskScheduler:
                     logger.info(f"MCP filesystem tools: {[t.name for t in mcp_fs_tools]}")
                 except Exception as e:
                     logger.warning(f"Could not load MCP filesystem tools: {e}")
+
+            # 3. Official MCP memory tools (create_entities, search_nodes, etc.)
+            mcp_memory_tools = []
+            if process.resource_limits.allowed_tools and "memory_access" in process.resource_limits.allowed_tools:
+                try:
+                    from backend.tools.mcp_memory import get_mcp_memory_tools
+                    mcp_memory_tools = await get_mcp_memory_tools()
+                    logger.info(f"MCP memory tools: {[t.name for t in mcp_memory_tools]}")
+                except Exception as e:
+                    logger.warning(f"Could not load MCP memory tools: {e}")
             
-            all_tools = custom_tools + mcp_fs_tools
+            all_tools = custom_tools + mcp_fs_tools + mcp_memory_tools
             
             # 3. Run agent loop
             initial_history = process.memory_context.get("initial_history")

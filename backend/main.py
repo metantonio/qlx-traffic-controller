@@ -1,6 +1,7 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
+import os
 import json
 import logging
 import asyncio
@@ -13,6 +14,7 @@ from backend.kernel.process import AIProcess, ResourceLimits, system_process_tab
 # Force tool registry load
 import backend.tools.shell
 import backend.tools.filesystem
+import backend.tools.memory
 
 logger = get_kernel_logger("AgentOS.Main")
 
@@ -113,6 +115,20 @@ async def get_process_details(pid: str):
         "metrics": proc.metrics,
         "allowed_tools": proc.resource_limits.allowed_tools
     }
+
+@app.get("/api/memory")
+async def get_knowledge_graph():
+    """Returns the current Knowledge Graph from the memory MCP server."""
+    memory_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "memory.json"))
+    if not os.path.exists(memory_path):
+        return {"entities": [], "relations": []}
+    
+    try:
+        with open(memory_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as e:
+        logger.error(f"Failed to read memory.json: {e}")
+        return {"entities": [], "relations": []}
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
