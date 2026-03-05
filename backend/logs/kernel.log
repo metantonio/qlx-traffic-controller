@@ -107,3 +107,92 @@
 2026-03-05 12:17:29 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process 062b7efc (worker_90)
 2026-03-05 12:17:30 [INFO] AgentOS.Kernel.Scheduler: Process 062b7efc executing with tools: ['shell_execute', 'filesystem_read']
 2026-03-05 12:17:31 [INFO] AgentOS.Kernel.Scheduler: Process 062b7efc completed successfully.
+2026-03-05 12:21:56 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 12:21:56 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 12:22:41 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 12:22:44 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"worker_649","task":"ejecuta el comando 'dir' y dime qué archivos hay"}
+2026-03-05 12:22:44 [INFO] AgentOS.Kernel.Scheduler: Process fdccdec1 (worker_649) queued at MEDIUM priority.
+2026-03-05 12:22:44 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process fdccdec1 (worker_649)
+2026-03-05 12:22:45 [INFO] AgentOS.Kernel.Scheduler: Process fdccdec1 executing with tools: ['shell_execute', 'filesystem_read']
+2026-03-05 12:22:54 [INFO] AgentOS.Kernel.Scheduler: Process fdccdec1 completed successfully.
+2026-03-05 12:23:12 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"worker_858","task":"ejecuta el comando 'dir' y dime qué archivos hay"}
+2026-03-05 12:23:12 [INFO] AgentOS.Kernel.Scheduler: Process 68204037 (worker_858) queued at MEDIUM priority.
+2026-03-05 12:23:12 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process 68204037 (worker_858)
+2026-03-05 12:23:13 [INFO] AgentOS.Kernel.Scheduler: Process 68204037 executing with tools: ['shell_execute', 'filesystem_read']
+2026-03-05 12:23:15 [INFO] AgentOS.Kernel.Scheduler: Process 68204037 completed successfully.
+2026-03-05 12:23:27 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"worker_408","task":"en qué directorio estoy"}
+2026-03-05 12:23:27 [INFO] AgentOS.Kernel.Scheduler: Process ede5a272 (worker_408) queued at MEDIUM priority.
+2026-03-05 12:23:27 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process ede5a272 (worker_408)
+2026-03-05 12:23:28 [INFO] AgentOS.Kernel.Scheduler: Process ede5a272 executing with tools: ['shell_execute', 'filesystem_read']
+2026-03-05 12:23:35 [INFO] AgentOS.Kernel.Scheduler: Process ede5a272 completed successfully.
+2026-03-05 12:24:23 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"worker_332","task":"List files in current directory using shell_execute tool with command 'dir /b"}
+2026-03-05 12:24:23 [INFO] AgentOS.Kernel.Scheduler: Process 6afb8c80 (worker_332) queued at MEDIUM priority.
+2026-03-05 12:24:23 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process 6afb8c80 (worker_332)
+2026-03-05 12:24:24 [INFO] AgentOS.Kernel.Scheduler: Process 6afb8c80 executing with tools: ['shell_execute', 'filesystem_read']
+2026-03-05 12:24:26 [INFO] AgentOS.Kernel.Scheduler: Process 6afb8c80 completed successfully.
+2026-03-05 12:25:48 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 12:25:48 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 12:25:51 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 12:25:57 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 12:25:57 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 12:37:20 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 12:37:20 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 12:37:38 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"worker_372","task":"List files in current directory using shell_execute tool with command 'dir /b"}
+2026-03-05 12:37:38 [INFO] AgentOS.Kernel.Scheduler: Process d19dec0f (worker_372) queued at MEDIUM priority.
+2026-03-05 12:37:39 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process d19dec0f (worker_372)
+2026-03-05 12:37:39 [INFO] AgentOS.Kernel.Scheduler: Process d19dec0f executing with tools: ['shell_execute', 'filesystem_read']
+2026-03-05 12:37:45 [INFO] AgentOS.Kernel.Scheduler: Process d19dec0f completed successfully.
+2026-03-05 12:37:56 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"worker_341","task":"List files in current directory using shell_execute tool with command dir"}
+2026-03-05 12:37:56 [INFO] AgentOS.Kernel.Scheduler: Process ca2d3edd (worker_341) queued at MEDIUM priority.
+2026-03-05 12:37:56 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process ca2d3edd (worker_341)
+2026-03-05 12:37:57 [INFO] AgentOS.Kernel.Scheduler: Process ca2d3edd executing with tools: ['shell_execute', 'filesystem_read']
+2026-03-05 12:37:59 [INFO] AgentOS.Kernel.Scheduler: Process ca2d3edd completed successfully.
+2026-03-05 12:46:57 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 12:46:57 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 12:47:35 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 12:47:35 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 12:47:48 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 12:47:55 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 12:47:55 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 12:47:57 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"worker_51","task":"List files in current directory"}
+2026-03-05 12:47:57 [INFO] AgentOS.Kernel.Scheduler: Process 283c56bc (worker_51) queued at MEDIUM priority.
+2026-03-05 12:47:57 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process 283c56bc (worker_51)
+2026-03-05 12:47:58 [INFO] AgentOS.Kernel.Scheduler: Process 283c56bc executing with tools: ['shell_execute', 'filesystem_read']
+2026-03-05 12:48:00 [INFO] AgentOS.Kernel.Scheduler: Process 283c56bc completed successfully.
+2026-03-05 12:48:11 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"worker_750","task":"List files in current directory with the command dir"}
+2026-03-05 12:48:11 [INFO] AgentOS.Kernel.Scheduler: Process 7f3f96f5 (worker_750) queued at MEDIUM priority.
+2026-03-05 12:48:12 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process 7f3f96f5 (worker_750)
+2026-03-05 12:48:12 [INFO] AgentOS.Kernel.Scheduler: Process 7f3f96f5 executing with tools: ['shell_execute', 'filesystem_read']
+2026-03-05 12:48:15 [INFO] AgentOS.Kernel.Scheduler: Process 7f3f96f5 completed successfully.
+2026-03-05 12:50:26 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 12:50:26 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 12:50:52 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 12:50:52 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 12:52:48 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 12:52:55 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 12:52:55 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 13:10:58 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 13:10:58 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 13:11:04 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"worker_288","task":"List files in current directory with the command dir"}
+2026-03-05 13:11:04 [INFO] AgentOS.Kernel.Scheduler: Process c5a5ba3e (worker_288) queued at MEDIUM priority.
+2026-03-05 13:11:04 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process c5a5ba3e (worker_288)
+2026-03-05 13:11:05 [INFO] AgentOS.Kernel.Scheduler: Process c5a5ba3e executing with tools: ['shell_execute', 'filesystem_read']
+2026-03-05 13:11:14 [INFO] AgentOS.Kernel.Scheduler: Process c5a5ba3e completed successfully.
+2026-03-05 13:22:15 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 13:22:15 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 13:23:10 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 13:23:10 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 13:23:36 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 13:23:36 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 13:31:03 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 13:31:11 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 13:31:11 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 13:35:45 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 13:35:45 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 13:36:01 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 13:36:19 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"worker_486","task":"List files in current directory with the command dir"}
+2026-03-05 13:36:19 [INFO] AgentOS.Kernel.Scheduler: Process 0ef596df (worker_486) queued at MEDIUM priority.
+2026-03-05 13:36:19 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process 0ef596df (worker_486)
+2026-03-05 13:36:22 [INFO] AgentOS.Kernel.Scheduler: MCP filesystem tools: ['read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 13:36:22 [INFO] AgentOS.Kernel.Scheduler: Process 0ef596df tools: ['shell_execute', 'read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 13:36:27 [INFO] AgentOS.Kernel.Scheduler: Process 0ef596df completed successfully.

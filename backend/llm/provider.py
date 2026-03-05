@@ -1,8 +1,10 @@
 from langchain_ollama import ChatOllama
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, ToolMessage
+from langchain_core.tools import BaseTool
 from backend.core.config import settings
 import logging
 import json
+import re
 
 logger = logging.getLogger("AgentOS.LLMProvider")
 
@@ -43,56 +45,55 @@ class LLMProvider:
 
     def _parse_text_tool_call(self, content: str, tool_names: set) -> tuple | None:
         """
-        Parse a JSON tool call from text content.
-        Returns (tool_name, args_dict) or None.
+        Parse tool calls from text in all 3 formats local LLMs produce:
+          A) JSON: {"name": "tool", "arguments": {"arg": "val"}}
+          B) JSON: {"tool": "tool", "input": "val"}
+          C) Python: tool_name("val")
+        Returns (tool_name, raw_arg_value_or_dict) or None.
         """
+        # Format A & B: JSON block
         try:
             start = content.find("{")
             end = content.rfind("}") + 1
-            if start == -1 or end <= start:
-                return None
-            
-            parsed = json.loads(content[start:end])
-            
-            # Format A: {"name": "shell_execute", "arguments": {"command": "dir"}}
-            if "name" in parsed and parsed["name"] in tool_names:
-                args = parsed.get("arguments", parsed.get("args", {}))
-                if not isinstance(args, dict):
-                    args = {"input": str(args)}
-                return (parsed["name"], args)
-            
-            # Format B: {"tool": "shell_execute", "input": "dir"}
-            if "tool" in parsed and parsed["tool"] in tool_names:
-                raw_input = parsed.get("input", "")
-                return (parsed["tool"], raw_input)  # caller resolves param name
-                
-        except (json.JSONDecodeError, KeyError, IndexError, AttributeError):
+            if start != -1 and end > start:
+                parsed = json.loads(content[start:end])
+                if "name" in parsed and parsed["name"] in tool_names:
+                    args = parsed.get("arguments", parsed.get("args", {}))
+                    return (parsed["name"], args if isinstance(args, dict) else {"input": str(args)})
+                if "tool" in parsed and parsed["tool"] in tool_names:
+                    return (parsed["tool"], parsed.get("input", ""))
+        except (json.JSONDecodeError, KeyError, IndexError):
             pass
+        
+        # Format C: Python function call
+        for tool_name in tool_names:
+            match = re.search(rf'{re.escape(tool_name)}\(["\'](.+?)["\']\)', content)
+            if match:
+                logger.info(f"Detected Python-style call: {tool_name}('{match.group(1)}')")
+                return (tool_name, match.group(1))
+        
         return None
 
-    async def aexecute_agent(self, system_prompt: str, user_prompt: str, mcp_tools: list) -> str:
+    async def aexecute_agent(self, system_prompt: str, user_prompt: str, tools: list[BaseTool]) -> str:
         """
-        Dual-mode async agent loop using MCPTool objects.
-        Calls tool.execute() directly (async) — no sync wrapper, no nested loop issues.
-        Compatible with any Ollama model that supports bind_tools OR text JSON output.
+        Unified agent loop that works with any LangChain BaseTool objects.
+        Handles native tool_calls (PATH 1) and text JSON/Python tool calls (PATH 2).
         
         Args:
-            mcp_tools: List of MCPTool instances from the system registry.
+            tools: List of BaseTool (from MCP server, StructuredTool, etc.)
         """
-        # Build two maps: LangChain tools for bind_tools (schema), MCPTool for execution
-        lc_tools = [t.to_langchain_tool() for t in mcp_tools]
-        exec_map = {t.name: t for t in mcp_tools}  # MCPTool objects
-        tool_names = set(exec_map.keys())
+        tool_map = {t.name: t for t in tools}
+        tool_names = set(tool_map.keys())
         
-        llm_with_tools = self._client.bind_tools(lc_tools) if lc_tools else self._client
+        llm_with_tools = self._client.bind_tools(tools) if tools else self._client
         
-        # Inject tool descriptions into the system message so the model KNOWS it has tools
-        tool_desc = "\n".join([f"- {t.name}: {t.description}" for t in mcp_tools])
+        # Inject tool descriptions so the model knows what's available
+        tool_desc = "\n".join([f"- {t.name}: {t.description}" for t in tools])
         full_system = (
             f"{system_prompt}\n\n"
             f"You have access to the following real system tools:\n{tool_desc}\n\n"
-            "When the task requires interacting with the system, reading files, or running commands, "
-            "USE A TOOL. Do not say you cannot do something if a tool can help."
+            "USE A TOOL when the task requires filesystem or shell interaction. "
+            "Do not say you cannot do something if a tool can help."
         )
         
         messages = [
@@ -105,7 +106,7 @@ class LLMProvider:
             messages.append(response)
             content = response.content or ""
             
-            # --- PATH 1: Native tool_calls (function calling protocol) ---
+            # --- PATH 1: Native tool_calls ---
             if response.tool_calls:
                 for tc in response.tool_calls:
                     tool_name = tc["name"]
@@ -114,52 +115,94 @@ class LLMProvider:
                     
                     logger.info(f"[Native] Iter {iteration+1}: {tool_name}({tool_args})")
                     
-                    if tool_name not in exec_map:
-                        result = f"Error: tool '{tool_name}' not found in registry."
+                    if tool_name not in tool_map:
+                        result_str = f"Error: tool '{tool_name}' not found."
                     else:
                         try:
-                            # Await the async execute directly — no sync wrapper needed
-                            result = await exec_map[tool_name].execute(**tool_args)
-                            logger.info(f"Tool '{tool_name}' result: {str(result)[:300]}")
+                            # arun() handles async properly for all BaseTool subclasses
+                            result = await tool_map[tool_name].arun(tool_args)
+                            result_str = self._format_tool_result(result)
+                            logger.info(f"Tool '{tool_name}' result: {result_str[:300]}")
                         except Exception as e:
-                            result = f"Tool error: {str(e)}"
-                            logger.error(result)
+                            result_str = f"Tool error: {str(e)}"
+                            logger.error(result_str)
                     
-                    messages.append(ToolMessage(content=str(result), tool_call_id=tool_call_id))
-                continue  # get final answer in next iteration
+                    messages.append(ToolMessage(content=result_str, tool_call_id=tool_call_id))
+                continue
             
-            # --- PATH 2: Text JSON tool call in content ---
+            # --- PATH 2: Text JSON or Python-style tool call ---
             parsed = self._parse_text_tool_call(content, tool_names)
             if parsed:
                 tool_name, raw_args = parsed
-                mcp_tool = exec_map[tool_name]
+                tool = tool_map[tool_name]
                 
-                # Resolve arg name: use the first parameter key from the tool's own spec
+                # Normalize args to dict using tool schema's first field
                 if isinstance(raw_args, dict):
                     kwargs = raw_args
                 else:
-                    first_param = list(mcp_tool.parameters.keys())[0] if mcp_tool.parameters else "input"
-                    kwargs = {first_param: str(raw_args)}
+                    schema = getattr(tool, "args_schema", None)
+                    first_field = (
+                        list(schema.model_fields.keys())[0]
+                        if schema and hasattr(schema, "model_fields") and schema.model_fields
+                        else "input"
+                    )
+                    kwargs = {first_field: str(raw_args)}
                 
-                logger.info(f"[Text JSON] Iter {iteration+1}: {tool_name}({kwargs})")
+                logger.info(f"[Text] Iter {iteration+1}: {tool_name}({kwargs})")
                 try:
-                    result = await mcp_tool.execute(**kwargs)
-                    logger.info(f"Tool '{tool_name}' result: {str(result)[:300]}")
+                    result = await tool.arun(kwargs)
+                    result_str = self._format_tool_result(result)
+                    logger.info(f"Tool '{tool_name}' result: {result_str[:300]}")
                 except Exception as e:
-                    result = f"Tool error: {str(e)}"
-                    logger.error(result)
+                    result_str = f"Tool error: {str(e)}"
+                    logger.error(result_str)
                 
-                messages.append(HumanMessage(
-                    content=f"Tool '{tool_name}' returned:\n{result}\n\nNow answer the original question using this information."
-                ))
-                continue
+                # Direct summarization — avoids qwen confusion with multi-turn HumanMessages
+                summary_prompt = (
+                    f"Task: {user_prompt}\n\n"
+                    f"The tool '{tool_name}' returned:\n---\n{result_str}\n---\n\n"
+                    "Provide a clear, helpful answer to the task based on this output."
+                )
+                logger.info("Requesting direct summary from model...")
+                summary = await self._client.ainvoke([
+                    SystemMessage(content=full_system),
+                    HumanMessage(content=summary_prompt)
+                ])
+                return summary.content or result_str
             
-            # --- PATH 3: Final answer ---
-            logger.info(f"Agent finished after {iteration + 1} iterations.")
-            return content or "Agent completed with no text output."
+            # --- PATH 3: Final answer (no tool call) ---
+            logger.info(f"Agent done after {iteration + 1} iteration(s).")
+            return content or "Agent completed with no output."
         
-        # Exhausted iterations — request final summary
-        logger.warning("Agent hit max iterations, requesting summary.")
-        messages.append(HumanMessage(content="Please summarize your findings based on the tool results above."))
+        logger.warning("Agent hit max iterations.")
+        messages.append(HumanMessage(content="Summarize your findings based on the tool results."))
         final = await self._client.ainvoke(messages)
         return final.content or "Agent reached iteration limit."
+
+    def _format_tool_result(self, result: any) -> str:
+        """
+        Helper to format complex tool results into clean strings for the model.
+        Handles:
+          - Dicts (like shell_execute results) -> returns stdout
+          - Lists of TextContent (MCP official server) -> returns joined text
+          - Base types -> returns str()
+        """
+        if isinstance(result, dict):
+            # For shell_execute: extract stdout
+            if "stdout" in result:
+                return result["stdout"]
+            return json.dumps(result, indent=2)
+            
+        if isinstance(result, list):
+            # For official MCP server results: [TextContent(text='...'), ...]
+            texts = []
+            for item in result:
+                if hasattr(item, "text"):
+                    texts.append(item.text)
+                elif isinstance(item, dict) and "text" in item:
+                    texts.append(item["text"])
+                else:
+                    texts.append(str(item))
+            return "\n".join(texts)
+            
+        return str(result)

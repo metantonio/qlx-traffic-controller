@@ -107,22 +107,36 @@ class TaskScheduler:
                 "Always prefer using a tool over guessing. After using a tool, provide a clear summary of the results."
             )
             
-            # 1. Collect MCPTool objects for this process (keep as native MCPTool, not StructuredTool)
-            bound_mcp_tools = []
-            if process.resource_limits.allowed_tools:
-                for tool_name in process.resource_limits.allowed_tools:
-                    mcp_t = system_registry.get_tool(tool_name)
-                    if mcp_t:
-                        bound_mcp_tools.append(mcp_t)
+            # 1. Custom shell/system tools from MCPTool registry → convert to StructuredTool (BaseTool)
+            custom_tools = []
+            custom_tool_names = [n for n in (process.resource_limits.allowed_tools or [])
+                                  if n != "filesystem_read"]  # filesystem delegated to MCP server
+            for tool_name in custom_tool_names:
+                mcp_t = system_registry.get_tool(tool_name)
+                if mcp_t:
+                    custom_tools.append(mcp_t.to_langchain_tool())
             
-            # 2. Run agent loop
-            if bound_mcp_tools:
-                logger.info(f"Process {process.pid} executing with tools: {[t.name for t in bound_mcp_tools]}")
+            # 2. Official MCP filesystem tools (read_file, list_directory, search_files, etc.)
+            mcp_fs_tools = []
+            if process.resource_limits.allowed_tools and "filesystem_read" in process.resource_limits.allowed_tools:
+                try:
+                    from backend.tools.mcp_filesystem import get_mcp_filesystem_tools
+                    mcp_fs_tools = await get_mcp_filesystem_tools()
+                    logger.info(f"MCP filesystem tools: {[t.name for t in mcp_fs_tools]}")
+                except Exception as e:
+                    logger.warning(f"Could not load MCP filesystem tools: {e}")
+            
+            all_tools = custom_tools + mcp_fs_tools
+            
+            # 3. Run agent loop
+            if all_tools:
+                logger.info(f"Process {process.pid} tools: {[t.name for t in all_tools]}")
                 response_text = await llm.aexecute_agent(
                     system_prompt=system_prompt,
                     user_prompt=process.task_description,
-                    mcp_tools=bound_mcp_tools  # MCPTool objects — async execute() called directly
+                    tools=all_tools  # unified BaseTool list
                 )
+
             else:
                 response_text = await llm.agenerate(
                     system_prompt=system_prompt,
