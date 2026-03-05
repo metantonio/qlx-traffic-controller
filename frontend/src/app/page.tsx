@@ -8,6 +8,7 @@ import CommandMonitor, { CommandEvent } from "@/components/Monitoring/CommandMon
 import AgentConversationModal, { Message } from '@/components/Kernel/AgentConversationModal';
 import KnowledgeGraphExplorer from "@/components/Kernel/KnowledgeGraphExplorer";
 import ModelSelector from "@/components/Kernel/ModelSelector";
+import AgentSelector from "@/components/Kernel/AgentSelector";
 
 export interface ProcessData {
   pid: string;
@@ -31,6 +32,7 @@ export default function Dashboard() {
   const [selectedPid, setSelectedPid] = useState<string | null>(null);
   const [llmProvider, setLlmProvider] = useState<string>("");
   const [llmModel, setLlmModel] = useState<string>("");
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
   const handleSpawnAgent = useCallback((manualTask?: string, parent_pid?: string, initial_history?: Message[]) => {
@@ -39,7 +41,7 @@ export default function Dashboard() {
 
     const payload = {
       action: 'spawn',
-      agent_name: 'kernel_agent',
+      agent_name: selectedAgentId || 'kernel_agent',
       task: finalTask,
       allowed_tools: enabledTools,
       parent_pid: parent_pid,
@@ -52,7 +54,7 @@ export default function Dashboard() {
       wsRef.current.send(JSON.stringify(payload));
       if (!manualTask) setTaskText('');
     }
-  }, [taskText, enabledTools, llmProvider, llmModel]);
+  }, [taskText, enabledTools, llmProvider, llmModel, selectedAgentId]);
 
   const handleContinue = useCallback((pid: string, followUp: string, history: Message[]) => {
     handleSpawnAgent(followUp, pid, history);
@@ -101,6 +103,11 @@ export default function Dashboard() {
         </div>
 
         <div className="flex flex-wrap items-center gap-4">
+          <AgentSelector
+            onSelect={(agent) => setSelectedAgentId(agent?.id || null)}
+            currentAgentId={selectedAgentId}
+          />
+          <div className="h-10 w-px bg-neutral-800 hidden md:block" />
           <ModelSelector
             onSelect={(p, m) => {
               setLlmProvider(p);

@@ -129,6 +129,24 @@ async def remove_mcp_server(server_id: str):
     mcp_manager.remove_server(server_id)
     return {"status": "success"}
 
+@app.get("/api/agents/custom")
+async def list_custom_agents():
+    from backend.kernel.agent_manager import agent_manager
+    return agent_manager.list_agents()
+
+@app.post("/api/agents/custom")
+async def add_custom_agent(data: dict):
+    from backend.kernel.agent_manager import agent_manager, CustomAgent
+    agent = CustomAgent(**data)
+    agent_manager.add_agent(agent)
+    return {"status": "success"}
+
+@app.delete("/api/agents/custom/{agent_id}")
+async def remove_custom_agent(agent_id: str):
+    from backend.kernel.agent_manager import agent_manager
+    agent_manager.remove_agent(agent_id)
+    return {"status": "success"}
+
 import ollama
 
 @app.get("/api/llm/models")
@@ -242,11 +260,29 @@ async def websocket_endpoint(websocket: WebSocket):
                     llm_provider = msg.get("provider")
                     llm_model = msg.get("model")
                     
+                    # Custom Agent resolution
+                    from backend.kernel.agent_manager import agent_manager
+                    custom_agent = agent_manager.get_agent(agent_name)
+                    
+                    resolved_tools = allowed_tools
+                    system_prompt_override = None
+
+                    if custom_agent:
+                        # Build tools list for custom agent
+                        # Custom agent tools = its static tools + all tools from its enabled MCP servers
+                        # We tag server tools as "mcp:<server_id>" to tell the scheduler to load them
+                        resolved_tools = custom_agent.static_tools + [f"mcp:{s}" for s in custom_agent.mcp_servers]
+                        system_prompt_override = custom_agent.system_prompt
+                        logger.info(f"Using Custom Agent: {custom_agent.name} with tools {resolved_tools}")
+                    
                     proc = AIProcess(
                         agent_name=agent_name,
                         task_description=task_text,
-                        limits=ResourceLimits(allowed_tools=allowed_tools)
+                        limits=ResourceLimits(allowed_tools=resolved_tools)
                     )
+                    
+                    if system_prompt_override:
+                        proc.memory_context["system_prompt"] = system_prompt_override
                     
                     if initial_history:
                         proc.memory_context["initial_history"] = initial_history

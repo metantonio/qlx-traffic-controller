@@ -102,39 +102,66 @@ class TaskScheduler:
         """Asynchronously executes the AI process using local LLM inference."""
         try:
             llm = LLMProvider() # Adheres to DEFAULT_MODEL in .env automatically
-            system_prompt = (
+            
+            default_prompt = (
                 "You are an AI Kernel Agent with access to real system tools. "
                 "Use the provided tools whenever the user task requires executing commands, reading files, or interacting with the system. "
                 "Always prefer using a tool over guessing. After using a tool, provide a clear summary of the results."
             )
+            system_prompt = process.memory_context.get("system_prompt", default_prompt)
             
             # 1. Static tools from Custom Registry (shell, etc.)
             custom_tools = []
             allowed_tool_names = process.resource_limits.allowed_tools or []
             
             static_tool_names = [n for n in allowed_tool_names 
-                                if n not in ["filesystem_read", "memory_access"]]
+                                if n not in ["filesystem_read", "memory_access"] and not n.startswith("mcp:")]
             
             for tool_name in static_tool_names:
                 mcp_t = system_registry.get_tool(tool_name)
                 if mcp_t:
                     custom_tools.append(mcp_t.to_langchain_tool())
             
-            # 2. Dynamic tools from ALL Configured MCP Servers
+            # 2. Dynamic tools from Configured MCP Servers
             dynamic_mcp_tools = []
             
-            # We check if ANY MCP server is allowed. 
-            # In the current UI, "filesystem_read" and "memory_access" are the legacy flags.
-            # For now, if either is present, we load all dynamic tools and filter.
-            if "filesystem_read" in allowed_tool_names or "memory_access" in allowed_tool_names:
+            # Collect specific MCP servers to load
+            target_mcp_servers = [n.split("mcp:")[1] for n in allowed_tool_names if n.startswith("mcp:")]
+            
+            # Support legacy tags by mapping to known server IDs
+            if "filesystem_read" in allowed_tool_names:
+                target_mcp_servers.append("filesystem")
+            if "memory_access" in allowed_tool_names:
+                target_mcp_servers.append("memory")
+
+            if target_mcp_servers:
                 try:
-                    all_dynamic = await mcp_manager.get_all_tools()
                     # Filter: if it's a legacy tool, we allow it specifically.
                     # As we move to more dynamic MCPs, we might want a more granular allowed_tools check.
-                    dynamic_mcp_tools = all_dynamic
-                    logger.info(f"Loaded {len(dynamic_mcp_tools)} dynamic MCP tools.")
+                    # For now, we fetch ALL and filter if target_mcp_servers is specified?
+                    # Actually, MCPManager should support server-specific fetching.
+                    # But for now, get_all_tools uses a multi-client. 
+                    # Let's see if we can filter by server in the client.
+                    
+                    config = mcp_manager.load_config()
+                    enabled_for_agent = {
+                        s_id: config[s_id] for s_id in target_mcp_servers if s_id in config and config[s_id].get("enabled", True)
+                    }
+                    
+                    if enabled_for_agent:
+                        from langchain_mcp_adapters.client import MultiServerMCPClient
+                        client = MultiServerMCPClient({
+                            k: {
+                                "command": v["command"],
+                                "args": v["args"],
+                                "transport": v.get("transport", "stdio"),
+                                "env": v.get("env")
+                            } for k, v in enabled_for_agent.items()
+                        })
+                        dynamic_mcp_tools = await client.get_tools()
+                        logger.info(f"Loaded {len(dynamic_mcp_tools)} tools from servers: {list(enabled_for_agent.keys())}")
                 except Exception as e:
-                    logger.warning(f"Could not load dynamic MCP tools: {e}")
+                    logger.warning(f"Could not load dynamic MCP tools for agent: {e}")
             
             all_tools = custom_tools + dynamic_mcp_tools
             
