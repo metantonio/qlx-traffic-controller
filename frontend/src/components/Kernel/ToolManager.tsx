@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { Settings, RefreshCw } from "lucide-react";
+import MCPManagerModal from "./MCPManagerModal";
 
 export interface Tool {
     name: string;
@@ -15,39 +17,42 @@ export default function ToolManager({ onToolsChange }: ToolManagerProps) {
     const [tools, setTools] = useState<Tool[]>([]);
     const [enabledTools, setEnabledTools] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(true);
+    const [isMCPModalOpen, setIsMCPModalOpen] = useState(false);
+
+    const fetchTools = useCallback(async () => {
+        setLoading(true);
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+            const response = await fetch(`${apiUrl}/api/tools`);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
+
+            if (Array.isArray(data)) {
+                setTools(data);
+                const allNames = data.map((t: Tool) => t.name);
+                setEnabledTools(new Set(allNames));
+                onToolsChange(allNames);
+            } else {
+                console.error("API returned non-array data:", data);
+                setTools([]);
+            }
+        } catch (error) {
+            console.error("Failed to fetch tools:", error);
+            const fallback = [
+                { name: "shell_execute", description: "Execute system commands" },
+                { name: "filesystem_read", description: "Read files via MCP" }
+            ];
+            setTools(fallback);
+            setEnabledTools(new Set(fallback.map(t => t.name)));
+            onToolsChange(fallback.map(t => t.name));
+        } finally {
+            setLoading(false);
+        }
+    }, [onToolsChange]);
 
     useEffect(() => {
-        const fetchTools = async () => {
-            try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-                const response = await fetch(`${apiUrl}/api/tools`);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                const data = await response.json();
-
-                if (Array.isArray(data)) {
-                    setTools(data);
-                    const allNames = data.map((t: Tool) => t.name);
-                    setEnabledTools(new Set(allNames));
-                    onToolsChange(allNames);
-                } else {
-                    console.error("API returned non-array data:", data);
-                    setTools([]);
-                }
-            } catch (error) {
-                console.error("Failed to fetch tools:", error);
-                const fallback = [
-                    { name: "shell_execute", description: "Execute system commands" },
-                    { name: "filesystem_read", description: "Read files via MCP" }
-                ];
-                setTools(fallback);
-                setEnabledTools(new Set(fallback.map(t => t.name)));
-                onToolsChange(fallback.map(t => t.name));
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchTools();
-    }, [onToolsChange]);
+    }, [fetchTools]);
 
     const toggleTool = (name: string) => {
         const newEnabled = new Set(enabledTools);
@@ -71,7 +76,23 @@ export default function ToolManager({ onToolsChange }: ToolManagerProps) {
     return (
         <div className="space-y-3">
             <div className="flex items-center justify-between text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                <span>Available Capabilities (MCP)</span>
+                <div className="flex items-center gap-2">
+                    <span>Capabilities (MCP)</span>
+                    <button
+                        onClick={() => setIsMCPModalOpen(true)}
+                        className="p-1 hover:bg-neutral-800 rounded transition-colors text-neutral-600 hover:text-blue-400"
+                        title="Manage MCP Servers"
+                    >
+                        <Settings size={12} />
+                    </button>
+                    <button
+                        onClick={() => fetchTools()}
+                        className="p-1 hover:bg-neutral-800 rounded transition-colors text-neutral-600 hover:text-blue-400"
+                        title="Refresh Tools"
+                    >
+                        <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
+                    </button>
+                </div>
                 <div className="flex gap-2">
                     <button
                         onClick={() => toggleAll(true)}
@@ -115,6 +136,12 @@ export default function ToolManager({ onToolsChange }: ToolManagerProps) {
                     </div>
                 ))}
             </div>
+
+            <MCPManagerModal
+                isOpen={isMCPModalOpen}
+                onClose={() => setIsMCPModalOpen(false)}
+                onChanged={() => fetchTools()}
+            />
         </div>
     );
 }

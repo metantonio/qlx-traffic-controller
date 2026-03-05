@@ -69,42 +69,65 @@ async def list_processes():
 @app.get("/api/tools")
 async def list_tools():
     from backend.tools.mcp_registry import system_registry
-    from backend.tools.mcp_filesystem import get_mcp_filesystem_tools
-    from backend.tools.mcp_memory import get_mcp_memory_tools
+    from backend.tools.mcp_manager import mcp_manager
     
     # 1. Static tools from registry (these are dicts)
     static_tools = system_registry.list_tools()
     
-    # 2. Dynamic tools from MCP servers (these are BaseTool objects)
-    fs_tools = await get_mcp_filesystem_tools()
-    mem_tools = await get_mcp_memory_tools()
+    # 2. Dynamic tools from all configured MCP servers
+    dynamic_tools = await mcp_manager.get_all_tools()
     
-    custom_tools = []
+    results = []
     
     # Add static tools
     for tool in static_tools:
-        custom_tools.append({
+        results.append({
             "name": tool["name"],
             "description": tool["description"],
             "schema": tool.get("parameters", {})
         })
         
     # Add dynamic tools
-    for tool in fs_tools + mem_tools:
+    for tool in dynamic_tools:
         schema = {}
         if hasattr(tool, "args_schema") and tool.args_schema:
             if hasattr(tool.args_schema, "model_json_schema"):
                 schema = tool.args_schema.model_json_schema()
+            elif hasattr(tool.args_schema, "schema"):
+                schema = tool.args_schema.schema()
             else:
-                schema = tool.args_schema # already a dict or fallback
-                
-        custom_tools.append({
+                schema = str(tool.args_schema)
+        
+        results.append({
             "name": tool.name,
             "description": tool.description,
             "schema": schema
         })
         
-    return custom_tools
+    return results
+
+@app.get("/api/mcp/servers")
+async def list_mcp_servers():
+    from backend.tools.mcp_manager import mcp_manager
+    return mcp_manager.list_servers()
+
+@app.post("/api/mcp/servers")
+async def add_mcp_server(data: dict):
+    from backend.tools.mcp_manager import mcp_manager
+    mcp_manager.add_server(
+        id=data["id"],
+        name=data["name"],
+        command=data["command"],
+        args=data["args"],
+        env=data.get("env")
+    )
+    return {"status": "success"}
+
+@app.delete("/api/mcp/servers/{server_id}")
+async def remove_mcp_server(server_id: str):
+    from backend.tools.mcp_manager import mcp_manager
+    mcp_manager.remove_server(server_id)
+    return {"status": "success"}
 
 import ollama
 
@@ -139,13 +162,13 @@ async def list_llm_models():
         {
             "provider": "anthropic",
             "name": "Anthropic Claude",
-            "models": ["claude-3-5-sonnet-20240620", "claude-3-opus-20240229", "claude-3-haiku-20240307"],
+            "models": ["claude-4-6-sonnet-20260220", "claude-3-5-sonnet-20240620", "claude-3-opus-20240229", "claude-3-haiku-20240307"],
             "configured": bool(settings.ANTHROPIC_API_KEY)
         },
         {
             "provider": "google",
             "name": "Google Gemini",
-            "models": ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-3.1-pro-preview", "gemini-2.5-flash"],
+            "models": ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-3.1-pro", "gemini-2.5-flash"],
             "configured": bool(settings.GOOGLE_API_KEY)
         }
     ]

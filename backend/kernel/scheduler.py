@@ -7,6 +7,7 @@ from backend.kernel.process import AIProcess, ProcessState, system_process_table
 from backend.kernel.memory_bus import system_memory_bus, MessagePayload
 from backend.llm.provider import LLMProvider
 from backend.tools.mcp_registry import system_registry
+from backend.tools.mcp_manager import mcp_manager
 
 logger = get_kernel_logger("AgentOS.Kernel.Scheduler")
 
@@ -107,36 +108,35 @@ class TaskScheduler:
                 "Always prefer using a tool over guessing. After using a tool, provide a clear summary of the results."
             )
             
-            # 1. Custom shell/system tools from MCPTool registry → convert to StructuredTool (BaseTool)
+            # 1. Static tools from Custom Registry (shell, etc.)
             custom_tools = []
-            custom_tool_names = [n for n in (process.resource_limits.allowed_tools or [])
-                                  if n != "filesystem_read"]  # filesystem delegated to MCP server
-            for tool_name in custom_tool_names:
+            allowed_tool_names = process.resource_limits.allowed_tools or []
+            
+            static_tool_names = [n for n in allowed_tool_names 
+                                if n not in ["filesystem_read", "memory_access"]]
+            
+            for tool_name in static_tool_names:
                 mcp_t = system_registry.get_tool(tool_name)
                 if mcp_t:
                     custom_tools.append(mcp_t.to_langchain_tool())
             
-            # 2. Official MCP filesystem tools (read_file, list_directory, search_files, etc.)
-            mcp_fs_tools = []
-            if process.resource_limits.allowed_tools and "filesystem_read" in process.resource_limits.allowed_tools:
-                try:
-                    from backend.tools.mcp_filesystem import get_mcp_filesystem_tools
-                    mcp_fs_tools = await get_mcp_filesystem_tools()
-                    logger.info(f"MCP filesystem tools: {[t.name for t in mcp_fs_tools]}")
-                except Exception as e:
-                    logger.warning(f"Could not load MCP filesystem tools: {e}")
-
-            # 3. Official MCP memory tools (create_entities, search_nodes, etc.)
-            mcp_memory_tools = []
-            if process.resource_limits.allowed_tools and "memory_access" in process.resource_limits.allowed_tools:
-                try:
-                    from backend.tools.mcp_memory import get_mcp_memory_tools
-                    mcp_memory_tools = await get_mcp_memory_tools()
-                    logger.info(f"MCP memory tools: {[t.name for t in mcp_memory_tools]}")
-                except Exception as e:
-                    logger.warning(f"Could not load MCP memory tools: {e}")
+            # 2. Dynamic tools from ALL Configured MCP Servers
+            dynamic_mcp_tools = []
             
-            all_tools = custom_tools + mcp_fs_tools + mcp_memory_tools
+            # We check if ANY MCP server is allowed. 
+            # In the current UI, "filesystem_read" and "memory_access" are the legacy flags.
+            # For now, if either is present, we load all dynamic tools and filter.
+            if "filesystem_read" in allowed_tool_names or "memory_access" in allowed_tool_names:
+                try:
+                    all_dynamic = await mcp_manager.get_all_tools()
+                    # Filter: if it's a legacy tool, we allow it specifically.
+                    # As we move to more dynamic MCPs, we might want a more granular allowed_tools check.
+                    dynamic_mcp_tools = all_dynamic
+                    logger.info(f"Loaded {len(dynamic_mcp_tools)} dynamic MCP tools.")
+                except Exception as e:
+                    logger.warning(f"Could not load dynamic MCP tools: {e}")
+            
+            all_tools = custom_tools + dynamic_mcp_tools
             
             provider_override = process.memory_context.get("llm_provider")
             model_override = process.memory_context.get("llm_model")

@@ -1,0 +1,24 @@
+{
+    "filesystem": {
+        "name": "Filesystem",
+        "command": "npx",
+        "args": [
+            "-y",
+            "@modelcontextprotocol/server-filesystem",
+            "c:\\Repositorios\\qlx-traffic-controller\\workspace",
+            "c:\\Repositorios\\qlx-traffic-controller"
+        ],
+        "transport": "stdio",
+        "enabled": true
+    },
+    "memory": {
+        "name": "Sequential Memory",
+        "command": "npx",
+        "args": [
+            "-y",
+            "@modelcontextprotocol/server-memory"
+        ],
+        "transport": "stdio",
+        "enabled": true
+    }
+}
