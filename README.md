@@ -48,10 +48,22 @@ cp .env.example .env
 *(Optionally edit the `.env` file to customize your LLM model or Telegram Token).*
 
 ### Starting the Server
-Start the FastAPI server via Uvicorn:
-```bash
-uvicorn main:app --reload
+Because the code uses `backend.` absolute imports, you must run the server **from the root repository directory** (one level above `backend`).
+
+#### **On Windows (PowerShell):**
+```powershell
+cd ..  # Make sure you are in the root directory qlx-traffic-controller
+$env:PYTHONPATH=(Get-Location).Path
+python backend\main.py
 ```
+
+#### **On macOS / Linux (Bash):**
+```bash
+cd ..  # Make sure you are in the root directory qlx-traffic-controller
+export PYTHONPATH=$(pwd)
+python backend/main.py
+```
+
 The backend API and WebSocket server will now be listening on `http://127.0.0.1:8000`.
 
 ---
@@ -90,9 +102,10 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to view th
 Once both servers are running:
 1. The frontend Dashboard connects automatically to `ws://127.0.0.1:8000/ws`.
 2. You can use the backend mockup to trigger a test simulation of processes and tool usage capabilities:
-   ```bash
-   # From the backend directory with venv activated:
-   python example_workflow.py
+   ```powershell
+   # From the root directory with venv activated:
+   $env:PYTHONPATH=(Get-Location).Path
+   python backend\example_workflow.py
    ```
 3. Watch the Next.js Dashboard live-update as agent `PID`s spawn, shift priorities, and handle tool quotas securely!
 
