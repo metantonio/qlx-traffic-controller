@@ -21,7 +21,7 @@ It is highly recommended to run the backend inside a Python virtual environment 
 #### **On Windows:**
 Open your terminal and run:
 ```bash
-cd ../backend  # Assuming you are in the frontend folder, navigate to backend
+cd ./backend  # Assuming you are in the frontend folder, navigate to backend
 python -m venv venv
 venv\Scripts\activate
 ```
@@ -29,7 +29,7 @@ venv\Scripts\activate
 #### **On macOS / Linux:**
 Open your terminal and run:
 ```bash
-cd ../backend
+cd ./backend
 python3 -m venv venv
 source venv/bin/activate
 ```
