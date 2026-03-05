@@ -209,3 +209,29 @@
 2026-03-05 13:45:38 [INFO] AgentOS.Main: Dashboard disconnected
 2026-03-05 13:45:40 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
 2026-03-05 13:45:40 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 13:51:32 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"worker_132","task":"qué archivos hay disponibles?","allowed_tools":["filesystem_read","shell_execute"]}
+2026-03-05 13:51:32 [INFO] AgentOS.Kernel.Scheduler: Process 528add27 (worker_132) queued at MEDIUM priority.
+2026-03-05 13:51:33 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process 528add27 (worker_132)
+2026-03-05 13:51:36 [INFO] AgentOS.Kernel.Scheduler: MCP filesystem tools: ['read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 13:51:36 [INFO] AgentOS.Kernel.Scheduler: Process 528add27 tools: ['shell_execute', 'read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 13:51:43 [INFO] AgentOS.Kernel.Scheduler: Process 528add27 completed successfully.
+2026-03-05 13:52:01 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"worker_23","task":"qué archivos hay disponibles?","allowed_tools":["shell_execute"]}
+2026-03-05 13:52:01 [INFO] AgentOS.Kernel.Scheduler: Process 49128804 (worker_23) queued at MEDIUM priority.
+2026-03-05 13:52:01 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process 49128804 (worker_23)
+2026-03-05 13:52:04 [INFO] AgentOS.Kernel.Scheduler: MCP filesystem tools: ['read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 13:52:04 [INFO] AgentOS.Kernel.Scheduler: Process 49128804 tools: ['shell_execute', 'read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 13:52:10 [INFO] AgentOS.Kernel.Scheduler: Process 49128804 completed successfully.
+2026-03-05 13:52:47 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"worker_239","task":"qué archivos hay disponibles?","allowed_tools":[]}
+2026-03-05 13:52:47 [INFO] AgentOS.Kernel.Scheduler: Process 8c22e5b6 (worker_239) queued at MEDIUM priority.
+2026-03-05 13:52:47 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process 8c22e5b6 (worker_239)
+2026-03-05 13:52:50 [INFO] AgentOS.Kernel.Scheduler: MCP filesystem tools: ['read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 13:52:50 [INFO] AgentOS.Kernel.Scheduler: Process 8c22e5b6 tools: ['shell_execute', 'read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 13:52:55 [INFO] AgentOS.Kernel.Scheduler: Process 8c22e5b6 completed successfully.
+2026-03-05 13:57:03 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 13:57:03 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 13:57:39 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 13:57:39 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 13:57:55 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 13:57:55 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 13:59:30 [INFO] AgentOS.Main: Starting AI Kernel subsystems...
+2026-03-05 13:59:30 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.

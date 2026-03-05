@@ -73,7 +73,7 @@ export default function Dashboard() {
             <span className="text-xs font-bold text-blue-500 tracking-[0.2em] uppercase">System v0.1.0</span>
           </div>
           <h1 className="text-4xl font-black tracking-tight bg-gradient-to-br from-white via-neutral-200 to-neutral-500 bg-clip-text text-transparent">
-            AgentOS Kernel
+            QLX Traffic Controller
           </h1>
           <p className="text-neutral-500 text-sm mt-1 font-medium tracking-wide">Autonomous Neural-Process Orchestrator</p>
         </div>
@@ -98,8 +98,8 @@ export default function Dashboard() {
               onClick={handleSpawnAgent}
               disabled={!taskText.trim()}
               className={`mr-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 flex items-center gap-2 ${!taskText.trim()
-                  ? "bg-neutral-800 text-neutral-600 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_20px_rgba(37,99,235,0.35)]"
+                ? "bg-neutral-800 text-neutral-600 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_20px_rgba(37,99,235,0.35)]"
                 }`}
             >
               <span>Spawn</span>

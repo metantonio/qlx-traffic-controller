@@ -112,7 +112,11 @@ async def websocket_endpoint(websocket: WebSocket):
                 if msg.get("action") == "spawn":
                     agent_name = msg.get("agent_name", "test_agent")
                     task_text = msg.get("task", "Simulated WS Task")
-                    allowed_tools = msg.get("allowed_tools", ["shell_execute", "filesystem_read"])
+                    
+                    # Robust handling: only default if key is missing or None
+                    allowed_tools = msg.get("allowed_tools")
+                    if allowed_tools is None:
+                        allowed_tools = ["shell_execute", "filesystem_read"]
                     
                     proc = AIProcess(
                         agent_name=agent_name,

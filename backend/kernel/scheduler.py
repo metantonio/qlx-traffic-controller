@@ -130,17 +130,21 @@ class TaskScheduler:
             
             # 3. Run agent loop
             if all_tools:
-                logger.info(f"Process {process.pid} tools: {[t.name for t in all_tools]}")
+                logger.info(f"Process {process.pid} running with tools: {[t.name for t in all_tools]}")
                 response_text = await llm.aexecute_agent(
                     system_prompt=system_prompt,
                     user_prompt=process.task_description,
-                    tools=all_tools  # unified BaseTool list
+                    tools=all_tools,  # unified BaseTool list
+                    source_pid=process.pid # Link to this process for logs
                 )
 
             else:
-                response_text = await llm.agenerate(
+                logger.info(f"Process {process.pid} running with NO TOOLS.")
+                response_text = await llm.aexecute_agent(
                     system_prompt=system_prompt,
-                    user_prompt=process.task_description
+                    user_prompt=process.task_description,
+                    tools=[],
+                    source_pid=process.pid
                 )
             
             # Mocking token consumption based on response length for testing limits

@@ -74,27 +74,38 @@ class LLMProvider:
         
         return None
 
-    async def aexecute_agent(self, system_prompt: str, user_prompt: str, tools: list[BaseTool]) -> str:
+    async def aexecute_agent(self, system_prompt: str, user_prompt: str, tools: list[BaseTool], source_pid: str = "kernel") -> str:
         """
         Unified agent loop that works with any LangChain BaseTool objects.
         Handles native tool_calls (PATH 1) and text JSON/Python tool calls (PATH 2).
         
         Args:
             tools: List of BaseTool (from MCP server, StructuredTool, etc.)
+            source_pid: The PID of the calling process for logging/telemetry.
         """
+        from backend.kernel.memory_bus import system_memory_bus, MessagePayload
+        
         tool_map = {t.name: t for t in tools}
         tool_names = set(tool_map.keys())
         
         llm_with_tools = self._client.bind_tools(tools) if tools else self._client
         
-        # Inject tool descriptions so the model knows what's available
-        tool_desc = "\n".join([f"- {t.name}: {t.description}" for t in tools])
-        full_system = (
-            f"{system_prompt}\n\n"
-            f"You have access to the following real system tools:\n{tool_desc}\n\n"
-            "USE A TOOL when the task requires filesystem or shell interaction. "
-            "Do not say you cannot do something if a tool can help."
-        )
+        # Inject tool descriptions ONLY if tools are available
+        if tools:
+            tool_desc = "\n".join([f"- {t.name}: {t.description}" for t in tools])
+            capability_block = (
+                f"You have access to the following real system tools:\n{tool_desc}\n\n"
+                "USE A TOOL when the task requires filesystem or shell interaction. \n"
+                "Do not say you cannot do something if a tool can help."
+            )
+        else:
+            capability_block = (
+                "NO TOOLS ARE CURRENTLY AUTHORIZED for this session. \n"
+                "You must perform the task using only your internal knowledge. \n"
+                "If you need tools to complete the task, inform the user they are missing."
+            )
+            
+        full_system = f"{system_prompt}\n\n{capability_block}"
         
         messages = [
             SystemMessage(content=full_system),
@@ -113,7 +124,15 @@ class LLMProvider:
                     tool_args = tc.get("args", {})
                     tool_call_id = tc["id"]
                     
-                    logger.info(f"[Native] Iter {iteration+1}: {tool_name}({tool_args})")
+                    logger.info(f"[{source_pid}][Native] Iter {iteration+1}: {tool_name}({tool_args})")
+                    
+                    # Emit event to memory bus
+                    await system_memory_bus.publish(MessagePayload(
+                        source_pid=source_pid,
+                        target_pid="BROADCAST",
+                        event_type="tool_requested",
+                        data={"tool": tool_name, "arguments": tool_args}
+                    ))
                     
                     if tool_name not in tool_map:
                         result_str = f"Error: tool '{tool_name}' not found."
@@ -148,7 +167,16 @@ class LLMProvider:
                     )
                     kwargs = {first_field: str(raw_args)}
                 
-                logger.info(f"[Text] Iter {iteration+1}: {tool_name}({kwargs})")
+                logger.info(f"[{source_pid}][Text] Iter {iteration+1}: {tool_name}({kwargs})")
+                
+                # Emit event to memory bus
+                await system_memory_bus.publish(MessagePayload(
+                    source_pid=source_pid,
+                    target_pid="BROADCAST",
+                    event_type="tool_requested",
+                    data={"tool": tool_name, "arguments": kwargs}
+                ))
+
                 try:
                     result = await tool.arun(kwargs)
                     result_str = self._format_tool_result(result)
