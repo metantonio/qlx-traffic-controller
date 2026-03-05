@@ -4,7 +4,7 @@ class Settings(BaseSettings):
     # App Settings
     API_HOST: str = "127.0.0.1"
     API_PORT: int = 8000
-    CORS_ORIGINS: str = "*"
+    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
 
     # LLM Settings
     DEFAULT_PROVIDER: str = "ollama"
