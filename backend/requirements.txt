@@ -1,0 +1,17 @@
+fastapi
+uvicorn
+sqlalchemy
+python-telegram-bot
+ollama
+langgraph
+langchain_core
+langchain_community
+pymupdf
+pandas
+python-docx
+unstructured
+qdrant-client
+chromadb
+sentence-transformers
+pydantic
+pydantic-settings
