@@ -20,6 +20,12 @@ logger = get_kernel_logger("AgentOS.Main")
 
 app = FastAPI(title="AI Control Tower API", version="0.1.0")
 
+@app.on_event("startup")
+async def startup_event():
+    # Start the task scheduler in the background
+    asyncio.create_task(system_scheduler.start_scheduler())
+    logger.info("Background Task Scheduler initialized.")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS.split(","),
@@ -111,6 +117,13 @@ async def list_llm_models():
         response = ollama.list()
         # Newer versions of ollama-python return an object with a 'models' attribute
         ollama_models = [m.model for m in response.models]
+        
+        # Promote qwen2.5-coder:7b to default if exists
+        target = "qwen2.5-coder:7b"
+        if target in ollama_models:
+            ollama_models.remove(target)
+            ollama_models.insert(0, target)
+            
     except Exception as e:
         logger.error(f"Failed to fetch local Ollama models: {e}")
         # Fallback to defaults if Ollama is unreachable

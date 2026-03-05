@@ -56,8 +56,14 @@ export default function AgentConversationModal({ pid, onClose, onContinue }: Age
     if (loading) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="bg-neutral-900/90 border border-neutral-800 w-full max-w-4xl h-[80vh] rounded-2xl flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            onClick={onClose}
+        >
+            <div
+                className="bg-neutral-900/90 border border-neutral-800 w-full max-w-4xl h-[80vh] rounded-2xl flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200"
+                onClick={(e) => e.stopPropagation()}
+            >
 
                 {/* Header */}
                 <div className="p-4 border-b border-neutral-800 flex items-center justify-between bg-neutral-900">

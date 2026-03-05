@@ -413,3 +413,55 @@
 2026-03-05 17:50:41 [INFO] AgentOS.Kernel.Scheduler: Process 80c58364 (kernel_agent) queued at MEDIUM priority.
 2026-03-05 17:51:38 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"kernel_agent","task":"qué archivos hay?","allowed_tools":["shell_execute","filesystem_read","memory_access","read_file","read_text_file","read_media_file","read_multiple_files","write_file","edit_file","create_directory","list_directory","list_directory_with_sizes","directory_tree","move_file","search_files","get_file_info","list_allowed_directories","create_entities","create_relations","add_observations","delete_entities","delete_observations","read_graph","search_nodes","open_nodes","delete_relations"],"provider":"ollama","model":"qwen2.5-coder:7b"}
 2026-03-05 17:51:38 [INFO] AgentOS.Kernel.Scheduler: Process c2cd502d (kernel_agent) queued at MEDIUM priority.
+2026-03-05 17:52:47 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"kernel_agent","task":"qué archivos hay?","allowed_tools":["shell_execute","filesystem_read","memory_access","read_file","read_text_file","read_media_file","read_multiple_files","write_file","edit_file","create_directory","list_directory","list_directory_with_sizes","directory_tree","move_file","search_files","get_file_info","list_allowed_directories","create_entities","create_relations","add_observations","delete_entities","delete_observations","delete_relations","read_graph","search_nodes","open_nodes"],"provider":"ollama","model":"maternion/LightOnOCR-2:1b"}
+2026-03-05 17:52:48 [INFO] AgentOS.Kernel.Scheduler: Process 6bf62b65 (kernel_agent) queued at MEDIUM priority.
+2026-03-05 17:53:39 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"kernel_agent","task":"qué archivos hay?","allowed_tools":["shell_execute","filesystem_read","memory_access","read_file","read_text_file","read_media_file","read_multiple_files","write_file","edit_file","create_directory","list_directory","list_directory_with_sizes","directory_tree","move_file","search_files","get_file_info","list_allowed_directories","create_entities","create_relations","add_observations","delete_entities","delete_observations","delete_relations","read_graph","search_nodes","open_nodes"],"provider":"ollama","model":"qwen2.5-coder:7b"}
+2026-03-05 17:53:39 [INFO] AgentOS.Kernel.Scheduler: Process 5b221c66 (kernel_agent) queued at MEDIUM priority.
+2026-03-05 17:54:12 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 17:55:24 [INFO] AgentOS.Main: Background Task Scheduler initialized.
+2026-03-05 17:55:24 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 17:55:46 [INFO] AgentOS.Main: Background Task Scheduler initialized.
+2026-03-05 17:55:46 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 17:57:12 [INFO] AgentOS.Main: Dashboard WS message: {"action": "spawn", "agent_name": "test_verification_agent", "task": "Dime qu\u00e9 hora es y lista los archivos en el directorio actual.", "allowed_tools": ["shell_execute", "filesystem_read"], "provider": "ollama", "model": "qwen2.5-coder:7b"}
+2026-03-05 17:57:12 [INFO] AgentOS.Kernel.Scheduler: Process 61152b21 (test_verification_agent) queued at MEDIUM priority.
+2026-03-05 17:57:12 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process 61152b21 (test_verification_agent)
+2026-03-05 17:57:14 [INFO] AgentOS.Kernel.Scheduler: MCP filesystem tools: ['read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 17:57:15 [INFO] AgentOS.Kernel.Scheduler: Process 61152b21 running with tools: ['shell_execute', 'read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 17:57:35 [INFO] AgentOS.Kernel.Scheduler: Process 61152b21 completed successfully.
+2026-03-05 17:57:35 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 17:58:12 [ERROR] AgentOS.Main: PORT CONFLICT: Port 8000 is already in use by another process.
+2026-03-05 17:58:12 [ERROR] AgentOS.Main: Common culprits: Edge browser, another instance of this app, or a zombie python process.
+2026-03-05 17:58:12 [ERROR] AgentOS.Main: Please close the conflicting application and restart.
+2026-03-05 17:58:20 [INFO] AgentOS.Main: Background Task Scheduler initialized.
+2026-03-05 17:58:20 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 17:59:05 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 17:59:14 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"kernel_agent","task":"que archivos hay?","allowed_tools":["shell_execute","filesystem_read","memory_access","read_file","read_text_file","read_media_file","read_multiple_files","write_file","edit_file","create_directory","list_directory","list_directory_with_sizes","directory_tree","move_file","search_files","get_file_info","list_allowed_directories","create_entities","create_relations","add_observations","delete_entities","delete_observations","delete_relations","read_graph","search_nodes","open_nodes"],"provider":"ollama","model":"maternion/LightOnOCR-2:1b"}
+2026-03-05 17:59:14 [INFO] AgentOS.Kernel.Scheduler: Process eabbe0d2 (kernel_agent) queued at MEDIUM priority.
+2026-03-05 17:59:14 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process eabbe0d2 (kernel_agent)
+2026-03-05 17:59:15 [INFO] AgentOS.Kernel.Scheduler: MCP filesystem tools: ['read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 17:59:15 [INFO] AgentOS.Kernel.Scheduler: MCP memory tools: ['create_entities', 'create_relations', 'add_observations', 'delete_entities', 'delete_observations', 'delete_relations', 'read_graph', 'search_nodes', 'open_nodes']
+2026-03-05 17:59:15 [INFO] AgentOS.Kernel.Scheduler: Process eabbe0d2 running with tools: ['shell_execute', 'memory_access', 'read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories', 'create_entities', 'create_relations', 'add_observations', 'delete_entities', 'delete_observations', 'delete_relations', 'read_graph', 'search_nodes', 'open_nodes']
+2026-03-05 17:59:23 [INFO] AgentOS.Kernel.Scheduler: Process eabbe0d2 completed successfully.
+2026-03-05 17:59:51 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 18:03:51 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 18:04:01 [INFO] AgentOS.Main: Background Task Scheduler initialized.
+2026-03-05 18:04:01 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 18:04:01 [INFO] AgentOS.Main: Background Task Scheduler initialized.
+2026-03-05 18:04:01 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 18:04:41 [ERROR] AgentOS.Main: PORT CONFLICT: Port 8000 is already in use by another process.
+2026-03-05 18:04:41 [ERROR] AgentOS.Main: Common culprits: Edge browser, another instance of this app, or a zombie python process.
+2026-03-05 18:04:41 [ERROR] AgentOS.Main: Please close the conflicting application and restart.
+2026-03-05 18:04:48 [INFO] AgentOS.Main: Background Task Scheduler initialized.
+2026-03-05 18:04:48 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 18:07:10 [ERROR] AgentOS.Main: PORT CONFLICT: Port 8000 is already in use by another process.
+2026-03-05 18:07:10 [ERROR] AgentOS.Main: Common culprits: Edge browser, another instance of this app, or a zombie python process.
+2026-03-05 18:07:10 [ERROR] AgentOS.Main: Please close the conflicting application and restart.
+2026-03-05 18:07:40 [INFO] AgentOS.Main: Background Task Scheduler initialized.
+2026-03-05 18:07:40 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 18:08:18 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn","agent_name":"kernel_agent","task":"qué archivos hay?","allowed_tools":["shell_execute","filesystem_read","memory_access","read_file","read_text_file","read_media_file","read_multiple_files","write_file","edit_file","create_directory","list_directory","list_directory_with_sizes","directory_tree","move_file","search_files","get_file_info","list_allowed_directories","create_entities","create_relations","add_observations","delete_entities","delete_observations","delete_relations","read_graph","search_nodes","open_nodes"],"provider":"ollama","model":"qwen2.5-coder:7b"}
+2026-03-05 18:08:18 [INFO] AgentOS.Kernel.Scheduler: Process 119e1907 (kernel_agent) queued at MEDIUM priority.
+2026-03-05 18:08:18 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process 119e1907 (kernel_agent)
+2026-03-05 18:08:19 [INFO] AgentOS.Kernel.Scheduler: MCP filesystem tools: ['read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 18:08:19 [INFO] AgentOS.Kernel.Scheduler: MCP memory tools: ['create_entities', 'create_relations', 'add_observations', 'delete_entities', 'delete_observations', 'delete_relations', 'read_graph', 'search_nodes', 'open_nodes']
+2026-03-05 18:08:20 [INFO] AgentOS.Kernel.Scheduler: Process 119e1907 running with tools: ['shell_execute', 'memory_access', 'read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories', 'create_entities', 'create_relations', 'add_observations', 'delete_entities', 'delete_observations', 'delete_relations', 'read_graph', 'search_nodes', 'open_nodes']
+2026-03-05 18:08:37 [INFO] AgentOS.Kernel.Scheduler: Process 119e1907 completed successfully.
