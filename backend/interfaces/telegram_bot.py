@@ -4,7 +4,7 @@ import asyncio
 import logging
 from backend.core.orchestrator import AIControlTower
 
-logger = logging.getLogger("TrafficController.Telegram")
+logger = logging.getLogger("QLX-TC.Telegram")
 
 class TelegramInterface:
     def __init__(self, token: str, orchestrator: AIControlTower):

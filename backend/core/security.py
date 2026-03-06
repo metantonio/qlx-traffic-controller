@@ -4,7 +4,7 @@ import shlex
 from typing import List, Dict, Any, Tuple
 import logging
 
-logger = logging.getLogger("TrafficController.Security")
+logger = logging.getLogger("QLX-TC.Security")
 
 class SecurityException(Exception):
     pass

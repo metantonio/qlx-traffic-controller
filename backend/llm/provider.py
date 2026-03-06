@@ -8,7 +8,7 @@ import logging
 import json
 import re
 
-logger = logging.getLogger("AgentOS.LLMProvider")
+logger = logging.getLogger("QLX-TC.LLMProvider")
 
 
 class LLMProvider:
