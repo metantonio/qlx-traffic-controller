@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Plus, Trash2, Settings, ExternalLink } from "lucide-react";
+import { X, Plus, Trash2, Settings, ExternalLink, HelpCircle, Info, ChevronDown, ChevronUp } from "lucide-react";
 
 interface MCPServer {
     id: string;
@@ -20,7 +20,16 @@ interface MCPManagerModalProps {
 export default function MCPManagerModal({ isOpen, onClose, onChanged }: MCPManagerModalProps) {
     const [servers, setServers] = useState<MCPServer[]>([]);
     const [loading, setLoading] = useState(true);
+    const [showHelp, setShowHelp] = useState(false);
     const [newServer, setNewServer] = useState({ id: '', name: '', command: 'npx', args: '' });
+
+    const mcpExamples = [
+        { id: 'filesystem', name: 'Local Filesystem', cmd: 'npx', args: '-y @modelcontextprotocol/server-filesystem "C:\\Users\\..." ' },
+        { id: 'google-maps', name: 'Google Maps', cmd: 'npx', args: '-y @modelcontextprotocol/server-google-maps --api-key YOUR_KEY' },
+        { id: 'postgres', name: 'PostgreSQL', cmd: 'npx', args: '-y @modelcontextprotocol/server-postgres postgresql://user:pass@localhost:5432/db' },
+        { id: 'github', name: 'GitHub Search', cmd: 'npx', args: '-y @modelcontextprotocol/server-github --personal-access-token YOUR_TOKEN' },
+        { id: 'brave-search', name: 'Brave Search', cmd: 'npx', args: '-y @modelcontextprotocol/server-brave-search --api-key YOUR_KEY' }
+    ];
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -180,6 +189,40 @@ export default function MCPManagerModal({ isOpen, onClose, onChanged }: MCPManag
                             <Plus size={18} />
                             Provision MCP Server
                         </button>
+                    </div>
+
+                    {/* Help Section */}
+                    <div className="space-y-4">
+                        <button
+                            onClick={() => setShowHelp(!showHelp)}
+                            className="flex items-center gap-2 text-[10px] text-neutral-500 uppercase font-black hover:text-neutral-300 transition-colors"
+                        >
+                            <HelpCircle size={14} /> Need Help? {showHelp ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+                        </button>
+
+                        {showHelp && (
+                            <div className="p-5 bg-neutral-950/50 border border-neutral-800/50 rounded-2xl animate-in fade-in slide-in-from-top-2 duration-300">
+                                <div className="flex items-start gap-3 mb-4">
+                                    <Info className="w-4 h-4 text-blue-400 mt-0.5" />
+                                    <p className="text-[11px] text-neutral-400 leading-relaxed font-medium">
+                                        MCP servers allow AI agents to interact with external tools. Most servers run via <code className="text-blue-400">npx</code> and require specific arguments or API keys.
+                                        Click an example below to pre-fill the form.
+                                    </p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {mcpExamples.map(ex => (
+                                        <button
+                                            key={ex.id}
+                                            onClick={() => setNewServer({ id: ex.id, name: ex.name, command: ex.cmd, args: ex.args })}
+                                            className="px-3 py-2 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 rounded-xl text-[10px] text-neutral-400 font-bold transition-all text-left flex items-center justify-between group"
+                                        >
+                                            {ex.name}
+                                            <Plus size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 

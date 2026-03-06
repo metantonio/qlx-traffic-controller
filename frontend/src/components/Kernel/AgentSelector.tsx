@@ -11,6 +11,8 @@ export interface CustomAgent {
     system_prompt?: string;
     mcp_servers: string[];
     static_tools: string[];
+    provider?: string;
+    model?: string;
 }
 
 interface AgentSelectorProps {

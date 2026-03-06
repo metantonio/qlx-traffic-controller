@@ -504,3 +504,5 @@
 2026-03-05 18:48:41 [INFO] AgentOS.Main: Dashboard disconnected
 2026-03-05 18:49:01 [INFO] AgentOS.Main: Background Task Scheduler initialized.
 2026-03-05 18:49:01 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 19:02:00 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 19:03:16 [INFO] AgentOS.Main: Dashboard disconnected
