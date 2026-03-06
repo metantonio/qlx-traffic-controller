@@ -9,7 +9,9 @@ from backend.core.config import settings
 from backend.core.logger import get_kernel_logger
 from backend.kernel.scheduler import system_scheduler, Priority
 from backend.kernel.memory_bus import system_memory_bus, MessagePayload
-from backend.kernel.process import AIProcess, ResourceLimits, system_process_table
+from backend.kernel.agent_manager import CustomAgent, agent_manager
+from backend.kernel.workflow_manager import Workflow, workflow_manager
+from backend.kernel.workflow_orchestrator import workflow_orchestrator
 
 # Force tool registry load
 import backend.tools.shell
@@ -145,6 +147,20 @@ async def add_custom_agent(data: dict):
 async def remove_custom_agent(agent_id: str):
     from backend.kernel.agent_manager import agent_manager
     agent_manager.remove_agent(agent_id)
+    return {"status": "success"}
+
+@app.get("/api/workflows")
+async def list_workflows():
+    return workflow_manager.list_workflows()
+
+@app.post("/api/workflows")
+async def create_workflow(workflow: Workflow):
+    workflow_manager.add_workflow(workflow)
+    return {"status": "success"}
+
+@app.delete("/api/workflows/{id}")
+async def delete_workflow(id: str):
+    workflow_manager.remove_workflow(id)
     return {"status": "success"}
 
 import ollama
@@ -296,8 +312,16 @@ async def websocket_endpoint(websocket: WebSocket):
                     if llm_provider: proc.memory_context["llm_provider"] = llm_provider
                     if llm_model: proc.memory_context["llm_model"] = llm_model
                         
-                    await system_scheduler.submit(proc, Priority.MEDIUM)
-                    await websocket.send_json({"type": "info", "message": f"Spawned {proc.pid}: {task_text[:20]}..."})
+                    if msg.get("action") == "spawn_workflow":
+                        workflow_id = msg.get("workflow_id")
+                        variables = msg.get("variables", {})
+                        try:
+                            execution_id = await workflow_orchestrator.start_workflow(workflow_id, variables)
+                            await websocket.send_json({"type": "info", "message": f"Workflow {execution_id} started."})
+                        except Exception as e:
+                            logger.error(f"Failed to start workflow: {e}")
+                            await websocket.send_json({"type": "error", "message": str(e)})
+
             except Exception as e:
                 logger.error(f"Failed to process WS command: {e}")
 
