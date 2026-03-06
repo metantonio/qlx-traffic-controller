@@ -21,7 +21,7 @@
         "description": "Tests batch processing",
         "steps": [
             {
-                "agent_id": "kernel",
+                "agent_id": "kernel_agent",
                 "task_template": "Read the file {{file_path}} and summarize its contents. The filename is {{filename}}."
             }
         ],
