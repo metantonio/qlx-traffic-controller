@@ -203,7 +203,7 @@ async def list_llm_models():
         {
             "provider": "google",
             "name": "Google Gemini",
-            "models": ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-3.1-pro", "gemini-2.5-flash"],
+            "models": ["gemini-3.1-pro", "gemini-2.5-flash", "gemini-3-flash"],
             "configured": bool(settings.GOOGLE_API_KEY)
         }
     ]
