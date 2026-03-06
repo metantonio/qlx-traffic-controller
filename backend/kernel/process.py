@@ -36,7 +36,9 @@ class AIProcess:
             "end_time": None
         }
         self.memory_context: Dict[str, Any] = {}
-        self.history: List[Dict[str, Any]] = []  # Added for conversation persistence
+        self.workflow_id: Optional[str] = None
+        self.workflow_step: Optional[int] = None
+        self.history: List[Dict[str, Any]] = []
 
     def start(self):
         self.state = ProcessState.RUNNING
@@ -79,6 +81,8 @@ class ProcessTable:
                 agent_name=process.agent_name,
                 task_description=process.task_description,
                 state=process.state.value,
+                workflow_id=process.workflow_id,
+                workflow_step=process.workflow_step,
                 resource_limits=process.resource_limits.model_dump(),
                 tokens_used=process.metrics["tokens_used"],
                 tools_called=process.metrics["tools_called"],
@@ -157,6 +161,8 @@ class ProcessTable:
                 proc = AIProcess(db_proc.agent_name, db_proc.task_description, limits)
                 proc.pid = db_proc.pid
                 proc.state = ProcessState(db_proc.state)
+                proc.workflow_id = db_proc.workflow_id
+                proc.workflow_step = db_proc.workflow_step
                 proc.metrics = {
                     "tokens_used": db_proc.tokens_used,
                     "tools_called": db_proc.tools_called,
@@ -175,9 +181,6 @@ class ProcessTable:
                 self.processes[pid] = proc
                 return proc
         return None
-
-# Global process table mapping
-system_process_table = ProcessTable()
 
 # Global process table mapping
 system_process_table = ProcessTable()

@@ -21,6 +21,7 @@ class TaskScheduler:
     
     def __init__(self, max_concurrent: int = 3):
         self.max_concurrent = max_concurrent
+        logger.info(f"TaskScheduler init. system_process_table ID: {id(system_process_table)}")
         self.queues: Dict[Priority, asyncio.Queue] = {
             Priority.HIGH: asyncio.Queue(),
             Priority.MEDIUM: asyncio.Queue(),

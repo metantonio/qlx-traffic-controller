@@ -3,7 +3,9 @@ import os
 from logging.handlers import RotatingFileHandler
 
 # Ensure log directory exists inside backend
-LOG_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs")
+# We want this to be consistently in the backend/logs directory
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+LOG_DIR = os.path.join(BASE_DIR, "logs")
 os.makedirs(LOG_DIR, exist_ok=True)
 
 # Main physical log file

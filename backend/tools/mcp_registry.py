@@ -14,7 +14,14 @@ class MCPTool:
         self._handler = handler
         
     async def execute(self, **kwargs) -> Any:
-        return await self._handler(**kwargs)
+        print(f"DEBUG: Executing tool {self.name} with handler {self._handler}")
+        try:
+            return await self._handler(**kwargs)
+        except Exception as e:
+            import traceback
+            tb = traceback.format_exc()
+            logger.error(f"TOOL EXECUTION ERROR ({self.name}):\n{tb}")
+            return f"Error executing tool {self.name}: {str(e)}"
         
     def _build_args_schema(self) -> Type[BaseModel]:
         """
@@ -30,25 +37,12 @@ class MCPTool:
     def to_langchain_tool(self) -> StructuredTool:
         """Converts the MCPTool to a StructuredTool with proper schema for bind_tools()."""
         
-        # Capture reference to self
-        mcp_self = self
         args_schema = self._build_args_schema()
         
-        def sync_wrapper(**kwargs) -> str:
-            """Sync wrapper that runs the async handler correctly inside an active asyncio loop."""
-            coro = mcp_self.execute(**kwargs)
-            try:
-                import nest_asyncio  # lazy import — avoids startup failure if not installed
-                nest_asyncio.apply()
-                loop = asyncio.get_event_loop()
-                return str(loop.run_until_complete(coro))
-            except Exception as e:
-                return f"Error executing tool {mcp_self.name}: {str(e)}"
-
         return StructuredTool.from_function(
             name=self.name,
             description=self.description,
-            func=sync_wrapper,
+            coroutine=self.execute, # Use the async execute method
             args_schema=args_schema,
         )
 

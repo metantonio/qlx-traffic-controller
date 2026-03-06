@@ -9,6 +9,7 @@ logger = get_kernel_logger("QLX-TC.Workflow.Manager")
 class WorkflowStep(BaseModel):
     agent_id: str
     task_template: str
+    condition: Optional[str] = None
 
 class Workflow(BaseModel):
     id: str

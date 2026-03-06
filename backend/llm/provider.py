@@ -1,6 +1,5 @@
+from typing import Optional, Any
 from langchain_ollama import ChatOllama
-from langchain_anthropic import ChatAnthropic
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, ToolMessage
 from langchain_core.tools import BaseTool
 from backend.core.config import settings
@@ -8,7 +7,12 @@ import logging
 import json
 import re
 
+from contextvars import ContextVar
+
 logger = logging.getLogger("QLX-TC.LLMProvider")
+
+# Global context to track which process is calling a tool
+current_pid = ContextVar("current_pid", default="kernel")
 
 
 class LLMProvider:
@@ -28,20 +32,28 @@ class LLMProvider:
         elif self.provider == "anthropic":
             if not settings.ANTHROPIC_API_KEY:
                 raise ValueError("ANTHROPIC_API_KEY not found in settings")
-            return ChatAnthropic(
-                model=self.model, 
-                anthropic_api_key=settings.ANTHROPIC_API_KEY,
-                timeout=None,
-                stop=None
-            )
+            try:
+                from langchain_anthropic import ChatAnthropic
+                return ChatAnthropic(
+                    model=self.model, 
+                    anthropic_api_key=settings.ANTHROPIC_API_KEY,
+                    timeout=None,
+                    stop=None
+                )
+            except ImportError:
+                raise ImportError("langchain-anthropic is not installed. Please run 'pip install langchain-anthropic'")
             
         elif self.provider == "google":
             if not settings.GOOGLE_API_KEY:
                 raise ValueError("GOOGLE_API_KEY not found in settings")
-            return ChatGoogleGenerativeAI(
-                model=self.model, 
-                google_api_key=settings.GOOGLE_API_KEY
-            )
+            try:
+                from langchain_google_genai import ChatGoogleGenerativeAI
+                return ChatGoogleGenerativeAI(
+                    model=self.model, 
+                    google_api_key=settings.GOOGLE_API_KEY
+                )
+            except ImportError:
+                raise ImportError("langchain-google-genai is not installed. Please run 'pip install langchain-google-genai'")
             
         else:
             raise ValueError(f"Unknown LLM Provider {self.provider}")
@@ -64,29 +76,67 @@ class LLMProvider:
         response = await self._client.ainvoke(messages)
         return response.content
 
-    def _parse_text_tool_call(self, content: str, tool_names: set) -> tuple | None:
+    def _parse_text_tool_calls(self, content: str, tool_names: set) -> list[tuple]:
         """
-        Parse tool calls from text in all 3 formats local LLMs produce.
+        Parse all tool calls from text. Handles multiple JSON blocks (objects or lists).
         """
-        try:
-            start = content.find("{")
-            end = content.rfind("}") + 1
-            if start != -1 and end > start:
-                parsed = json.loads(content[start:end])
-                if "name" in parsed and parsed["name"] in tool_names:
-                    args = parsed.get("arguments", parsed.get("args", {}))
-                    return (parsed["name"], args if isinstance(args, dict) else {"input": str(args)})
-                if "tool" in parsed and parsed["tool"] in tool_names:
-                    return (parsed["tool"], parsed.get("input", ""))
-        except (json.JSONDecodeError, KeyError, IndexError):
-            pass
+        calls = []
         
-        for tool_name in tool_names:
-            match = re.search(rf'{re.escape(tool_name)}\(["\'](.+?)["\']\)', content)
-            if match:
-                logger.info(f"Detected Python-style call: {tool_name}('{match.group(1)}')")
-                return (tool_name, match.group(1))
+        # 1. Extract JSON blocks
+        # We look for both { (objects) and [ (lists)
+        for match in re.finditer(r'\{|\[', content):
+            start = match.start()
+            for end in range(len(content), start + 1, -1):
+                char = content[end-1]
+                if char not in ('}', ']'):
+                    continue
+                
+                try:
+                    candidate = content[start:end]
+                    # Clean comments
+                    candidate_clean = re.sub(r'//.*$', '', candidate, flags=re.MULTILINE)
+                    
+                    parsed = json.loads(candidate_clean)
+                    
+                    # Handle single object
+                    if isinstance(parsed, dict):
+                        call = self._extract_call_from_dict(parsed, tool_names)
+                        if call:
+                            calls.append(call)
+                            break # Found valid block starting here
+                            
+                    # Handle list of objects
+                    elif isinstance(parsed, list):
+                        found_in_list = False
+                        for item in parsed:
+                            if isinstance(item, dict):
+                                call = self._extract_call_from_dict(item, tool_names)
+                                if call:
+                                    calls.append(call)
+                                    found_in_list = True
+                        if found_in_list:
+                            break
+                            
+                except (json.JSONDecodeError, ValueError):
+                    continue
         
+        # 2. Fallback for Python-style calls if no JSON found
+        if not calls:
+            for tool_name in tool_names:
+                for match in re.finditer(rf'{re.escape(tool_name)}\(["\'](.+?)["\']\)', content):
+                    calls.append((tool_name, match.group(1)))
+        
+        return calls
+
+    def _extract_call_from_dict(self, d: dict, tool_names: set) -> Optional[tuple]:
+        """Helper to extract (name, args) from a suspected tool call dict."""
+        # OpenAI/Standard format
+        if "name" in d and d["name"] in tool_names:
+            args = d.get("arguments", d.get("args", {}))
+            return (d["name"], args if isinstance(args, dict) else {"input": str(args)})
+        # Alternative format
+        elif "tool" in d and d["tool"] in tool_names:
+            return (d["tool"], d.get("input", {}))
         return None
 
     async def aexecute_agent(
@@ -183,38 +233,47 @@ class LLMProvider:
                     if tool_name not in tool_map:
                         result_str = f"Error: tool '{tool_name}' not found."
                     else:
+                        token = current_pid.set(source_pid)
                         try:
                             result = await tool_map[tool_name].arun(tool_args)
                             result_str = self._format_tool_result(result)
                         except Exception as e:
                             result_str = f"Tool error: {str(e)}"
+                        finally:
+                            current_pid.reset(token)
                     
                     messages.append(ToolMessage(content=result_str, tool_call_id=tool_call_id))
                 continue
             
             # Text based fallback for Ollama
             if self.provider == "ollama":
-                parsed = self._parse_text_tool_call(content, tool_names)
-                if parsed:
-                    tool_name, raw_args = parsed
-                    tool = tool_map[tool_name]
-                    kwargs = raw_args if isinstance(raw_args, dict) else {"input": str(raw_args)}
-                    
-                    logger.info(f"[{source_pid}][Text] Iter {iteration+1}: {tool_name}({kwargs})")
-                    await system_memory_bus.publish(MessagePayload(
-                        source_pid=source_pid, target_pid="BROADCAST",
-                        event_type="tool_requested", data={"tool": tool_name, "arguments": kwargs}
-                    ))
+                parsed_calls = self._parse_text_tool_calls(content, tool_names)
+                if parsed_calls:
+                    for tool_name, tool_args in parsed_calls:
+                        tool = tool_map[tool_name]
+                        kwargs = tool_args if isinstance(tool_args, dict) else {"input": str(tool_args)}
+                        
+                        logger.info(f"[{source_pid}][Text-Fallback] Iter {iteration+1}: {tool_name}({kwargs})")
+                        await system_memory_bus.publish(MessagePayload(
+                            source_pid=source_pid, target_pid="BROADCAST",
+                            event_type="tool_requested", data={"tool": tool_name, "arguments": kwargs}
+                        ))
 
-                    try:
-                        result = await tool.arun(kwargs)
-                        result_str = self._format_tool_result(result)
-                    except Exception as e:
-                        result_str = f"Tool error: {str(e)}"
-                    
-                    pseudo_id = f"text_to_tool_{iteration}"
-                    messages[-1].tool_calls = [{"name": tool_name, "args": kwargs, "id": pseudo_id}]
-                    messages.append(ToolMessage(content=result_str, tool_call_id=pseudo_id))
+                        try:
+                            token = current_pid.set(source_pid)
+                            result = await tool.arun(kwargs)
+                            result_str = self._format_tool_result(result)
+                        except Exception as e:
+                            result_str = f"Tool error: {str(e)}"
+                        finally:
+                            current_pid.reset(token)
+                        
+                        pseudo_id = f"text_to_tool_{iteration}_{tool_name}"
+                        # Ensure we don't overwrite tool_calls if something else set it, but here it should be empty
+                        if not response.tool_calls:
+                            response.tool_calls = []
+                        response.tool_calls.append({"name": tool_name, "args": kwargs, "id": pseudo_id})
+                        messages.append(ToolMessage(content=result_str, tool_call_id=pseudo_id))
                     continue # Continue to let it summarize or use more tools
 
             return content or "Agent completed.", _msgs_to_dicts(messages)

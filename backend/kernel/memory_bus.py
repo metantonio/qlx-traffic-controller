@@ -3,8 +3,9 @@ import logging
 from typing import Dict, List, Callable, Any
 from pydantic import BaseModel
 import time
+from backend.core.logger import get_kernel_logger
 
-logger = logging.getLogger("QLX-TC.Kernel.MemoryBus")
+logger = get_kernel_logger("QLX-TC.Kernel.MemoryBus")
 
 class MessagePayload(BaseModel):
     source_pid: str
@@ -31,7 +32,7 @@ class MemoryBus:
         message.timestamp = time.time()
         self._message_history.append(message)
         
-        logger.info(f"BUS: [{message.event_type}] from {message.source_pid} -> {message.target_pid}")
+        logger.debug(f"BUS-PUB: [{message.event_type}] from {message.source_pid} -> {message.target_pid}")
         
         # Route to subscribers of this event type
         if message.event_type in self._subscribers:

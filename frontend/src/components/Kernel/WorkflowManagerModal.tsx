@@ -6,6 +6,7 @@ import { X, Plus, Trash2, GitBranch, Sparkles, Terminal, ChevronRight, Play } fr
 interface WorkflowStep {
     agent_id: string;
     task_template: string;
+    condition?: string;
 }
 
 interface Workflow {
@@ -113,9 +114,17 @@ export default function WorkflowManagerModal({ isOpen, onClose }: WorkflowManage
 
     const handleSave = async () => {
         if (!formData.id || !formData.name) return;
+
+        // Clean empty conditions before saving
+        const cleanedSteps = formData.steps.map(s => ({
+            ...s,
+            condition: s.condition?.trim() === '' ? undefined : s.condition
+        }));
+
         const workflow: Workflow = {
             ...formData,
-            variables: extractVariables(formData.steps)
+            steps: cleanedSteps,
+            variables: extractVariables(cleanedSteps)
         };
 
         try {
@@ -357,6 +366,31 @@ export default function WorkflowManagerModal({ isOpen, onClose }: WorkflowManage
                                 />
                             </div>
 
+                            {/* Advanced Features Help */}
+                            <div className="bg-blue-500/10 border border-blue-500/20 p-5 rounded-2xl flex gap-4 text-sm text-neutral-300">
+                                <GitBranch className="text-blue-400 shrink-0 mt-0.5" size={18} />
+                                <div>
+                                    <h4 className="font-bold text-blue-300 mb-1">Advanced Conditional Routing (Manual)</h4>
+                                    <p className="mb-3 text-xs text-neutral-400 leading-relaxed">
+                                        Pipelines can dynamically choose which agent handles a step, or skip steps entirely based on the decisions made by previous agents in the sequence.
+                                    </p>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[11px] text-neutral-400">
+                                        <div className="bg-neutral-900/50 p-3 rounded-xl border border-neutral-800">
+                                            <strong className="text-blue-300 block mb-1">1. The Router Agent</strong>
+                                            Instruct an agent to analyze data and define a variable using its tools (e.g. <i>&quot;If it&apos;s a PDF, set `next_agent` to `pdf_agent`&quot;</i>).
+                                        </div>
+                                        <div className="bg-neutral-900/50 p-3 rounded-xl border border-neutral-800">
+                                            <strong className="text-blue-300 block mb-1">2. Dynamic Assignment</strong>
+                                            Instead of selecting a specific Persona ID for the next step, type the variable name: <code className="text-blue-300 bg-blue-500/20 px-1 rounded">{"{{next_agent}}"}</code>.
+                                        </div>
+                                        <div className="bg-neutral-900/50 p-3 rounded-xl border border-neutral-800 md:col-span-2 mt-2">
+                                            <strong className="text-yellow-400 block mb-1">3. Step Conditions</strong>
+                                            Use the <b>Execute Condition</b> field to define when a step should run. If an agent previously set `file_type` to `image`, a step with condition <code className="text-yellow-400 bg-yellow-500/10 px-1 rounded">{"{{file_type}} == pdf"}</code> will be automatically skipped.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             {/* Steps Editor */}
                             <div className="space-y-6">
                                 <div className="flex items-center justify-between">
@@ -384,17 +418,37 @@ export default function WorkflowManagerModal({ isOpen, onClose }: WorkflowManage
 
                                             <div className="grid gap-4">
                                                 <div className="space-y-2">
-                                                    <label className="text-[9px] text-neutral-600 uppercase font-black ml-1">Designated Persona</label>
-                                                    <select
-                                                        className="w-full bg-neutral-900 border border-neutral-800/50 rounded-xl px-4 py-2 text-sm text-white focus:border-blue-500/50 outline-none appearance-none cursor-pointer"
+                                                    <label className="text-[9px] text-neutral-600 uppercase font-black ml-1 flex justify-between">
+                                                        <span>Designated Persona ID</span>
+                                                        <span className="text-[8px] opacity-40 lowercase">Type {"{{var}}"} for dynamic routing</span>
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        list="agent-suggestions"
+                                                        className="w-full bg-neutral-900 border border-neutral-800/50 rounded-xl px-4 py-2 text-sm text-white focus:border-blue-500/50 outline-none"
+                                                        placeholder="kernel_agent OR {{next_agent}}"
                                                         value={step.agent_id}
                                                         onChange={e => handleStepChange(index, 'agent_id', e.target.value)}
-                                                    >
+                                                    />
+                                                    <datalist id="agent-suggestions">
                                                         <option value="kernel_agent">Kernel Default</option>
                                                         {agents.map(a => (
                                                             <option key={a.id} value={a.id}>{a.name}</option>
                                                         ))}
-                                                    </select>
+                                                    </datalist>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[9px] text-neutral-600 uppercase font-black ml-1 flex justify-between">
+                                                        <span>Execute Condition (Optional)</span>
+                                                        <span className="text-[8px] opacity-40 lowercase">e.g. {"{{file_type}} == pdf"}</span>
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        className="w-full bg-neutral-900 border border-neutral-800/50 rounded-xl px-4 py-2 text-sm text-white focus:border-yellow-500/50 outline-none placeholder:text-neutral-700"
+                                                        placeholder="Leave blank to always execute..."
+                                                        value={step.condition || ''}
+                                                        onChange={e => handleStepChange(index, 'condition', e.target.value)}
+                                                    />
                                                 </div>
                                                 <div className="space-y-2">
                                                     <label className="text-[9px] text-neutral-600 uppercase font-black ml-1 flex items-center justify-between">

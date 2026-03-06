@@ -1,1 +1,15 @@
-{}
+{
+    "creator_txt_agent": {
+        "id": "creator_txt_agent",
+        "name": "TXT Document Creator",
+        "description": "Creates or appends text summaries to files. Excellent at formatting summaries.",
+        "system_prompt": null,
+        "mcp_servers": [],
+        "static_tools": [
+            "shell_execute",
+            "filesystem_append"
+        ],
+        "provider": null,
+        "model": null
+    }
+}

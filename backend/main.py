@@ -21,7 +21,7 @@ from sqlalchemy import desc
 import backend.tools.shell
 import backend.tools.filesystem
 import backend.tools.memory
-
+import backend.tools.pipeline_tools
 logger = get_kernel_logger("QLX-TC.Main")
 
 app = FastAPI(title="AI Control Tower API", version="0.1.0")

@@ -4,7 +4,9 @@ from sqlalchemy.orm import sessionmaker
 import os
 
 # Ensure data directory exists
-DB_DIR = os.path.join(os.getcwd(), "data")
+# We want this to be consistently in the backend/data directory
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DB_DIR = os.path.join(BASE_DIR, "data")
 os.makedirs(DB_DIR, exist_ok=True)
 
 SQLALCHEMY_DATABASE_URL = f"sqlite:///{os.path.join(DB_DIR, 'kernel.db')}"

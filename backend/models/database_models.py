@@ -11,6 +11,8 @@ class DbProcess(Base):
     agent_name = Column(String)
     task_description = Column(String)
     state = Column(String)
+    workflow_id = Column(String, index=True, nullable=True)
+    workflow_step = Column(Integer, nullable=True)
     
     # Resource Limits stored as JSON
     resource_limits = Column(JSON)

@@ -23,8 +23,30 @@ class WorkflowExecution:
 class WorkflowOrchestrator:
     def __init__(self):
         self.active_executions: Dict[str, WorkflowExecution] = {}
+        logger.info(f"WorkflowOrchestrator init. system_process_table ID: {id(system_process_table)}")
         # Subscribe to agent outputs to trigger next steps
         system_memory_bus.subscribe("agent_output", self._handle_step_completion)
+        system_memory_bus.subscribe("set_pipeline_variable", self._handle_set_variable)
+        
+    async def _handle_set_variable(self, msg: MessagePayload):
+        source_pid = msg.source_pid
+        logger.info(f"RECEIVED set_pipeline_variable event from {source_pid}: {msg.data}")
+        proc = system_process_table.get(source_pid)
+        if not proc:
+            logger.warning(f"Variable update received from unknown PID: {source_pid}. Active processes: {list(system_process_table.keys())}")
+            return
+
+        workflow_id = proc.workflow_id or proc.memory_context.get("workflow_id")
+        if workflow_id and workflow_id in self.active_executions:
+            execution = self.active_executions[workflow_id]
+            execution.variables[msg.data["key"]] = msg.data["value"]
+            logger.info(f"Workflow {execution.id} variable UPDATED: {msg.data['key']} = {msg.data['value']}")
+        else:
+            logger.warning(f"Process {source_pid} has no workflow_id or workflow not active. "
+                           f"PID workflow_id: {workflow_id}. "
+                           f"Memory Context: {proc.memory_context}. "
+                           f"Active Executions: {list(self.active_executions.keys())}")
+
 
     async def start_workflow(self, workflow_id: str, variables: Dict[str, str]) -> str:
         workflow = workflow_manager.get_workflow(workflow_id)
@@ -56,12 +78,34 @@ class WorkflowOrchestrator:
                 task_text = task_text.replace(placeholder, val)
                 logger.debug(f"Substituted variable {var} in step {execution.current_step_index}")
 
-        # Resolve agent
+        # Check conditions
+        if step.condition:
+            condition = step.condition
+            for var, val in execution.variables.items():
+                placeholder = f"{{{{{var}}}}}"
+                if placeholder in condition:
+                    condition = condition.replace(placeholder, val)
+            
+            # Simple evaluation (e.g., "pdf == pdf" or "true == true")
+            parts = [p.strip() for p in condition.split("==")]
+            if len(parts) == 2 and parts[0] != parts[1]:
+                logger.info(f"Condition '{condition}' evaluated to FALSE. Skipping step {execution.current_step_index}.")
+                execution.current_step_index += 1
+                await self._run_current_step(execution)
+                return
+
+        # Resolve agent dynamically
         agent_name = step.agent_id
+        for var, val in execution.variables.items():
+            placeholder = f"{{{{{var}}}}}"
+            if placeholder in agent_name:
+                agent_name = agent_name.replace(placeholder, val)
+        
         custom_agent = agent_manager.get_agent(agent_name)
+
         
         # Default tools for kernel agent or if custom agent not found
-        resolved_tools = ["shell_execute", "filesystem_read"]
+        resolved_tools = ["shell_execute", "filesystem_read", "list_available_agents", "set_pipeline_variable"]
         system_prompt_override = None
         llm_provider = None
         llm_model = None
@@ -84,6 +128,8 @@ class WorkflowOrchestrator:
             )
             
             # Pass orchestration metadata
+            proc.workflow_id = execution.id
+            proc.workflow_step = execution.current_step_index
             proc.memory_context["workflow_id"] = execution.id
             proc.memory_context["workflow_step"] = execution.current_step_index
             

@@ -1,2 +1,0 @@
-File 2 content.
-More things to analyze in batch.
