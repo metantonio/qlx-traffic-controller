@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { X, Plus, Trash2, Zap, Sparkles, Terminal, Database, MessageSquare, ChevronRight, Cpu } from "lucide-react";
+import { X, Plus, Trash2, Zap, Sparkles, Terminal, Database, MessageSquare, ChevronRight, Cpu, Info } from "lucide-react";
 
 interface MCPServer {
     id: string;
@@ -335,7 +335,20 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged }: 
 
                             {/* Standard Capabilities Selection */}
                             <div className="space-y-4">
-                                <h4 className="text-[10px] text-neutral-500 uppercase font-black ml-1 flex items-center gap-1.5"><Cpu size={10} /> Standard Capabilities</h4>
+                                <div className="flex items-center justify-between ml-1">
+                                    <h4 className="text-[10px] text-neutral-500 uppercase font-black flex items-center gap-1.5"><Cpu size={10} /> Standard Capabilities</h4>
+                                    <div className="group relative">
+                                        <Info size={12} className="text-neutral-600 cursor-help hover:text-blue-400 transition-colors" />
+                                        <div className="absolute right-0 bottom-full mb-2 w-64 p-3 bg-neutral-950 border border-neutral-800 rounded-xl text-[10px] text-neutral-400 leading-relaxed shadow-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+                                            <p className="font-bold text-blue-400 mb-1">Standard Capabilities</p>
+                                            Built-in system tools for direct interaction. These are high-performance native functions.
+                                            <br /><br />
+                                            <span className="text-neutral-200">Filesystem Read:</span> Basic access to read local files.
+                                            <br />
+                                            <span className="text-neutral-200">Memory Access:</span> Enables &quot;Sequential Memory&quot; for tracking facts across turns.
+                                        </div>
+                                    </div>
+                                </div>
                                 <div className="grid grid-cols-2 gap-3">
                                     {availableStaticTools.length > 0 ? availableStaticTools.map(t => (
                                         <div
@@ -361,7 +374,20 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged }: 
 
                             {/* MCP Bridges Selection */}
                             <div className="space-y-4">
-                                <h4 className="text-[10px] text-neutral-500 uppercase font-black ml-1 flex items-center gap-1.5"><Database size={10} /> Enabled Neural Bridges (MCP Servers)</h4>
+                                <div className="flex items-center justify-between ml-1">
+                                    <h4 className="text-[10px] text-neutral-500 uppercase font-black flex items-center gap-1.5"><Database size={10} /> Enabled Neural Bridges (MCP Servers)</h4>
+                                    <div className="group relative">
+                                        <Info size={12} className="text-neutral-600 cursor-help hover:text-purple-400 transition-colors" />
+                                        <div className="absolute right-0 bottom-full mb-2 w-64 p-3 bg-neutral-950 border border-neutral-800 rounded-xl text-[10px] text-neutral-400 leading-relaxed shadow-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+                                            <p className="font-bold text-purple-400 mb-1">Neural Bridges (MCP)</p>
+                                            Advanced connectors to external ecosystems. They provide exhaustive toolsets (Search, Write, Analyze) beyond basic reading.
+                                            <br /><br />
+                                            <span className="text-neutral-200">Filesystem (MCP):</span> Full recursive search, editing, and management.
+                                            <br />
+                                            <span className="text-neutral-200">Memory (MCP):</span> Advanced Knowledge Graph for long-term intelligence.
+                                        </div>
+                                    </div>
+                                </div>
                                 <div className="grid grid-cols-2 gap-3">
                                     {mcpServers.map(s => {
                                         const toolCount = getToolsPerServer(s.id);
