@@ -15,6 +15,28 @@ class MCPManager:
         self._cache_time = 0
         self._ttl = 300  # 5 minutes
         self._ensure_config_exists()
+        self._fix_mcp_paths()
+
+    def _fix_mcp_paths(self):
+        """Fixes the filesystem MCP paths to be absolute and cross-platform."""
+        config = self.load_config()
+        if "filesystem" in config:
+            # Get the project root directory (two levels up from this file)
+            project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+            workspace_dir = os.path.join(project_root, "workspace")
+            
+            # Ensure the workspace directory exists
+            os.makedirs(workspace_dir, exist_ok=True)
+            
+            # Update args with absolute paths
+            config["filesystem"]["args"] = [
+                "-y",
+                "@modelcontextprotocol/server-filesystem",
+                workspace_dir,
+                project_root
+            ]
+            self.save_config(config)
+            logger.info(f"Updated filesystem MCP paths: {workspace_dir}, {project_root}")
 
     def _ensure_config_exists(self):
         os.makedirs(os.path.dirname(self.config_path), exist_ok=True)

@@ -5,8 +5,8 @@
         "args": [
             "-y",
             "@modelcontextprotocol/server-filesystem",
-            "c:\\Repositorios\\qlx-traffic-controller\\workspace",
-            "c:\\Repositorios\\qlx-traffic-controller"
+            "C:\\Repositorios\\qlx-traffic-controller\\workspace",
+            "C:\\Repositorios\\qlx-traffic-controller"
         ],
         "transport": "stdio",
         "enabled": true
