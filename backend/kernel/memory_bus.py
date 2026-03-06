@@ -4,7 +4,7 @@ from typing import Dict, List, Callable, Any
 from pydantic import BaseModel
 import time
 
-logger = logging.getLogger("TrafficController.Kernel.MemoryBus")
+logger = logging.getLogger("QLX-TC.Kernel.MemoryBus")
 
 class MessagePayload(BaseModel):
     source_pid: str

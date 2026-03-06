@@ -4,7 +4,7 @@ from backend.kernel.process import AIProcess
 from backend.kernel.sandbox import AISandbox, SandboxException
 from backend.tools.mcp_registry import system_registry
 
-logger = logging.getLogger("TrafficController.Kernel.ToolRouter")
+logger = logging.getLogger("QLX-TC.Kernel.ToolRouter")
 
 class ToolExecutionRouter:
     """Routes tool execution requests, enforcing quotas and capabilities."""

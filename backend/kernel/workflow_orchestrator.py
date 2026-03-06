@@ -9,7 +9,7 @@ from backend.kernel.process import AIProcess, ResourceLimits, system_process_tab
 from backend.kernel.scheduler import system_scheduler, Priority
 from backend.kernel.memory_bus import system_memory_bus, MessagePayload
 
-logger = get_kernel_logger("AgentOS.Workflow.Orchestrator")
+logger = get_kernel_logger("QLX-TC.Workflow.Orchestrator")
 
 class WorkflowExecution:
     def __init__(self, workflow: Workflow, variables: Dict[str, str]):

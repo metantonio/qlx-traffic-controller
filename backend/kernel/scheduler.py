@@ -9,7 +9,7 @@ from backend.llm.provider import LLMProvider
 from backend.tools.mcp_registry import system_registry
 from backend.tools.mcp_manager import mcp_manager
 
-logger = get_kernel_logger("AgentOS.Kernel.Scheduler")
+logger = get_kernel_logger("QLX-TC.Kernel.Scheduler")
 
 class Priority(IntEnum):
     HIGH = 1

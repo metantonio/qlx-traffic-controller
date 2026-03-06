@@ -4,7 +4,7 @@ from typing import Dict, Any, List, Optional
 from pydantic import BaseModel
 from backend.core.logger import get_kernel_logger
 
-logger = get_kernel_logger("AgentOS.Agent.Manager")
+logger = get_kernel_logger("QLX-TC.Agent.Manager")
 
 class CustomAgent(BaseModel):
     id: str

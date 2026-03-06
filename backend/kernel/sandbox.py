@@ -4,7 +4,7 @@ from typing import Dict, Any
 from backend.kernel.process import AIProcess
 from backend.kernel.capabilities import system_enforcer
 
-logger = logging.getLogger("TrafficController.Kernel.Sandbox")
+logger = logging.getLogger("QLX-TC.Kernel.Sandbox")
 
 class SandboxException(Exception):
     pass

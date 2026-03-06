@@ -22,7 +22,7 @@ import backend.tools.shell
 import backend.tools.filesystem
 import backend.tools.memory
 
-logger = get_kernel_logger("AgentOS.Main")
+logger = get_kernel_logger("QLX-TC.Main")
 
 app = FastAPI(title="AI Control Tower API", version="0.1.0")
 

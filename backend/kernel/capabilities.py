@@ -3,7 +3,7 @@ import os
 import logging
 from typing import List, Tuple
 
-logger = logging.getLogger("TrafficController.Kernel.Capabilities")
+logger = logging.getLogger("QLX-TC.Kernel.Capabilities")
 
 class Capability:
     FILESYSTEM_READ = "filesystem.read"

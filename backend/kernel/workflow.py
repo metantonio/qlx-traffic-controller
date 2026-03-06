@@ -5,7 +5,7 @@ from backend.kernel.memory_bus import system_memory_bus, MessagePayload
 from backend.kernel.scheduler import system_scheduler, Priority
 from backend.kernel.process import AIProcess, ResourceLimits
 
-logger = logging.getLogger("TrafficController.Kernel.Workflow")
+logger = logging.getLogger("QLX-TC.Kernel.Workflow")
 
 class WorkflowPipeline:
     """Manages chaining processes together using the Memory Bus."""
