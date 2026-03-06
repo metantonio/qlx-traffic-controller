@@ -11,19 +11,5 @@
         ],
         "provider": "ollama",
         "model": "qwen2.5-coder:7b"
-    },
-    "ExcelWorker": {
-        "id": "ExcelWorker",
-        "name": "Excel Agent",
-        "description": "Agent that works with spreadsheets (csv, xlsx, xlsm)",
-        "system_prompt": "",
-        "mcp_servers": [
-            "excel"
-        ],
-        "static_tools": [
-            "filesystem_read"
-        ],
-        "provider": "ollama",
-        "model": "qwen2.5-coder:7b"
     }
 }
