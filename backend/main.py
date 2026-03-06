@@ -195,7 +195,8 @@ async def get_batch_status(job_id: str):
 
 @app.get("/api/batch")
 async def list_batch_jobs():
-    return [job for job in batch_orchestrator.active_jobs.values()]
+    return [batch_orchestrator.get_job_status(job.id) for job in batch_orchestrator.active_jobs.values() if job]
+
 
 import ollama
 

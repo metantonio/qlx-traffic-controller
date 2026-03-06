@@ -11,7 +11,8 @@ import ModelSelector from "@/components/Kernel/ModelSelector";
 import AgentSelector from "@/components/Kernel/AgentSelector";
 import WorkflowManagerModal from "@/components/Kernel/WorkflowManagerModal";
 import HistoryView from "@/components/Kernel/HistoryView";
-import { GitBranch, History, LayoutDashboard } from "lucide-react";
+import BatchManagerModal from "@/components/Kernel/BatchManagerModal";
+import { GitBranch, History, LayoutDashboard, Layers } from "lucide-react";
 
 export interface ProcessData {
   pid: string;
@@ -37,6 +38,7 @@ export default function Dashboard() {
   const [llmModel, setLlmModel] = useState<string>("");
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [isWorkflowModalOpen, setIsWorkflowModalOpen] = useState(false);
+  const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
   const [activeWorkflow, setActiveWorkflow] = useState<{
     id: string;
     name: string;
@@ -150,6 +152,14 @@ export default function Dashboard() {
           >
             <GitBranch size={16} className="text-neutral-500 group-hover:text-blue-400 transition-colors" />
             <span className="text-[10px] text-neutral-400 uppercase font-black tracking-widest">Pipelines</span>
+          </button>
+          <div className="h-10 w-px bg-neutral-800 hidden md:block" />
+          <button
+            onClick={() => setIsBatchModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-neutral-900 border border-neutral-800 rounded-2xl hover:border-purple-500/50 hover:bg-neutral-800 transition-all group"
+          >
+            <Layers size={16} className="text-neutral-500 group-hover:text-purple-400 transition-colors" />
+            <span className="text-[10px] text-neutral-400 uppercase font-black tracking-widest">Batches</span>
           </button>
           <div className="h-10 w-px bg-neutral-800 hidden md:block" />
           <button
@@ -317,6 +327,12 @@ export default function Dashboard() {
         <WorkflowManagerModal
           isOpen={isWorkflowModalOpen}
           onClose={() => setIsWorkflowModalOpen(false)}
+        />
+      )}
+      {isBatchModalOpen && (
+        <BatchManagerModal
+          isOpen={isBatchModalOpen}
+          onClose={() => setIsBatchModalOpen(false)}
         />
       )}
     </div>
