@@ -1,4 +1,4 @@
-# AI Kernel - AgentOS Dashboard and Control Tower
+# QLX Traffic Controller
 
 This repository contains the AI Command Kernel (Backend) and the Observability Dashboard (Frontend) for managing isolated, autonomous AI processes.
 
