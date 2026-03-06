@@ -22,3 +22,14 @@ pydantic-settings==2.12.0
 nest-asyncio==1.6.0
 langchain-anthropic
 langchain-google-genai
+
+# Excel Agent and Dependencies
+openpyxl>=3.1.0
+pydantic-ai==1.11.0
+pydantic-evals==1.11.0
+fastmcp==2.12.4
+openai>=1.0.0
+rich>=13.0.0
+python-dotenv>=1.0.0
+requests>=2.28.0
+slack-bolt>=1.18.0

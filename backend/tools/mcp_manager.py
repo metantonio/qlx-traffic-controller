@@ -18,25 +18,32 @@ class MCPManager:
         self._fix_mcp_paths()
 
     def _fix_mcp_paths(self):
-        """Fixes the filesystem MCP paths to be absolute and cross-platform."""
+        """Fixes MCP server paths to be absolute and cross-platform."""
         config = self.load_config()
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+        changed = False
+
         if "filesystem" in config:
-            # Get the project root directory (two levels up from this file)
-            project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
             workspace_dir = os.path.join(project_root, "workspace")
-            
-            # Ensure the workspace directory exists
             os.makedirs(workspace_dir, exist_ok=True)
+            config["filesystem"]["args"] = ["-y", "@modelcontextprotocol/server-filesystem", workspace_dir, project_root]
+            changed = True
+
+        if "excel" in config:
+            # Determine python path based on OS
+            python_exe = "python.exe" if os.name == "nt" else "python"
+            venv_path = os.path.join(project_root, "backend", "venv", "Scripts" if os.name == "nt" else "bin", python_exe)
+            excel_path = os.path.join(project_root, "backend", "servers", "sv-excel-agent")
             
-            # Update args with absolute paths
-            config["filesystem"]["args"] = [
-                "-y",
-                "@modelcontextprotocol/server-filesystem",
-                workspace_dir,
-                project_root
-            ]
+            config["excel"]["command"] = venv_path
+            if "env" not in config["excel"]:
+                config["excel"]["env"] = {}
+            config["excel"]["env"]["PYTHONPATH"] = excel_path
+            changed = True
+
+        if changed:
             self.save_config(config)
-            logger.info(f"Updated filesystem MCP paths: {workspace_dir}, {project_root}")
+            logger.info("Updated MCP server paths to be dynamic.")
 
     def _ensure_config_exists(self):
         os.makedirs(os.path.dirname(self.config_path), exist_ok=True)

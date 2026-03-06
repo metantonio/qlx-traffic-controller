@@ -20,5 +20,18 @@
         ],
         "transport": "stdio",
         "enabled": true
+    },
+    "excel": {
+        "name": "Excel Agent",
+        "command": "C:\\Repositorios\\qlx-traffic-controller\\backend\\venv\\Scripts\\python.exe",
+        "args": [
+            "-c",
+            "from excel_mcp.excel_server import mcp; mcp.run()"
+        ],
+        "env": {
+            "PYTHONPATH": "C:\\Repositorios\\qlx-traffic-controller\\backend\\servers\\sv-excel-agent"
+        },
+        "transport": "stdio",
+        "enabled": true
     }
 }

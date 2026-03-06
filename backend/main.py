@@ -8,7 +8,7 @@ import asyncio
 from backend.core.config import settings
 from backend.core.logger import get_kernel_logger
 from backend.kernel.scheduler import system_scheduler, Priority
-from backend.kernel.process import system_process_table
+from backend.kernel.process import AIProcess, ResourceLimits, system_process_table
 from backend.kernel.memory_bus import system_memory_bus, MessagePayload
 from backend.kernel.agent_manager import CustomAgent, agent_manager
 from backend.kernel.workflow_manager import Workflow, workflow_manager
@@ -386,7 +386,6 @@ async def websocket_endpoint(websocket: WebSocket):
                     llm_model = msg.get("model")
                     
                     # Custom Agent resolution
-                    from backend.kernel.agent_manager import agent_manager
                     custom_agent = agent_manager.get_agent(agent_name)
                     
                     resolved_tools = allowed_tools
