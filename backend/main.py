@@ -8,6 +8,7 @@ import asyncio
 from backend.core.config import settings
 from backend.core.logger import get_kernel_logger
 from backend.kernel.scheduler import system_scheduler, Priority
+from backend.kernel.process import system_process_table
 from backend.kernel.memory_bus import system_memory_bus, MessagePayload
 from backend.kernel.agent_manager import CustomAgent, agent_manager
 from backend.kernel.workflow_manager import Workflow, workflow_manager

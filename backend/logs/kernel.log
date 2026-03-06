@@ -579,3 +579,11 @@
 2026-03-05 19:50:22 [INFO] AgentOS.Workflow.Orchestrator: Submitting Process 360cd7fe for Workflow 6c5c4dff-c4c5-4e6e-8d7e-dc9ed3451989, Step 1
 2026-03-05 19:50:22 [INFO] AgentOS.Kernel.Scheduler: Process 360cd7fe (kernel_agent) queued at MEDIUM priority.
 2026-03-05 19:50:23 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process 360cd7fe (kernel_agent)
+2026-03-05 19:50:25 [INFO] AgentOS.Kernel.Scheduler: Loaded 14 tools from servers: ['filesystem']
+2026-03-05 19:50:25 [INFO] AgentOS.Kernel.Scheduler: Process 360cd7fe running with tools: ['shell_execute', 'read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 19:50:32 [INFO] AgentOS.Kernel.Scheduler: Process 360cd7fe completed successfully.
+2026-03-05 19:50:32 [INFO] AgentOS.Workflow.Orchestrator: Workflow 6c5c4dff-c4c5-4e6e-8d7e-dc9ed3451989 step 1 (360cd7fe) finished. Advancing...
+2026-03-05 19:50:32 [INFO] AgentOS.Workflow.Orchestrator: Workflow test (6c5c4dff-c4c5-4e6e-8d7e-dc9ed3451989) COMPLETED successfully.
+2026-03-05 19:52:16 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 19:52:29 [INFO] AgentOS.Main: Background Task Scheduler initialized.
+2026-03-05 19:52:29 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
