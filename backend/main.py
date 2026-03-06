@@ -173,6 +173,9 @@ import ollama
 async def list_llm_models():
     """Returns supported providers and common models."""
     ollama_models = []
+    ollama_configured = True
+    ollama_error = None
+    
     try:
         # Fetch local models from Ollama
         response = ollama.list()
@@ -189,13 +192,16 @@ async def list_llm_models():
         logger.error(f"Failed to fetch local Ollama models: {e}")
         # Fallback to defaults if Ollama is unreachable
         ollama_models = ["qwen2.5-coder:7b", "llama3.1", "mistral"]
+        ollama_configured = False
+        ollama_error = "Ollama is not running. Showing fallback models."
 
     return [
         {
             "provider": "ollama",
             "name": "Ollama (Local)",
             "models": ollama_models,
-            "configured": True
+            "configured": ollama_configured,
+            "error": ollama_error
         },
         {
             "provider": "anthropic",

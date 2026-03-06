@@ -30,6 +30,7 @@ interface LLMProvider {
     name: string;
     models: string[];
     configured: boolean;
+    error?: string;
 }
 
 interface CustomAgentManagerModalProps {
@@ -330,6 +331,11 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged }: 
                                             <option key={m} value={m}>{m}</option>
                                         )) || <option value="">No models available</option>}
                                     </select>
+                                    {formData.provider === 'ollama' && llmProviders.find(p => p.provider === 'ollama')?.error && (
+                                        <div className="mt-2 p-2 bg-amber-500/10 border border-amber-500/20 rounded-xl text-[9px] text-amber-500 font-medium flex items-center gap-2 animate-pulse">
+                                            <Info size={10} /> Ollama not running. Showing fallbacks.
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 

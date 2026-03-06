@@ -8,6 +8,7 @@ interface LLMProviderInfo {
     name: string;
     models: string[];
     configured: boolean;
+    error?: string;
 }
 
 interface ModelSelectorProps {
@@ -78,8 +79,13 @@ export default function ModelSelector({ onSelect, currentProvider, currentModel 
                             <div key={p.provider} className="p-1">
                                 <div className="px-3 py-1.5 text-[10px] font-bold text-neutral-500 uppercase tracking-widest flex items-center justify-between">
                                     <span>{p.name}</span>
-                                    {!p.configured && (
+                                    {!p.configured && p.provider !== "ollama" && (
                                         <span className="text-red-500 lowercase font-normal italic">Key missing</span>
+                                    )}
+                                    {p.provider === "ollama" && p.error && (
+                                        <div className="flex items-center gap-1 text-[8px] text-amber-500 font-bold animate-pulse">
+                                            <Zap size={8} /> SERVICE DOWN
+                                        </div>
                                     )}
                                 </div>
                                 {p.models.map((m) => (
@@ -104,6 +110,11 @@ export default function ModelSelector({ onSelect, currentProvider, currentModel 
                             </div>
                         ))}
                     </div>
+                    {providers.find(p => p.provider === "ollama")?.error && (
+                        <div className="p-3 bg-amber-500/10 border-t border-neutral-800 text-[10px] text-amber-500 font-medium leading-tight">
+                            ⚠️ Ollama is unreachable. List shows fallback models. Please start Ollama to see your installed models.
+                        </div>
+                    )}
                 </div>
             )}
         </div>
