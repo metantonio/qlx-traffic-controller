@@ -31,14 +31,32 @@ export default function AgentConversationModal({ pid, onClose, onContinue }: Age
     const scrollRef = useRef<HTMLDivElement>(null);
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
+    const [error, setError] = useState<string | null>(null);
+
     useEffect(() => {
+        if (!pid) return;
+        setError(null);
         fetch(`${apiUrl}/api/processes/${pid}`)
-            .then(res => res.json())
+            .then(async (res) => {
+                if (!res.ok) {
+                    const text = await res.text();
+                    throw new Error(`Server returned ${res.status}: ${text.slice(0, 100)}`);
+                }
+                return res.json();
+            })
             .then(data => {
-                setProcDetails(data);
+                if (data.error) {
+                    setError(data.error);
+                } else {
+                    setProcDetails(data);
+                }
                 setLoading(false);
             })
-            .catch(err => console.error('Failed to fetch process details:', err));
+            .catch(err => {
+                console.error('Failed to fetch process details:', err);
+                setError(err.message || 'Network error occurred');
+                setLoading(false);
+            });
     }, [pid, apiUrl]);
 
     useEffect(() => {
@@ -55,6 +73,23 @@ export default function AgentConversationModal({ pid, onClose, onContinue }: Age
 
     if (loading) return null;
 
+    if (error) {
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
+                <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-2xl max-w-md w-full text-center space-y-4" onClick={e => e.stopPropagation()}>
+                    <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto">
+                        <X size={32} />
+                    </div>
+                    <h3 className="text-xl font-bold text-white">Execution Error</h3>
+                    <p className="text-neutral-400 text-sm">{error}</p>
+                    <button onClick={onClose} className="w-full py-3 bg-neutral-800 hover:bg-neutral-700 text-white rounded-xl transition-all">
+                        Dismiss
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
@@ -64,7 +99,6 @@ export default function AgentConversationModal({ pid, onClose, onContinue }: Age
                 className="bg-neutral-900/90 border border-neutral-800 w-full max-w-4xl h-[80vh] rounded-2xl flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200"
                 onClick={(e) => e.stopPropagation()}
             >
-
                 {/* Header */}
                 <div className="p-4 border-b border-neutral-800 flex items-center justify-between bg-neutral-900">
                     <div className="flex items-center gap-3">
@@ -142,6 +176,6 @@ export default function AgentConversationModal({ pid, onClose, onContinue }: Age
                     <p className="text-[10px] text-center text-neutral-500 mt-2 uppercase tracking-widest font-medium"> Resumption Mode Active • PID: {pid} Context Linked </p>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

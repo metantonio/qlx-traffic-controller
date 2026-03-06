@@ -99,6 +99,22 @@ class WorkflowOrchestrator:
             logger.info(f"Submitting Process {proc.pid} for Workflow {execution.id}, Step {execution.current_step_index}")
             await system_scheduler.submit(proc, Priority.MEDIUM)
             execution.active_process_pids.append(proc.pid)
+
+            # Broadcast progress
+            await system_memory_bus.publish(MessagePayload(
+                source_pid="kernel",
+                target_pid="BROADCAST",
+                event_type="workflow_progress",
+                data={
+                    "workflow_id": execution.id,
+                    "step_index": execution.current_step_index,
+                    "total_steps": len(execution.workflow.steps),
+                    "status": "step_started",
+                    "pid": proc.pid,
+                    "workflow_name": execution.workflow.name
+                }
+            ))
+
         except Exception as e:
             logger.error(f"FAILED to spawn step {execution.current_step_index} for workflow {execution.id}: {e}")
             if execution.id in self.active_executions:
@@ -116,8 +132,7 @@ class WorkflowOrchestrator:
 
         execution = self.active_executions[workflow_id]
         
-        # Ensure we are responding to the *correct* current step to avoid race conditions 
-        # (though unlikely in a sequential flow)
+        # Ensure we are responding to the *correct* current step
         step_index = proc.memory_context.get("workflow_step")
         if step_index != execution.current_step_index:
             return
@@ -129,9 +144,37 @@ class WorkflowOrchestrator:
         # We take the latest state to pass it forward.
         execution.cumulative_history = proc.history
         
+        # Broadcast step completion
+        await system_memory_bus.publish(MessagePayload(
+            source_pid="kernel",
+            target_pid="BROADCAST",
+            event_type="workflow_progress",
+            data={
+                "workflow_id": execution.id,
+                "step_index": execution.current_step_index,
+                "status": "step_completed",
+                "pid": source_pid
+            }
+        ))
+
         # Advance
         execution.current_step_index += 1
-        await self._run_current_step(execution)
+        
+        if execution.current_step_index >= len(execution.workflow.steps):
+            logger.info(f"Workflow {execution.workflow.name} ({execution.id}) COMPLETED successfully.")
+            await system_memory_bus.publish(MessagePayload(
+                source_pid="kernel",
+                target_pid="BROADCAST",
+                event_type="workflow_progress",
+                data={
+                    "workflow_id": execution.id,
+                    "status": "completed",
+                    "workflow_name": execution.workflow.name
+                }
+            ))
+            del self.active_executions[execution.id]
+        else:
+            await self._run_current_step(execution)
 
 # Global system orchestrator
 workflow_orchestrator = WorkflowOrchestrator()

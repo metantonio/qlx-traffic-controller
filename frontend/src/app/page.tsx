@@ -36,6 +36,14 @@ export default function Dashboard() {
   const [llmModel, setLlmModel] = useState<string>("");
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [isWorkflowModalOpen, setIsWorkflowModalOpen] = useState(false);
+  const [activeWorkflow, setActiveWorkflow] = useState<{
+    id: string;
+    name: string;
+    stepIndex: number;
+    totalSteps: number;
+    status: string;
+    currentPid?: string;
+  } | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
   const handleSpawnAgent = useCallback((manualTask?: string, parent_pid?: string, initial_history?: Message[]) => {
@@ -76,6 +84,19 @@ export default function Dashboard() {
       const data = JSON.parse(event.data);
       if (data.type === "system_metrics") {
         setKernelMetrics(data.payload);
+      } else if (data.type === "workflow_progress") {
+        const payload = data.payload;
+        setActiveWorkflow(prev => {
+          if (payload.status === "completed") return null;
+          return {
+            id: payload.workflow_id,
+            name: payload.workflow_name || prev?.name || "Pipeline",
+            stepIndex: payload.step_index ?? prev?.stepIndex,
+            totalSteps: payload.total_steps ?? prev?.totalSteps,
+            status: payload.status,
+            currentPid: payload.pid || prev?.currentPid
+          };
+        });
       } else {
         setEvents((prev) => [data, ...prev].slice(0, 50));
       }
@@ -210,6 +231,42 @@ export default function Dashboard() {
           </div>
         </section>
       </div>
+
+      {/* Pipeline HUD */}
+      {activeWorkflow && (
+        <div className="fixed bottom-8 right-8 z-40 animate-in slide-in-from-bottom-10 fade-in duration-300">
+          <div className="bg-neutral-900/90 backdrop-blur-xl border border-blue-500/30 p-6 rounded-3xl shadow-2xl shadow-blue-500/10 w-80 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <GitBranch className="text-blue-400 rotate-90" size={18} />
+                <span className="text-xs font-black uppercase tracking-widest text-blue-400">Neural Pipeline</span>
+              </div>
+              <div className="px-2 py-0.5 bg-blue-500/20 rounded text-[10px] font-bold text-blue-300">
+                STEP {activeWorkflow.stepIndex + 1}/{activeWorkflow.totalSteps}
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-white font-bold truncate">{activeWorkflow.name}</h4>
+              <p className="text-neutral-400 text-[10px] uppercase font-medium tracking-tight">Status: {activeWorkflow.status.replace('_', ' ')}</p>
+            </div>
+
+            <div className="relative h-1.5 w-full bg-neutral-800 rounded-full overflow-hidden">
+              <div
+                className="absolute top-0 left-0 h-full bg-blue-500 transition-all duration-1000 ease-out"
+                style={{ width: `${((activeWorkflow.stepIndex + 1) / activeWorkflow.totalSteps) * 100}%` }}
+              />
+            </div>
+
+            {activeWorkflow.currentPid && (
+              <div className="flex items-center gap-2 bg-black/40 p-2 rounded-xl border border-white/5">
+                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                <span className="text-[10px] font-mono text-neutral-400">ACTIVE PID: {activeWorkflow.currentPid}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {selectedPid && (
         <AgentConversationModal

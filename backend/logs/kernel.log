@@ -554,3 +554,28 @@
 2026-03-05 19:26:24 [INFO] AgentOS.Kernel.Scheduler: Process c3452067 completed successfully.
 2026-03-05 19:26:24 [INFO] AgentOS.Workflow.Orchestrator: Workflow 0f92f3d8-a49b-47a8-8fc5-39caecacd0bd step 1 (c3452067) finished. Advancing...
 2026-03-05 19:26:24 [INFO] AgentOS.Workflow.Orchestrator: Workflow test (0f92f3d8-a49b-47a8-8fc5-39caecacd0bd) COMPLETED successfully.
+2026-03-05 19:32:48 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 19:32:57 [INFO] AgentOS.Main: Background Task Scheduler initialized.
+2026-03-05 19:32:57 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 19:41:26 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 19:41:46 [INFO] AgentOS.Main: Background Task Scheduler initialized.
+2026-03-05 19:41:46 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 19:49:10 [INFO] AgentOS.Main: Background Task Scheduler initialized.
+2026-03-05 19:49:10 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 19:50:13 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn_workflow","workflow_id":"exhample-ID","variables":{}}
+2026-03-05 19:50:13 [INFO] AgentOS.Workflow.Orchestrator: Starting Workflow test (6c5c4dff-c4c5-4e6e-8d7e-dc9ed3451989)
+2026-03-05 19:50:13 [INFO] AgentOS.Workflow.Orchestrator: Running Workflow 6c5c4dff-c4c5-4e6e-8d7e-dc9ed3451989 - Step 1/2
+2026-03-05 19:50:13 [INFO] AgentOS.Workflow.Orchestrator: Step 0 using Default Agent: kernel_agent
+2026-03-05 19:50:13 [INFO] AgentOS.Workflow.Orchestrator: Submitting Process 060da747 for Workflow 6c5c4dff-c4c5-4e6e-8d7e-dc9ed3451989, Step 0
+2026-03-05 19:50:13 [INFO] AgentOS.Kernel.Scheduler: Process 060da747 (kernel_agent) queued at MEDIUM priority.
+2026-03-05 19:50:13 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process 060da747 (kernel_agent)
+2026-03-05 19:50:14 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 19:50:16 [INFO] AgentOS.Kernel.Scheduler: Loaded 14 tools from servers: ['filesystem']
+2026-03-05 19:50:17 [INFO] AgentOS.Kernel.Scheduler: Process 060da747 running with tools: ['shell_execute', 'read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 19:50:22 [INFO] AgentOS.Kernel.Scheduler: Process 060da747 completed successfully.
+2026-03-05 19:50:22 [INFO] AgentOS.Workflow.Orchestrator: Workflow 6c5c4dff-c4c5-4e6e-8d7e-dc9ed3451989 step 0 (060da747) finished. Advancing...
+2026-03-05 19:50:22 [INFO] AgentOS.Workflow.Orchestrator: Running Workflow 6c5c4dff-c4c5-4e6e-8d7e-dc9ed3451989 - Step 2/2
+2026-03-05 19:50:22 [INFO] AgentOS.Workflow.Orchestrator: Step 1 using Default Agent: kernel_agent
+2026-03-05 19:50:22 [INFO] AgentOS.Workflow.Orchestrator: Submitting Process 360cd7fe for Workflow 6c5c4dff-c4c5-4e6e-8d7e-dc9ed3451989, Step 1
+2026-03-05 19:50:22 [INFO] AgentOS.Kernel.Scheduler: Process 360cd7fe (kernel_agent) queued at MEDIUM priority.
+2026-03-05 19:50:23 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process 360cd7fe (kernel_agent)

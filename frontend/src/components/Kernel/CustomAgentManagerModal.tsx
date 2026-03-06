@@ -62,18 +62,30 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged }: 
     const fetchAllData = useCallback(async () => {
         setLoading(true);
         try {
-            const [agentsRes, serversRes, toolsRes, modelsRes] = await Promise.all([
-                fetch(`${apiUrl}/api/agents/custom`),
-                fetch(`${apiUrl}/api/mcp/servers`),
-                fetch(`${apiUrl}/api/tools`),
-                fetch(`${apiUrl}/api/llm/models`)
-            ]);
-            const [agentsData, serversData, toolsData, modelsData] = await Promise.all([
-                agentsRes.json(),
-                serversRes.json(),
-                toolsRes.json(),
-                modelsRes.json()
-            ] as [Promise<CustomAgent[]>, Promise<MCPServer[]>, Promise<Tool[]>, Promise<LLMProvider[]>]);
+            const urls = [
+                `${apiUrl}/api/agents/custom`,
+                `${apiUrl}/api/mcp/servers`,
+                `${apiUrl}/api/tools`,
+                `${apiUrl}/api/llm/models`
+            ];
+
+            const results = await Promise.all(urls.map(url =>
+                fetch(url).catch(e => {
+                    console.error(`Network error reaching ${url}:`, e);
+                    throw new Error(`Failed to reach ${url}`);
+                })
+            ));
+
+            const [agentsRes, serversRes, toolsRes, modelsRes] = results;
+
+            if (!agentsRes.ok) throw new Error(`Agents API error: ${agentsRes.status}`);
+            if (!serversRes.ok) throw new Error(`Servers API error: ${serversRes.status}`);
+            if (!toolsRes.ok) throw new Error(`Tools API error: ${toolsRes.status}`);
+            if (!modelsRes.ok) throw new Error(`Models API error: ${modelsRes.status}`);
+
+            const [agentsData, serversData, toolsData, modelsData] = await Promise.all(
+                results.map(res => res.json())
+            );
 
             setAgents(agentsData);
             setMcpServers(serversData);
@@ -88,7 +100,7 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged }: 
                 }
             }
         } catch (err) {
-            console.error("Failed to fetch data:", err);
+            console.error("Neural Registry Sync Failure:", err);
         } finally {
             setLoading(false);
         }

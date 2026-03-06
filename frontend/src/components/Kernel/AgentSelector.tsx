@@ -29,11 +29,18 @@ export default function AgentSelector({ onSelect, currentAgentId }: AgentSelecto
 
     const fetchAgents = useCallback(async () => {
         try {
-            const res = await fetch(`${apiUrl}/api/agents/custom`);
+            const url = `${apiUrl}/api/agents/custom`;
+            const res = await fetch(url).catch(e => {
+                console.error(`Network error reaching ${url}:`, e);
+                throw new Error(`Unreachable: ${url}`);
+            });
+
+            if (!res.ok) throw new Error(`HTTP Error: ${res.status} at ${url}`);
+
             const data = await res.json();
             setAgents(data);
         } catch (err) {
-            console.error("Failed to fetch custom agents:", err);
+            console.error("Agent Sync Failure:", err);
         }
     }, [apiUrl]);
 

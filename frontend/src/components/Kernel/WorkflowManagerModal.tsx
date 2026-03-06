@@ -49,14 +49,25 @@ export default function WorkflowManagerModal({ isOpen, onClose }: WorkflowManage
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            const [wfRes, agRes] = await Promise.all([
-                fetch(`${apiUrl}/api/workflows`),
-                fetch(`${apiUrl}/api/agents/custom`)
-            ]);
+            const urls = [
+                `${apiUrl}/api/workflows`,
+                `${apiUrl}/api/agents/custom`
+            ];
+
+            const [wfRes, agRes] = await Promise.all(urls.map(url =>
+                fetch(url).catch(e => {
+                    console.error(`Network error reaching ${url}:`, e);
+                    throw new Error(`Failed to reach ${url}`);
+                })
+            ));
+
+            if (!wfRes.ok) throw new Error(`Workflows API error: ${wfRes.status}`);
+            if (!agRes.ok) throw new Error(`Agents API error: ${agRes.status}`);
+
             setWorkflows(await wfRes.json());
             setAgents(await agRes.json());
         } catch (err) {
-            console.error("Failed to fetch workflow data:", err);
+            console.error("Workflow Pipeline Sync Failure:", err);
         } finally {
             setLoading(false);
         }
@@ -300,8 +311,8 @@ export default function WorkflowManagerModal({ isOpen, onClose }: WorkflowManage
                                     onClick={handleRun}
                                     disabled={isRunning}
                                     className={`flex-grow py-4 rounded-2xl font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 ${isRunning
-                                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 cursor-wait"
-                                            : "bg-blue-600 hover:bg-blue-500 text-white shadow-xl shadow-blue-600/20 active:scale-95"
+                                        ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 cursor-wait"
+                                        : "bg-blue-600 hover:bg-blue-500 text-white shadow-xl shadow-blue-600/20 active:scale-95"
                                         }`}
                                 >
                                     <Play size={18} fill="currentColor" className={isRunning ? "animate-pulse" : ""} />
