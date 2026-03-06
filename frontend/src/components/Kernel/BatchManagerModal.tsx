@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { X, Play, FolderTree, Database, Terminal, GitBranch, RefreshCw, Layers } from "lucide-react";
+import { X, Play, FolderTree, Database, Terminal, GitBranch, RefreshCw, Layers, Trash2 } from "lucide-react";
 
 interface Workflow {
     id: string;
@@ -124,6 +124,19 @@ export default function BatchManagerModal({ isOpen, onClose }: BatchManagerModal
         }
     };
 
+    const handleStopBatch = async (jobId: string) => {
+        try {
+            const res = await fetch(`${apiUrl}/api/batch/${jobId}`, {
+                method: 'DELETE'
+            });
+            if (res.ok) {
+                fetchBatches();
+            }
+        } catch (err) {
+            console.error("Failed to stop batch:", err);
+        }
+    };
+
     if (!isOpen) return null;
 
     const selectedWfObj = workflows.find(w => w.id === selectedWorkflowId);
@@ -199,8 +212,16 @@ export default function BatchManagerModal({ isOpen, onClose }: BatchManagerModal
                                                             <span className="truncate max-w-[300px]" title={job.folder}>{job.folder.split(/[\\/]/).pop()}</span>
                                                         </div>
                                                     </div>
-                                                    <div className={`px-3 py-1 text-[10px] font-bold uppercase rounded-xl border ${isCompleted ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20 animate-pulse'}`}>
-                                                        {job.status}
+                                                    <div className="flex items-center gap-2">
+                                                        <div className={`px-3 py-1 text-[10px] font-bold uppercase rounded-xl border ${isCompleted ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : job.status === 'stopped' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20 animate-pulse'}`}>
+                                                            {job.status}
+                                                        </div>
+                                                        <button
+                                                            onClick={() => handleStopBatch(job.id)}
+                                                            className="p-2 text-neutral-700 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
                                                     </div>
                                                 </div>
 
@@ -211,7 +232,7 @@ export default function BatchManagerModal({ isOpen, onClose }: BatchManagerModal
                                                     </div>
                                                     <div className="h-1.5 w-full bg-neutral-800 rounded-full overflow-hidden">
                                                         <div
-                                                            className={`h-full transition-all duration-500 ${isCompleted ? 'bg-emerald-500' : 'bg-blue-500'}`}
+                                                            className={`h-full transition-all duration-500 ${isCompleted ? 'bg-emerald-500' : job.status === 'stopped' ? 'bg-red-500' : 'bg-blue-500'}`}
                                                             style={{ width: `${progress}%` }}
                                                         />
                                                     </div>

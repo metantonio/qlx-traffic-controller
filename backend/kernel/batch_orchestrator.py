@@ -84,6 +84,22 @@ class BatchOrchestrator:
                         ))
                     break
 
+    async def stop_batch(self, job_id: str):
+        job = self.active_jobs.get(job_id)
+        if not job:
+            return
+        
+        job.status = "stopped"
+        logger.info(f"Batch Job {job_id} STOPPED by user.")
+        
+        # In a more advanced version, we would actually kill the running processes.
+        # For now, by changing the status, no more files will be processed if it was in the middle.
+        # But since start_batch spawns all at once currently, this primarily serves to mark it in UI.
+        # If we had a queue, we would clear the queue for this job.
+        
+        # Remove from active if completed or stopped, or just keep for history
+        # Let's keep it for now but mark as stopped.
+        
     def get_job_status(self, job_id: str) -> Optional[Dict[str, Any]]:
         job = self.active_jobs.get(job_id)
         if not job: return None

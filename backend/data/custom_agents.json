@@ -9,7 +9,7 @@
             "shell_execute",
             "filesystem_append"
         ],
-        "provider": null,
-        "model": null
+        "provider": "ollama",
+        "model": "qwen2.5-coder:7b"
     }
 }

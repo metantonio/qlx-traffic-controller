@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { X, Plus, Trash2, GitBranch, Sparkles, Terminal, ChevronRight, Play } from "lucide-react";
+import { X, Plus, Trash2, GitBranch, Sparkles, Terminal, ChevronRight, Play, Edit2 } from "lucide-react";
 
 interface WorkflowStep {
     agent_id: string;
@@ -32,6 +32,7 @@ export default function WorkflowManagerModal({ isOpen, onClose }: WorkflowManage
     const [agents, setAgents] = useState<CustomAgent[]>([]);
     const [loading, setLoading] = useState(true);
     const [view, setView] = useState<'list' | 'create' | 'run'>('list');
+    const [isEditing, setIsEditing] = useState(false);
 
     // Run state
     const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(null);
@@ -128,17 +129,32 @@ export default function WorkflowManagerModal({ isOpen, onClose }: WorkflowManage
         };
 
         try {
-            await fetch(`${apiUrl}/api/workflows`, {
-                method: 'POST',
+            const method = isEditing ? 'PUT' : 'POST';
+            const url = isEditing ? `${apiUrl}/api/workflows/${formData.id}` : `${apiUrl}/api/workflows`;
+
+            await fetch(url, {
+                method: method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(workflow)
             });
             setFormData({ id: '', name: '', description: '', steps: [] });
+            setIsEditing(false);
             setView('list');
             fetchData();
         } catch (err) {
             console.error("Failed to save workflow:", err);
         }
+    };
+
+    const handleEdit = (wf: Workflow) => {
+        setFormData({
+            id: wf.id,
+            name: wf.name,
+            description: wf.description,
+            steps: wf.steps
+        });
+        setIsEditing(true);
+        setView('create');
     };
 
     const [isRunning, setIsRunning] = useState(false);
@@ -208,7 +224,7 @@ export default function WorkflowManagerModal({ isOpen, onClose }: WorkflowManage
                             <div className="flex items-center justify-between">
                                 <h3 className="text-xs font-bold text-neutral-500 uppercase tracking-widest ml-1">Stored Sequences</h3>
                                 <button
-                                    onClick={() => setView('create')}
+                                    onClick={() => { setView('create'); setIsEditing(false); setFormData({ id: '', name: '', description: '', steps: [] }); }}
                                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-blue-500/10"
                                 >
                                     <Plus size={14} /> Design Workflow
@@ -250,6 +266,12 @@ export default function WorkflowManagerModal({ isOpen, onClose }: WorkflowManage
                                                     className="p-3 text-blue-400 hover:bg-blue-400/10 rounded-2xl transition-all"
                                                 >
                                                     <Play size={18} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleEdit(w)}
+                                                    className="p-3 text-neutral-700 hover:text-blue-400 hover:bg-blue-400/10 rounded-2xl transition-all"
+                                                >
+                                                    <Edit2 size={18} />
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(w.id)}
@@ -331,15 +353,16 @@ export default function WorkflowManagerModal({ isOpen, onClose }: WorkflowManage
                         </div>
                     ) : (
                         <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
-                            <div className="flex items-center gap-4 text-xs font-bold text-neutral-500 uppercase tracking-widest mb-2 cursor-pointer hover:text-neutral-300 transition-colors" onClick={() => setView('list')}>
-                                Pipeline Registry <ChevronRight size={14} /> <span className="text-blue-400">Workflow Designer</span>
+                            <div className="flex items-center gap-4 text-xs font-bold text-neutral-500 uppercase tracking-widest mb-2 cursor-pointer hover:text-neutral-300 transition-colors" onClick={() => { setView('list'); setIsEditing(false); }}>
+                                Pipeline Registry <ChevronRight size={14} /> <span className="text-blue-400">{isEditing ? 'Sequence Architect' : 'Workflow Designer'}</span>
                             </div>
 
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <label className="text-[10px] text-neutral-500 uppercase font-black ml-1 flex items-center gap-1.5"><Terminal size={10} /> Sequence ID</label>
                                     <input
-                                        className="w-full bg-neutral-950 border border-neutral-800 rounded-2xl px-5 py-3 text-sm text-white focus:border-blue-500/50 outline-none transition-all placeholder:text-neutral-800"
+                                        disabled={isEditing}
+                                        className={`w-full bg-neutral-950 border border-neutral-800 rounded-2xl px-5 py-3 text-sm text-white focus:border-blue-500/50 outline-none transition-all placeholder:text-neutral-800 ${isEditing ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         placeholder="refactor-and-verify"
                                         value={formData.id}
                                         onChange={e => setFormData({ ...formData, id: e.target.value })}
@@ -487,7 +510,7 @@ export default function WorkflowManagerModal({ isOpen, onClose }: WorkflowManage
                                     className="flex-[2] py-4 px-6 bg-blue-600 hover:bg-blue-500 disabled:bg-neutral-800 disabled:text-neutral-600 text-white font-black rounded-2xl transition-all shadow-xl shadow-blue-500/20 flex items-center justify-center gap-2"
                                 >
                                     <Sparkles size={18} />
-                                    Finalize Pipeline
+                                    {isEditing ? 'Update Pipeline' : 'Finalize Pipeline'}
                                 </button>
                             </div>
                         </div>

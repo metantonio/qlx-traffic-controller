@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { X, Plus, Trash2, Zap, Sparkles, Terminal, Database, MessageSquare, ChevronRight, Cpu, Info } from "lucide-react";
+import { X, Plus, Trash2, Zap, Sparkles, Terminal, Database, MessageSquare, ChevronRight, Cpu, Info, Edit2 } from "lucide-react";
 
 interface MCPServer {
     id: string;
@@ -46,6 +46,7 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged }: 
     const [llmProviders, setLlmProviders] = useState<LLMProvider[]>([]);
     const [loading, setLoading] = useState(true);
     const [view, setView] = useState<'list' | 'create'>('list');
+    const [isEditing, setIsEditing] = useState(false);
 
     const [formData, setFormData] = useState({
         id: '',
@@ -114,8 +115,11 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged }: 
     const handleAdd = async () => {
         if (!formData.id || !formData.name) return;
         try {
-            await fetch(`${apiUrl}/api/agents/custom`, {
-                method: 'POST',
+            const method = isEditing ? 'PUT' : 'POST';
+            const url = isEditing ? `${apiUrl}/api/agents/custom/${formData.id}` : `${apiUrl}/api/agents/custom`;
+
+            await fetch(url, {
+                method: method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
             });
@@ -129,12 +133,28 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged }: 
                 provider: 'ollama',
                 model: ''
             });
+            setIsEditing(false);
             setView('list');
             fetchAllData();
             onChanged();
         } catch (err) {
-            console.error("Failed to add custom agent:", err);
+            console.error("Failed to save custom agent:", err);
         }
+    };
+
+    const handleEdit = (agent: CustomAgent) => {
+        setFormData({
+            id: agent.id,
+            name: agent.name,
+            description: agent.description,
+            system_prompt: agent.system_prompt || '',
+            mcp_servers: agent.mcp_servers || [],
+            static_tools: agent.static_tools || [],
+            provider: agent.provider || 'ollama',
+            model: agent.model || ''
+        });
+        setIsEditing(true);
+        setView('create');
     };
 
     const handleDelete = async (id: string) => {
@@ -208,7 +228,7 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged }: 
                             <div className="flex items-center justify-between">
                                 <h3 className="text-xs font-bold text-neutral-500 uppercase tracking-widest ml-1">Active Neural Patterns</h3>
                                 <button
-                                    onClick={() => setView('create')}
+                                    onClick={() => { setView('create'); setIsEditing(false); setFormData({ id: '', name: '', description: '', system_prompt: '', mcp_servers: [], static_tools: ['shell_execute'], provider: 'ollama', model: '' }); }}
                                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-blue-500/10"
                                 >
                                     <Plus size={14} /> New Persona
@@ -240,12 +260,20 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged }: 
                                                     </div>
                                                 </div>
                                             </div>
-                                            <button
-                                                onClick={() => handleDelete(a.id)}
-                                                className="p-3 text-neutral-700 hover:text-red-400 hover:bg-red-400/10 rounded-2xl transition-all opacity-0 group-hover:opacity-100"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => handleEdit(a)}
+                                                    className="p-3 text-neutral-700 hover:text-blue-400 hover:bg-blue-400/10 rounded-2xl transition-all opacity-0 group-hover:opacity-100"
+                                                >
+                                                    <Edit2 size={18} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(a.id)}
+                                                    className="p-3 text-neutral-700 hover:text-red-400 hover:bg-red-400/10 rounded-2xl transition-all opacity-0 group-hover:opacity-100"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -253,15 +281,16 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged }: 
                         </div>
                     ) : (
                         <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
-                            <div className="flex items-center gap-4 text-xs font-bold text-neutral-500 uppercase tracking-widest mb-2 cursor-pointer hover:text-neutral-300 transition-colors" onClick={() => setView('list')}>
-                                Neural Registry <ChevronRight size={14} /> <span className="text-blue-400">Architect Persona</span>
+                            <div className="flex items-center gap-4 text-xs font-bold text-neutral-500 uppercase tracking-widest mb-2 cursor-pointer hover:text-neutral-300 transition-colors" onClick={() => { setView('list'); setIsEditing(false); }}>
+                                Neural Registry <ChevronRight size={14} /> <span className="text-blue-400">{isEditing ? 'Synthesize Persona' : 'Architect Persona'}</span>
                             </div>
 
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <label className="text-[10px] text-neutral-500 uppercase font-black ml-1 flex items-center gap-1.5"><Terminal size={10} /> Unique Descriptor (ID)</label>
                                     <input
-                                        className="w-full bg-neutral-950 border border-neutral-800 rounded-2xl px-5 py-3 text-sm text-white focus:border-blue-500/50 outline-none transition-all placeholder:text-neutral-800"
+                                        disabled={isEditing}
+                                        className={`w-full bg-neutral-950 border border-neutral-800 rounded-2xl px-5 py-3 text-sm text-white focus:border-blue-500/50 outline-none transition-all placeholder:text-neutral-800 ${isEditing ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         placeholder="devops-engineer"
                                         value={formData.id}
                                         onChange={e => setFormData({ ...formData, id: e.target.value })}
@@ -429,7 +458,7 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged }: 
                                     className="flex-[2] py-4 px-6 bg-blue-600 hover:bg-blue-500 disabled:bg-neutral-800 disabled:text-neutral-600 text-white font-black rounded-2xl transition-all shadow-xl shadow-blue-500/20 flex items-center justify-center gap-2"
                                 >
                                     <Zap size={18} />
-                                    Materialize Persona
+                                    {isEditing ? 'Update Neural Model' : 'Materialize Persona'}
                                 </button>
                             </div>
                         </div>

@@ -153,6 +153,15 @@ async def remove_custom_agent(agent_id: str):
     agent_manager.remove_agent(agent_id)
     return {"status": "success"}
 
+@app.put("/api/agents/custom/{agent_id}")
+async def update_custom_agent(agent_id: str, data: dict):
+    from backend.kernel.agent_manager import agent_manager, CustomAgent
+    # Ensure ID in payload matches URL
+    data["id"] = agent_id
+    agent = CustomAgent(**data)
+    agent_manager.add_agent(agent) # add_agent in manager is actually an upsert
+    return {"status": "success"}
+
 @app.get("/api/workflows")
 async def list_workflows():
     return workflow_manager.list_workflows()
@@ -165,6 +174,13 @@ async def create_workflow(workflow: Workflow):
 @app.delete("/api/workflows/{id}")
 async def delete_workflow(id: str):
     workflow_manager.remove_workflow(id)
+    return {"status": "success"}
+
+@app.put("/api/workflows/{id}")
+async def update_workflow(id: str, workflow: Workflow):
+    # Ensure ID in payload matches URL
+    workflow.id = id
+    workflow_manager.add_workflow(workflow) # add_workflow is an upsert
     return {"status": "success"}
 
 # --- BATCH PROCESSING ENDPOINTS ---
@@ -196,6 +212,11 @@ async def get_batch_status(job_id: str):
 @app.get("/api/batch")
 async def list_batch_jobs():
     return [batch_orchestrator.get_job_status(job.id) for job in batch_orchestrator.active_jobs.values() if job]
+
+@app.delete("/api/batch/{job_id}")
+async def stop_batch_job(job_id: str):
+    await batch_orchestrator.stop_batch(job_id)
+    return {"status": "success"}
 
 
 import ollama
