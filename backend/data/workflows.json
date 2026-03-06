@@ -1,29 +1,11 @@
 {
-    "exhample-ID": {
-        "id": "exhample-ID",
-        "name": "test",
-        "description": "check files",
-        "steps": [
-            {
-                "agent_id": "kernel_agent",
-                "task_template": "cuantos archivos hay?",
-                "condition": null
-            },
-            {
-                "agent_id": "kernel_agent",
-                "task_template": "revisa que la cantidad de archivos sea correcta y dame los nombres de los archivos",
-                "condition": null
-            }
-        ],
-        "variables": []
-    },
     "batch_test_wf": {
         "id": "batch_test_wf",
         "name": "Batch Test Workflow",
         "description": "Tests batch processing",
         "steps": [
             {
-                "agent_id": "kernel",
+                "agent_id": "kernel_agent",
                 "task_template": "Read the file {{file_path}} and summarize its contents. The filename is {{filename}}.",
                 "condition": null
             }
