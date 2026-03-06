@@ -1,1 +1,18 @@
-{}
+{
+    "exhample-ID": {
+        "id": "exhample-ID",
+        "name": "test",
+        "description": "check files",
+        "steps": [
+            {
+                "agent_id": "kernel_agent",
+                "task_template": "cuantos archivos hay?"
+            },
+            {
+                "agent_id": "kernel_agent",
+                "task_template": "revisa que la cantidad de archivos sea correcta y dame los nombres de los archivos"
+            }
+        ],
+        "variables": []
+    }
+}

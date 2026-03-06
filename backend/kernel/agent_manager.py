@@ -1,10 +1,10 @@
 import os
 import json
-import logging
 from typing import Dict, Any, List, Optional
 from pydantic import BaseModel
+from backend.core.logger import get_kernel_logger
 
-logger = logging.getLogger("AgentOS.Agent.Manager")
+logger = get_kernel_logger("AgentOS.Agent.Manager")
 
 class CustomAgent(BaseModel):
     id: str

@@ -121,21 +121,35 @@ export default function WorkflowManagerModal({ isOpen, onClose }: WorkflowManage
         }
     };
 
+    const [isRunning, setIsRunning] = useState(false);
+
     const handleRun = () => {
         if (!selectedWorkflow) return;
 
+        setIsRunning(true);
         const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://127.0.0.1:8000/ws";
         const ws = new WebSocket(wsUrl);
+
         ws.onopen = () => {
+            console.log("Sending spawn_workflow for:", selectedWorkflow.id);
             ws.send(JSON.stringify({
                 action: "spawn_workflow",
                 workflow_id: selectedWorkflow.id,
                 variables: variableValues
             }));
-            // Give it a tiny bit of time to send before closing
-            setTimeout(() => ws.close(), 100);
+            // Give it more time to ensure it arrives
+            setTimeout(() => {
+                ws.close();
+                setIsRunning(false);
+                onClose();
+            }, 500);
         };
-        onClose();
+
+        ws.onerror = (err) => {
+            console.error("WS Workflow Error:", err);
+            setIsRunning(false);
+            alert("Failed to connect to system kernel. Verify backend is running.");
+        };
     };
 
     const handleDelete = async (id: string) => {
@@ -284,10 +298,14 @@ export default function WorkflowManagerModal({ isOpen, onClose }: WorkflowManage
                                 </button>
                                 <button
                                     onClick={handleRun}
-                                    className="flex-[2] py-4 px-6 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-2xl transition-all shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2"
+                                    disabled={isRunning}
+                                    className={`flex-grow py-4 rounded-2xl font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 ${isRunning
+                                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 cursor-wait"
+                                            : "bg-blue-600 hover:bg-blue-500 text-white shadow-xl shadow-blue-600/20 active:scale-95"
+                                        }`}
                                 >
-                                    <Play size={18} />
-                                    Launch Sequential Agents
+                                    <Play size={18} fill="currentColor" className={isRunning ? "animate-pulse" : ""} />
+                                    {isRunning ? "Activating Pipeline..." : "Launch Sequential Agents"}
                                 </button>
                             </div>
                         </div>

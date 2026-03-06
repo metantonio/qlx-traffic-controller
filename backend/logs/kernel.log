@@ -516,3 +516,41 @@
 2026-03-05 19:10:01 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
 2026-03-05 19:11:50 [INFO] AgentOS.Main: Dashboard disconnected
 2026-03-05 19:11:50 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 19:17:36 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn_workflow","workflow_id":"exhample-ID","variables":{}}
+2026-03-05 19:17:36 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 19:18:44 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn_workflow","workflow_id":"exhample-ID","variables":{}}
+2026-03-05 19:18:44 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 19:19:26 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 19:20:34 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 19:20:43 [INFO] AgentOS.Main: Background Task Scheduler initialized.
+2026-03-05 19:20:43 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 19:21:39 [INFO] AgentOS.Main: Background Task Scheduler initialized.
+2026-03-05 19:21:39 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 19:22:34 [INFO] AgentOS.Main: Background Task Scheduler initialized.
+2026-03-05 19:22:34 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 19:23:07 [INFO] AgentOS.Main: Background Task Scheduler initialized.
+2026-03-05 19:23:07 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 19:24:17 [INFO] AgentOS.Main: Background Task Scheduler initialized.
+2026-03-05 19:24:17 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 19:25:55 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn_workflow","workflow_id":"exhample-ID","variables":{}}
+2026-03-05 19:25:55 [INFO] AgentOS.Workflow.Orchestrator: Starting Workflow test (0f92f3d8-a49b-47a8-8fc5-39caecacd0bd)
+2026-03-05 19:25:55 [INFO] AgentOS.Workflow.Orchestrator: Running Workflow 0f92f3d8-a49b-47a8-8fc5-39caecacd0bd - Step 1/2
+2026-03-05 19:25:55 [INFO] AgentOS.Workflow.Orchestrator: Step 0 using Default Agent: kernel_agent
+2026-03-05 19:25:55 [INFO] AgentOS.Workflow.Orchestrator: Submitting Process 51a37894 for Workflow 0f92f3d8-a49b-47a8-8fc5-39caecacd0bd, Step 0
+2026-03-05 19:25:55 [INFO] AgentOS.Kernel.Scheduler: Process 51a37894 (kernel_agent) queued at MEDIUM priority.
+2026-03-05 19:25:55 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process 51a37894 (kernel_agent)
+2026-03-05 19:25:56 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 19:25:58 [INFO] AgentOS.Kernel.Scheduler: Loaded 14 tools from servers: ['filesystem']
+2026-03-05 19:25:59 [INFO] AgentOS.Kernel.Scheduler: Process 51a37894 running with tools: ['shell_execute', 'read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 19:26:17 [INFO] AgentOS.Kernel.Scheduler: Process 51a37894 completed successfully.
+2026-03-05 19:26:17 [INFO] AgentOS.Workflow.Orchestrator: Workflow 0f92f3d8-a49b-47a8-8fc5-39caecacd0bd step 0 (51a37894) finished. Advancing...
+2026-03-05 19:26:17 [INFO] AgentOS.Workflow.Orchestrator: Running Workflow 0f92f3d8-a49b-47a8-8fc5-39caecacd0bd - Step 2/2
+2026-03-05 19:26:17 [INFO] AgentOS.Workflow.Orchestrator: Step 1 using Default Agent: kernel_agent
+2026-03-05 19:26:17 [INFO] AgentOS.Workflow.Orchestrator: Submitting Process c3452067 for Workflow 0f92f3d8-a49b-47a8-8fc5-39caecacd0bd, Step 1
+2026-03-05 19:26:17 [INFO] AgentOS.Kernel.Scheduler: Process c3452067 (kernel_agent) queued at MEDIUM priority.
+2026-03-05 19:26:18 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process c3452067 (kernel_agent)
+2026-03-05 19:26:20 [INFO] AgentOS.Kernel.Scheduler: Loaded 14 tools from servers: ['filesystem']
+2026-03-05 19:26:20 [INFO] AgentOS.Kernel.Scheduler: Process c3452067 running with tools: ['shell_execute', 'read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 19:26:24 [INFO] AgentOS.Kernel.Scheduler: Process c3452067 completed successfully.
+2026-03-05 19:26:24 [INFO] AgentOS.Workflow.Orchestrator: Workflow 0f92f3d8-a49b-47a8-8fc5-39caecacd0bd step 1 (c3452067) finished. Advancing...
+2026-03-05 19:26:24 [INFO] AgentOS.Workflow.Orchestrator: Workflow test (0f92f3d8-a49b-47a8-8fc5-39caecacd0bd) COMPLETED successfully.

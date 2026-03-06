@@ -256,7 +256,20 @@ async def websocket_endpoint(websocket: WebSocket):
             logger.info(f"Dashboard WS message: {data}")
             try:
                 msg = json.loads(data)
-                if msg.get("action") == "spawn":
+                action = msg.get("action")
+
+                if action == "spawn_workflow":
+                    workflow_id = msg.get("workflow_id")
+                    variables = msg.get("variables", {})
+                    try:
+                        execution_id = await workflow_orchestrator.start_workflow(workflow_id, variables)
+                        await websocket.send_json({"type": "info", "message": f"Workflow {execution_id} started."})
+                    except Exception as e:
+                        logger.error(f"Failed to start workflow: {e}")
+                        await websocket.send_json({"type": "error", "message": str(e)})
+                    continue
+
+                if action == "spawn":
                     agent_name = msg.get("agent_name", "test_agent")
                     task_text = msg.get("task", "Simulated WS Task")
                     
@@ -284,11 +297,9 @@ async def websocket_endpoint(websocket: WebSocket):
                     system_prompt_override = None
 
                     if custom_agent:
-                        # Build tools list for custom agent
                         resolved_tools = custom_agent.static_tools + [f"mcp:{s}" for s in custom_agent.mcp_servers]
                         system_prompt_override = custom_agent.system_prompt
                         
-                        # Use custom agent's LLM if not explicitly overridden by UI
                         if not llm_provider and custom_agent.provider:
                             llm_provider = custom_agent.provider
                         if not llm_model and custom_agent.model:
@@ -308,24 +319,11 @@ async def websocket_endpoint(websocket: WebSocket):
                     if initial_history:
                         proc.memory_context["initial_history"] = initial_history
                     
-                    # Store LLM overrides in memory_context for scheduler
                     if llm_provider: proc.memory_context["llm_provider"] = llm_provider
                     if llm_model: proc.memory_context["llm_model"] = llm_model
-                        
-                    if msg.get("action") == "spawn":
-                        await system_scheduler.submit(proc, Priority.MEDIUM)
-                        await websocket.send_json({"type": "info", "message": f"Spawned {proc.pid}: {task_text[:20]}..."})
                     
-                    elif msg.get("action") == "spawn_workflow":
-                        workflow_id = msg.get("workflow_id")
-                        variables = msg.get("variables", {})
-                        try:
-                            execution_id = await workflow_orchestrator.start_workflow(workflow_id, variables)
-                            await websocket.send_json({"type": "info", "message": f"Workflow {execution_id} started."})
-                        except Exception as e:
-                            logger.error(f"Failed to start workflow: {e}")
-                            await websocket.send_json({"type": "error", "message": str(e)})
-
+                    await system_scheduler.submit(proc, Priority.MEDIUM)
+                    await websocket.send_json({"type": "info", "message": f"Spawned {proc.pid}: {task_text[:20]}..."})
             except Exception as e:
                 logger.error(f"Failed to process WS command: {e}")
 
