@@ -587,3 +587,27 @@
 2026-03-05 19:52:16 [INFO] AgentOS.Main: Dashboard disconnected
 2026-03-05 19:52:29 [INFO] AgentOS.Main: Background Task Scheduler initialized.
 2026-03-05 19:52:29 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 19:53:16 [INFO] AgentOS.Main: Background Task Scheduler initialized.
+2026-03-05 19:53:16 [INFO] AgentOS.Kernel.Scheduler: Task Scheduler started.
+2026-03-05 19:53:31 [INFO] AgentOS.Main: Dashboard WS message: {"action":"spawn_workflow","workflow_id":"exhample-ID","variables":{}}
+2026-03-05 19:53:31 [INFO] AgentOS.Workflow.Orchestrator: Starting Workflow test (2154acb6-44f3-46c9-b3ad-f4d8a835c050)
+2026-03-05 19:53:31 [INFO] AgentOS.Workflow.Orchestrator: Running Workflow 2154acb6-44f3-46c9-b3ad-f4d8a835c050 - Step 1/2
+2026-03-05 19:53:31 [INFO] AgentOS.Workflow.Orchestrator: Step 0 using Default Agent: kernel_agent
+2026-03-05 19:53:31 [INFO] AgentOS.Workflow.Orchestrator: Submitting Process c421b4fc for Workflow 2154acb6-44f3-46c9-b3ad-f4d8a835c050, Step 0
+2026-03-05 19:53:31 [INFO] AgentOS.Kernel.Scheduler: Process c421b4fc (kernel_agent) queued at MEDIUM priority.
+2026-03-05 19:53:31 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process c421b4fc (kernel_agent)
+2026-03-05 19:53:31 [INFO] AgentOS.Main: Dashboard disconnected
+2026-03-05 19:53:34 [INFO] AgentOS.Kernel.Scheduler: Loaded 14 tools from servers: ['filesystem']
+2026-03-05 19:53:34 [INFO] AgentOS.Kernel.Scheduler: Process c421b4fc running with tools: ['shell_execute', 'read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 19:53:39 [INFO] AgentOS.Kernel.Scheduler: Process c421b4fc completed successfully.
+2026-03-05 19:53:39 [INFO] AgentOS.Workflow.Orchestrator: Workflow 2154acb6-44f3-46c9-b3ad-f4d8a835c050 step 0 (c421b4fc) finished. Advancing...
+2026-03-05 19:53:39 [INFO] AgentOS.Workflow.Orchestrator: Running Workflow 2154acb6-44f3-46c9-b3ad-f4d8a835c050 - Step 2/2
+2026-03-05 19:53:39 [INFO] AgentOS.Workflow.Orchestrator: Step 1 using Default Agent: kernel_agent
+2026-03-05 19:53:39 [INFO] AgentOS.Workflow.Orchestrator: Submitting Process 06af403a for Workflow 2154acb6-44f3-46c9-b3ad-f4d8a835c050, Step 1
+2026-03-05 19:53:39 [INFO] AgentOS.Kernel.Scheduler: Process 06af403a (kernel_agent) queued at MEDIUM priority.
+2026-03-05 19:53:39 [INFO] AgentOS.Kernel.Scheduler: Dispatched Process 06af403a (kernel_agent)
+2026-03-05 19:53:42 [INFO] AgentOS.Kernel.Scheduler: Loaded 14 tools from servers: ['filesystem']
+2026-03-05 19:53:43 [INFO] AgentOS.Kernel.Scheduler: Process 06af403a running with tools: ['shell_execute', 'read_file', 'read_text_file', 'read_media_file', 'read_multiple_files', 'write_file', 'edit_file', 'create_directory', 'list_directory', 'list_directory_with_sizes', 'directory_tree', 'move_file', 'search_files', 'get_file_info', 'list_allowed_directories']
+2026-03-05 19:53:48 [INFO] AgentOS.Kernel.Scheduler: Process 06af403a completed successfully.
+2026-03-05 19:53:48 [INFO] AgentOS.Workflow.Orchestrator: Workflow 2154acb6-44f3-46c9-b3ad-f4d8a835c050 step 1 (06af403a) finished. Advancing...
+2026-03-05 19:53:48 [INFO] AgentOS.Workflow.Orchestrator: Workflow test (2154acb6-44f3-46c9-b3ad-f4d8a835c050) COMPLETED successfully.
