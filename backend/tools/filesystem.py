@@ -20,4 +20,20 @@ filesystem_read_tool = MCPTool(
     handler=read_file
 )
 
+async def list_directory(path: str) -> list[str]:
+    """Lists files in a directory."""
+    if not os.path.isdir(path):
+        raise NotADirectoryError(f"{path} is not a directory.")
+    return [os.path.join(path, f) for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
+
+filesystem_list_tool = MCPTool(
+    name="filesystem_list",
+    description="Lists all files in a specified directory.",
+    parameters={
+        "path": {"type": "string", "description": "Absolute path to the directory"}
+    },
+    handler=list_directory
+)
+
 system_registry.register(filesystem_read_tool)
+system_registry.register(filesystem_list_tool)

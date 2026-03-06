@@ -14,5 +14,20 @@
             }
         ],
         "variables": []
+    },
+    "batch_test_wf": {
+        "id": "batch_test_wf",
+        "name": "Batch Test Workflow",
+        "description": "Tests batch processing",
+        "steps": [
+            {
+                "agent_id": "kernel",
+                "task_template": "Read the file {{file_path}} and summarize its contents. The filename is {{filename}}."
+            }
+        ],
+        "variables": [
+            "file_path",
+            "filename"
+        ]
     }
 }

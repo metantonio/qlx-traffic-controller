@@ -167,6 +167,36 @@ async def delete_workflow(id: str):
     workflow_manager.remove_workflow(id)
     return {"status": "success"}
 
+# --- BATCH PROCESSING ENDPOINTS ---
+from backend.kernel.batch_orchestrator import batch_orchestrator
+
+@app.post("/api/batch")
+async def create_batch_job(data: dict):
+    folder_path = data.get("folder_path")
+    workflow_id = data.get("workflow_id")
+    variables = data.get("variables", {})
+    
+    if not folder_path or not workflow_id:
+        return {"error": "folder_path and workflow_id are required"}
+        
+    try:
+        job_id = await batch_orchestrator.start_batch(folder_path, workflow_id, variables)
+        return {"status": "success", "job_id": job_id}
+    except Exception as e:
+        logger.error(f"Failed to start batch job: {e}")
+        return {"error": str(e)}
+
+@app.get("/api/batch/{job_id}")
+async def get_batch_status(job_id: str):
+    status = batch_orchestrator.get_job_status(job_id)
+    if not status:
+        return {"error": "Batch job not found"}
+    return status
+
+@app.get("/api/batch")
+async def list_batch_jobs():
+    return [job for job in batch_orchestrator.active_jobs.values()]
+
 import ollama
 
 @app.get("/api/llm/models")
