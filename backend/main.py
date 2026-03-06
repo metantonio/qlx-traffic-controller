@@ -13,6 +13,9 @@ from backend.kernel.memory_bus import system_memory_bus, MessagePayload
 from backend.kernel.agent_manager import CustomAgent, agent_manager
 from backend.kernel.workflow_manager import Workflow, workflow_manager
 from backend.kernel.workflow_orchestrator import workflow_orchestrator
+from backend.models.database_models import DbProcess, DbMessage
+from backend.core.database import SessionLocal
+from sqlalchemy import desc
 
 # Force tool registry load
 import backend.tools.shell
@@ -236,6 +239,40 @@ async def get_knowledge_graph():
     except Exception as e:
         logger.error(f"Failed to read memory.json: {e}")
         return {"entities": [], "relations": []}
+
+@app.get("/api/history")
+async def get_process_history(page: int = 1, page_size: int = 10):
+    """Returns a paginated list of historical processes."""
+    skip = (page - 1) * page_size
+    with SessionLocal() as db:
+        # Get total count for pagination
+        total_count = db.query(DbProcess).count()
+        
+        # Get paginated results ordered by creation time
+        db_processes = db.query(DbProcess).order_by(desc(DbProcess.created_at)).offset(skip).limit(page_size).all()
+        
+        history = []
+        for p in db_processes:
+            history.append({
+                "pid": p.pid,
+                "agent_name": p.agent_name,
+                "task": p.task_description,
+                "state": p.state,
+                "created_at": p.created_at.isoformat() if p.created_at else None,
+                "metrics": {
+                    "tokens_used": p.tokens_used,
+                    "tools_called": p.tools_called,
+                    "start_time": p.start_time,
+                    "end_time": p.end_time
+                }
+            })
+            
+        return {
+            "total": total_count,
+            "page": page,
+            "page_size": page_size,
+            "items": history
+        }
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):

@@ -21,10 +21,11 @@ interface Process {
 interface AgentConversationModalProps {
     pid: string;
     onClose: () => void;
-    onContinue: (pid: string, task: string, history: Message[]) => void;
+    onContinue?: (pid: string, task: string, history: Message[]) => void;
+    readOnly?: boolean;
 }
 
-export default function AgentConversationModal({ pid, onClose, onContinue }: AgentConversationModalProps) {
+export default function AgentConversationModal({ pid, onClose, onContinue, readOnly }: AgentConversationModalProps) {
     const [procDetails, setProcDetails] = useState<Process | null>(null);
     const [loading, setLoading] = useState(true);
     const [followUp, setFollowUp] = useState('');
@@ -35,7 +36,6 @@ export default function AgentConversationModal({ pid, onClose, onContinue }: Age
 
     useEffect(() => {
         if (!pid) return;
-        setError(null);
         fetch(`${apiUrl}/api/processes/${pid}`)
             .then(async (res) => {
                 if (!res.ok) {
@@ -66,7 +66,7 @@ export default function AgentConversationModal({ pid, onClose, onContinue }: Age
     }, [procDetails]);
 
     const handleSend = () => {
-        if (!followUp.trim() || !procDetails) return;
+        if (!followUp.trim() || !procDetails || !onContinue) return;
         onContinue(pid, followUp, procDetails.history);
         onClose();
     };
@@ -154,27 +154,34 @@ export default function AgentConversationModal({ pid, onClose, onContinue }: Age
                 </div>
 
                 {/* Footer / Input */}
-                <div className="p-4 border-t border-neutral-800 bg-neutral-900/50">
-                    <div className="flex gap-4 items-center max-w-3xl mx-auto">
-                        <div className="relative flex-1 group">
-                            <input
-                                value={followUp}
-                                onChange={(e) => setFollowUp(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                                placeholder="Continue conversation with this context..."
-                                className="w-full bg-neutral-800 border border-neutral-700 text-white rounded-xl py-3 px-4 outline-none focus:border-emerald-500/50 transition-all focus:ring-1 focus:ring-emerald-500/20 pr-12 group-hover:border-neutral-600"
-                            />
-                            <button
-                                onClick={handleSend}
-                                disabled={!followUp.trim()}
-                                className="absolute right-2 top-1.5 p-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:hover:bg-emerald-600 text-white rounded-lg transition-all"
-                            >
-                                <Send size={18} />
-                            </button>
+                {!readOnly && onContinue && (
+                    <div className="p-4 border-t border-neutral-800 bg-neutral-900/50">
+                        <div className="flex gap-4 items-center max-w-3xl mx-auto">
+                            <div className="relative flex-1 group">
+                                <input
+                                    value={followUp}
+                                    onChange={(e) => setFollowUp(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                                    placeholder="Continue conversation with this context..."
+                                    className="w-full bg-neutral-800 border border-neutral-700 text-white rounded-xl py-3 px-4 outline-none focus:border-emerald-500/50 transition-all focus:ring-1 focus:ring-emerald-500/20 pr-12 group-hover:border-neutral-600"
+                                />
+                                <button
+                                    onClick={handleSend}
+                                    disabled={!followUp.trim()}
+                                    className="absolute right-2 top-1.5 p-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:hover:bg-emerald-600 text-white rounded-lg transition-all"
+                                >
+                                    <Send size={18} />
+                                </button>
+                            </div>
                         </div>
+                        <p className="text-[10px] text-center text-neutral-500 mt-2 uppercase tracking-widest font-medium"> Resumption Mode Active • PID: {pid} Context Linked </p>
                     </div>
-                    <p className="text-[10px] text-center text-neutral-500 mt-2 uppercase tracking-widest font-medium"> Resumption Mode Active • PID: {pid} Context Linked </p>
-                </div>
+                )}
+                {readOnly && (
+                    <div className="p-4 border-t border-neutral-800 bg-neutral-900/50 text-center">
+                        <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-medium"> Archival Record • Read Only Mode </p>
+                    </div>
+                )}
             </div>
         </div >
     );

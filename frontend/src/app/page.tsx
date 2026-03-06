@@ -10,7 +10,8 @@ import KnowledgeGraphExplorer from "@/components/Kernel/KnowledgeGraphExplorer";
 import ModelSelector from "@/components/Kernel/ModelSelector";
 import AgentSelector from "@/components/Kernel/AgentSelector";
 import WorkflowManagerModal from "@/components/Kernel/WorkflowManagerModal";
-import { GitBranch } from "lucide-react";
+import HistoryView from "@/components/Kernel/HistoryView";
+import { GitBranch, History, LayoutDashboard } from "lucide-react";
 
 export interface ProcessData {
   pid: string;
@@ -44,6 +45,8 @@ export default function Dashboard() {
     status: string;
     currentPid?: string;
   } | null>(null);
+  const [activeView, setActiveView] = useState<'dashboard' | 'history'>('dashboard');
+  const [historyPid, setHistoryPid] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
   const handleSpawnAgent = useCallback((manualTask?: string, parent_pid?: string, initial_history?: Message[]) => {
@@ -149,6 +152,26 @@ export default function Dashboard() {
             <span className="text-[10px] text-neutral-400 uppercase font-black tracking-widest">Pipelines</span>
           </button>
           <div className="h-10 w-px bg-neutral-800 hidden md:block" />
+          <button
+            onClick={() => setActiveView(activeView === 'dashboard' ? 'history' : 'dashboard')}
+            className={`flex items-center gap-2 px-4 py-2 border rounded-2xl transition-all group ${activeView === 'history'
+              ? 'bg-blue-600 border-blue-500 text-white'
+              : 'bg-neutral-900 border-neutral-800 hover:border-blue-500/50 hover:bg-neutral-800'
+              }`}
+          >
+            {activeView === 'dashboard' ? (
+              <>
+                <History size={16} className="text-neutral-500 group-hover:text-blue-400 transition-colors" />
+                <span className="text-[10px] text-neutral-400 uppercase font-black tracking-widest">History</span>
+              </>
+            ) : (
+              <>
+                <LayoutDashboard size={16} className="text-white transition-colors" />
+                <span className="text-[10px] text-white uppercase font-black tracking-widest">Dashboard</span>
+              </>
+            )}
+          </button>
+          <div className="h-10 w-px bg-neutral-800 hidden md:block" />
           <div className="flex gap-4 p-1 bg-neutral-900 border border-neutral-800 rounded-2xl">
             <div className="px-3 py-1 bg-neutral-800/50 rounded-xl border border-neutral-700/30">
               <span className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest block mb-0.5">Processes</span>
@@ -159,78 +182,86 @@ export default function Dashboard() {
       </header>
 
       {/* Main Content Area */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 flex-grow overflow-hidden mb-8">
-        {/* TOP LEFT: Workers (Process Monitor) */}
-        <div className="xl:col-span-4 space-y-6 overflow-y-auto custom-scrollbar pr-2">
-          <div className="bg-neutral-900/60 border border-neutral-800/80 rounded-3xl p-6 shadow-xl backdrop-blur-xl">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <h2 className="text-sm font-bold text-neutral-400 uppercase tracking-widest">Active Workers</h2>
+      {activeView === 'dashboard' ? (
+        <>
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 flex-grow overflow-hidden mb-8">
+            {/* TOP LEFT: Workers (Process Monitor) */}
+            <div className="xl:col-span-4 space-y-6 overflow-y-auto custom-scrollbar pr-2">
+              <div className="bg-neutral-900/60 border border-neutral-800/80 rounded-3xl p-6 shadow-xl backdrop-blur-xl">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <h2 className="text-sm font-bold text-neutral-400 uppercase tracking-widest">Active Workers</h2>
+                </div>
+                <ProcessMonitor metrics={kernelMetrics} onProcessClick={setSelectedPid} />
+              </div>
+
+              <ToolManager onToolsChange={handleToolsChange} />
             </div>
-            <ProcessMonitor metrics={kernelMetrics} onProcessClick={setSelectedPid} />
+
+            {/* TOP RIGHT / MIDDLE: Metrics & Vis */}
+            <div className="xl:col-span-8 space-y-6 overflow-y-auto custom-scrollbar pr-2">
+              <TaskSchedulerVisualizer metrics={kernelMetrics} />
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-neutral-900/40 border border-neutral-800/50 rounded-[2rem] p-6 backdrop-blur-md">
+                  <h2 className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-4">Knowledge Graph</h2>
+                  <div className="h-[300px]">
+                    <KnowledgeGraphExplorer />
+                  </div>
+                </div>
+                <div className="bg-neutral-900/40 border border-neutral-800/50 rounded-[2rem] p-6 backdrop-blur-md overflow-hidden">
+                  <h2 className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-4">System Events</h2>
+                  <div className="h-[300px]">
+                    <CommandMonitor events={events} />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <ToolManager onToolsChange={handleToolsChange} />
+          {/* BOTTOM CENTER: Chat / Command Interface */}
+          <div className="max-w-4xl w-full mx-auto shrink-0 pb-4">
+            <section className="relative overflow-hidden group">
+              <div className="p-6 bg-neutral-900/80 border border-neutral-800/80 rounded-[2.5rem] shadow-2xl backdrop-blur-2xl relative border-t-neutral-700/50 shadow-blue-500/5">
+                <div className="relative flex items-end gap-4">
+                  <div className="flex-grow relative">
+                    <textarea
+                      value={taskText}
+                      onChange={(e) => setTaskText(e.target.value)}
+                      placeholder="Initiate a new autonomous thread..."
+                      className="w-full bg-neutral-950/80 border border-neutral-800 text-white rounded-3xl py-4 px-6 outline-none focus:border-blue-500/50 transition-all min-h-[80px] text-md placeholder:text-neutral-700 font-medium leading-relaxed resize-none"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSpawnAgent();
+                        }
+                      }}
+                    />
+                  </div>
+                  <button
+                    onClick={() => handleSpawnAgent()}
+                    className="h-14 w-14 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold shadow-lg shadow-blue-600/20 transition-all transform active:scale-95 flex items-center justify-center group/btn shrink-0"
+                    title="Initiate Sequence"
+                  >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform">
+                      <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="flex items-center gap-4 mt-3 px-4">
+                  <span className="text-[10px] text-neutral-600 font-mono">READY // {llmProvider}:{llmModel}</span>
+                  <div className="h-px flex-grow bg-neutral-800/50" />
+                  <span className="text-[10px] text-neutral-600 font-mono capitalize">{enabledTools.length} Tools Enabled</span>
+                </div>
+              </div>
+            </section>
+          </div>
+        </>
+      ) : (
+        <div className="flex-grow overflow-hidden flex flex-col">
+          <HistoryView onSelectPid={setHistoryPid} onBack={() => setActiveView('dashboard')} />
         </div>
-
-        {/* TOP RIGHT / MIDDLE: Metrics & Vis */}
-        <div className="xl:col-span-8 space-y-6 overflow-y-auto custom-scrollbar pr-2">
-          <TaskSchedulerVisualizer metrics={kernelMetrics} />
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-neutral-900/40 border border-neutral-800/50 rounded-[2rem] p-6 backdrop-blur-md">
-              <h2 className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-4">Knowledge Graph</h2>
-              <div className="h-[300px]">
-                <KnowledgeGraphExplorer />
-              </div>
-            </div>
-            <div className="bg-neutral-900/40 border border-neutral-800/50 rounded-[2rem] p-6 backdrop-blur-md overflow-hidden">
-              <h2 className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-4">System Events</h2>
-              <div className="h-[300px]">
-                <CommandMonitor events={events} />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* BOTTOM CENTER: Chat / Command Interface */}
-      <div className="max-w-4xl w-full mx-auto shrink-0 pb-4">
-        <section className="relative overflow-hidden group">
-          <div className="p-6 bg-neutral-900/80 border border-neutral-800/80 rounded-[2.5rem] shadow-2xl backdrop-blur-2xl relative border-t-neutral-700/50 shadow-blue-500/5">
-            <div className="relative flex items-end gap-4">
-              <div className="flex-grow relative">
-                <textarea
-                  value={taskText}
-                  onChange={(e) => setTaskText(e.target.value)}
-                  placeholder="Initiate a new autonomous thread..."
-                  className="w-full bg-neutral-950/80 border border-neutral-800 text-white rounded-3xl py-4 px-6 outline-none focus:border-blue-500/50 transition-all min-h-[80px] text-md placeholder:text-neutral-700 font-medium leading-relaxed resize-none"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSpawnAgent();
-                    }
-                  }}
-                />
-              </div>
-              <button
-                onClick={() => handleSpawnAgent()}
-                className="h-14 w-14 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold shadow-lg shadow-blue-600/20 transition-all transform active:scale-95 flex items-center justify-center group/btn shrink-0"
-                title="Initiate Sequence"
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform">
-                  <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
-                </svg>
-              </button>
-            </div>
-            <div className="flex items-center gap-4 mt-3 px-4">
-              <span className="text-[10px] text-neutral-600 font-mono">READY // {llmProvider}:{llmModel}</span>
-              <div className="h-px flex-grow bg-neutral-800/50" />
-              <span className="text-[10px] text-neutral-600 font-mono capitalize">{enabledTools.length} Tools Enabled</span>
-            </div>
-          </div>
-        </section>
-      </div>
+      )}
 
       {/* Pipeline HUD */}
       {activeWorkflow && (
@@ -273,6 +304,13 @@ export default function Dashboard() {
           pid={selectedPid}
           onClose={() => setSelectedPid(null)}
           onContinue={handleContinue}
+        />
+      )}
+      {historyPid && (
+        <AgentConversationModal
+          pid={historyPid}
+          onClose={() => setHistoryPid(null)}
+          readOnly={true}
         />
       )}
       {isWorkflowModalOpen && (
