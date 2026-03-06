@@ -312,7 +312,11 @@ async def websocket_endpoint(websocket: WebSocket):
                     if llm_provider: proc.memory_context["llm_provider"] = llm_provider
                     if llm_model: proc.memory_context["llm_model"] = llm_model
                         
-                    if msg.get("action") == "spawn_workflow":
+                    if msg.get("action") == "spawn":
+                        await system_scheduler.submit(proc, Priority.MEDIUM)
+                        await websocket.send_json({"type": "info", "message": f"Spawned {proc.pid}: {task_text[:20]}..."})
+                    
+                    elif msg.get("action") == "spawn_workflow":
                         workflow_id = msg.get("workflow_id")
                         variables = msg.get("variables", {})
                         try:

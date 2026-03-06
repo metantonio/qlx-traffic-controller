@@ -9,6 +9,8 @@ import AgentConversationModal, { Message } from '@/components/Kernel/AgentConver
 import KnowledgeGraphExplorer from "@/components/Kernel/KnowledgeGraphExplorer";
 import ModelSelector from "@/components/Kernel/ModelSelector";
 import AgentSelector from "@/components/Kernel/AgentSelector";
+import WorkflowManagerModal from "@/components/Kernel/WorkflowManagerModal";
+import { GitBranch } from "lucide-react";
 
 export interface ProcessData {
   pid: string;
@@ -33,6 +35,7 @@ export default function Dashboard() {
   const [llmProvider, setLlmProvider] = useState<string>("");
   const [llmModel, setLlmModel] = useState<string>("");
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [isWorkflowModalOpen, setIsWorkflowModalOpen] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
 
   const handleSpawnAgent = useCallback((manualTask?: string, parent_pid?: string, initial_history?: Message[]) => {
@@ -116,6 +119,14 @@ export default function Dashboard() {
             currentProvider={llmProvider}
             currentModel={llmModel}
           />
+          <div className="h-10 w-px bg-neutral-800 hidden md:block" />
+          <button
+            onClick={() => setIsWorkflowModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-neutral-900 border border-neutral-800 rounded-2xl hover:border-blue-500/50 hover:bg-neutral-800 transition-all group"
+          >
+            <GitBranch size={16} className="text-neutral-500 group-hover:text-blue-400 transition-colors" />
+            <span className="text-[10px] text-neutral-400 uppercase font-black tracking-widest">Pipelines</span>
+          </button>
           <div className="h-10 w-px bg-neutral-800 hidden md:block" />
           <div className="flex gap-4 p-1 bg-neutral-900 border border-neutral-800 rounded-2xl">
             <div className="px-3 py-1 bg-neutral-800/50 rounded-xl border border-neutral-700/30">
@@ -205,6 +216,12 @@ export default function Dashboard() {
           pid={selectedPid}
           onClose={() => setSelectedPid(null)}
           onContinue={handleContinue}
+        />
+      )}
+      {isWorkflowModalOpen && (
+        <WorkflowManagerModal
+          isOpen={isWorkflowModalOpen}
+          onClose={() => setIsWorkflowModalOpen(false)}
         />
       )}
     </div>
