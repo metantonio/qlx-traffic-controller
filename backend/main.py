@@ -23,7 +23,36 @@ import backend.tools.filesystem
 import backend.tools.memory
 import backend.tools.pipeline_tools
 import backend.tools.agent_tools
+from backend.tools.sharing_manager import sharing_manager
+from backend.tools.mcp_manager import mcp_manager
+
 logger = get_kernel_logger("QLX-TC.Main")
+
+def bootstrap_system():
+    """Seeds the system with default configuration on first run."""
+    try:
+        # Define 'emptiness' criteria
+        agents_path = "backend/data/custom_agents.json"
+        has_agents = os.path.exists(agents_path) and os.path.getsize(agents_path) > 2
+        
+        mcp_servers = mcp_manager.list_servers()
+        has_mcps = len(mcp_servers) > 0
+        
+        if not has_agents and not has_mcps:
+            seed_path = "backend/data/seed/default_bundle.json"
+            if os.path.exists(seed_path):
+                logger.info("Fresh installation detected. Bootstrapping base configuration...")
+                with open(seed_path, 'r') as f:
+                    bundle = json.load(f)
+                
+                # Import with no overrides (seed should only contain tools that don't STRICTLY require keys to be initialized, 
+                # or rely on the user to configure them later via the UI)
+                results = sharing_manager.import_bundle(bundle, overrides={})
+                logger.info(f"Bootstrap complete: {results}")
+            else:
+                logger.warning("Fresh installation detected but no seed bundle found at %s", seed_path)
+    except Exception as e:
+        logger.error(f"Error during bootstrap: {str(e)}")
 
 KERNEL_SYSTEM_PROMPT = """You are the QLX-TC Orchestrator (Kernel). 
 Your role is to manage the system and delegate complex tasks to specialized agents or skills.
@@ -38,6 +67,9 @@ async def startup_event():
     # Start the task scheduler in the background
     asyncio.create_task(system_scheduler.start_scheduler())
     logger.info("Background Task Scheduler initialized.")
+    
+    # Bootstrap if empty
+    bootstrap_system()
 
 app.add_middleware(
     CORSMiddleware,
@@ -259,6 +291,38 @@ async def update_workflow(id: str, workflow: Workflow):
     workflow.id = id
     workflow_manager.add_workflow(workflow) # add_workflow is an upsert
     return {"status": "success"}
+
+# --- SHARING ENDPOINTS ---
+
+@app.post("/api/share/export")
+async def export_bundle(data: dict):
+    from backend.tools.sharing_manager import sharing_manager
+    agent_ids = data.get("agent_ids", [])
+    workflow_ids = data.get("workflow_ids", [])
+    mcp_ids = data.get("mcp_ids", [])
+    
+    try:
+        bundle = sharing_manager.export_bundle(agent_ids, workflow_ids, mcp_ids)
+        return bundle
+    except Exception as e:
+        logger.error(f"Export failed: {e}")
+        return {"error": str(e)}
+
+@app.post("/api/share/import")
+async def import_bundle(data: dict):
+    from backend.tools.sharing_manager import sharing_manager
+    bundle = data.get("bundle")
+    overrides = data.get("overrides")
+    
+    if not bundle:
+        return {"error": "bundle is required"}
+        
+    try:
+        results = sharing_manager.import_bundle(bundle, overrides)
+        return {"status": "success", "results": results}
+    except Exception as e:
+        logger.error(f"Import failed: {e}")
+        return {"error": str(e)}
 
 # --- BATCH PROCESSING ENDPOINTS ---
 from backend.kernel.batch_orchestrator import batch_orchestrator

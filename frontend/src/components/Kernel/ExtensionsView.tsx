@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Info, Search, Sparkles, ExternalLink, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
+import { Info, Search, Sparkles, ExternalLink, RefreshCw, ChevronLeft, ChevronRight, Upload } from "lucide-react";
 import ExtensionCard from "./ExtensionCard";
 import CustomAgentManagerModal from "./CustomAgentManagerModal";
 
@@ -234,6 +234,72 @@ export default function ExtensionsView() {
         }
     };
 
+    const handleShare = async (id: string, type: 'skill' | 'mcp') => {
+        try {
+            const payload = type === 'skill' ? { agent_ids: [id] } : { mcp_ids: [id] };
+            const res = await fetch(`${apiUrl}/api/share/export`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                const bundle = await res.json();
+                const blob = new Blob([JSON.stringify(bundle, null, 4)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${id}_bundle.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+        } catch (err) {
+            console.error("Export failed:", err);
+            alert("Failed to export bundle.");
+        }
+    };
+
+    const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                const bundle = JSON.parse(event.target?.result as string);
+
+                // Identify required keys
+                const requiredKeys = new Set<string>();
+                bundle.mcp_servers?.forEach((s: { env_schema?: Record<string, string> }) => {
+                    Object.keys(s.env_schema || {}).forEach(k => requiredKeys.add(k));
+                });
+
+                const overrides: Record<string, string> = {};
+                for (const key of Array.from(requiredKeys)) {
+                    const val = prompt(`The bundle requires a value for ${key}:`);
+                    if (val) overrides[key] = val;
+                }
+
+                const res = await fetch(`${apiUrl}/api/share/import`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ bundle, overrides })
+                });
+
+                if (res.ok) {
+                    alert("Bundle imported successfully!");
+                    fetchData();
+                } else {
+                    const error = await res.json();
+                    alert(`Import failed: ${error.error}`);
+                }
+            } catch (err) {
+                console.error("Import failed:", err);
+                alert("Failed to parse bundle file.");
+            }
+        };
+        reader.readAsText(file);
+    };
+
     const filterExtensions = (list: Extension[]) => {
         return list.filter(ext =>
             ext.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -302,6 +368,10 @@ export default function ExtensionsView() {
                             </div>
                         )}
                     </div>
+                    <label className="p-3 bg-neutral-900 border border-neutral-800 rounded-2xl text-neutral-400 hover:text-blue-400 transition-all cursor-pointer" title="Import Bundle (.json)">
+                        <Upload size={18} />
+                        <input type="file" accept=".json" onChange={handleImportFile} className="hidden" />
+                    </label>
                     <button
                         onClick={handleSyncRegistry}
                         title="Import Community Registry"
@@ -411,6 +481,7 @@ export default function ExtensionsView() {
                                             onInstall={() => handleInstall(ext.id, ext.type, ext.requiresKey)}
                                             onUninstall={() => handleUninstall(ext.id, ext.type)}
                                             onConfigure={() => handleConfigure(ext.id, ext.type)}
+                                            onShare={() => handleShare(ext.id, ext.type)}
                                         />
                                     ))}
                                     {paginatedList.filter(ext => ext.type === 'skill').length === 0 && (
@@ -443,6 +514,7 @@ export default function ExtensionsView() {
                                             onInstall={() => handleInstall(ext.id, ext.type, ext.requiresKey)}
                                             onUninstall={() => handleUninstall(ext.id, ext.type)}
                                             onConfigure={() => handleConfigure(ext.id, ext.type)}
+                                            onShare={() => handleShare(ext.id, ext.type)}
                                         />
                                     ))}
                                     {paginatedList.filter(ext => ext.type === 'mcp').length === 0 && (
@@ -469,6 +541,7 @@ export default function ExtensionsView() {
                                     onInstall={() => handleInstall(ext.id, ext.type, ext.requiresKey)}
                                     onUninstall={() => handleUninstall(ext.id, ext.type)}
                                     onConfigure={() => handleConfigure(ext.id, ext.type)}
+                                    onShare={() => handleShare(ext.id, ext.type)}
                                 />
                             ))}
                         </div>

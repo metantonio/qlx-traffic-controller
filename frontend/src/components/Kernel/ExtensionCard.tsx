@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Download, Settings, ExternalLink } from "lucide-react";
+import { Download, Settings, ExternalLink, Share2 } from "lucide-react";
 
 interface ExtensionCardProps {
     id: string;
@@ -14,6 +14,7 @@ interface ExtensionCardProps {
     onInstall?: () => void;
     onUninstall?: () => void;
     onConfigure?: () => void;
+    onShare?: () => void;
     requiresKey?: boolean;
     icon?: React.ReactNode;
 }
@@ -29,6 +30,7 @@ export default function ExtensionCard({
     onInstall,
     onUninstall,
     onConfigure,
+    onShare,
     requiresKey,
     icon
 }: ExtensionCardProps) {
@@ -97,6 +99,15 @@ export default function ExtensionCard({
                             title="Configure"
                         >
                             <Settings size={16} />
+                        </button>
+                    )}
+                    {status === 'installed' && onShare && (
+                        <button
+                            onClick={onShare}
+                            className="p-2 text-neutral-600 hover:text-orange-400 hover:bg-orange-400/10 rounded-xl transition-all"
+                            title="Share / Export"
+                        >
+                            <Share2 size={16} />
                         </button>
                     )}
                     {status === 'installed' && onUninstall && (

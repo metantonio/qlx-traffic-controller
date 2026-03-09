@@ -1,0 +1,48 @@
+{
+    "filesystem": {
+        "name": "Filesystem",
+        "command": "npx",
+        "args": [
+            "-y",
+            "@modelcontextprotocol/server-filesystem",
+            "C:\\Repositorios\\qlx-traffic-controller\\workspace",
+            "C:\\Repositorios\\qlx-traffic-controller"
+        ],
+        "transport": "stdio",
+        "enabled": true
+    },
+    "memory": {
+        "name": "Sequential Memory",
+        "command": "npx",
+        "args": [
+            "-y",
+            "@modelcontextprotocol/server-memory"
+        ],
+        "transport": "stdio",
+        "enabled": true
+    },
+    "excel": {
+        "name": "Excel Agent",
+        "command": "C:\\Repositorios\\qlx-traffic-controller\\backend\\venv\\Scripts\\python.exe",
+        "args": [
+            "-c",
+            "from excel_mcp.excel_server import mcp; mcp.run()"
+        ],
+        "env": {
+            "PYTHONPATH": "C:\\Repositorios\\qlx-traffic-controller\\backend\\servers\\sv-excel-agent"
+        },
+        "transport": "stdio",
+        "enabled": true
+    },
+    "wikipedia": {
+        "name": "Wikipedia",
+        "command": "npx",
+        "args": [
+            "-y",
+            "@modelcontextprotocol/server-wikipedia"
+        ],
+        "transport": "stdio",
+        "env": null,
+        "enabled": true
+    }
+}
