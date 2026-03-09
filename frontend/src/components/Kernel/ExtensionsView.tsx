@@ -329,6 +329,8 @@ export default function ExtensionsView() {
                         <h3 className="text-lg font-bold text-neutral-100 mb-2">Skills & Ecosystem</h3>
                         <p className="text-sm text-neutral-400 leading-relaxed">
                             Skills extend your agents with new capabilities. QLX-traffic-controller supports the <span className="text-orange-400 font-bold">OpenClaw/ClawHub</span> ecosystem (3,000+ community skills) plus local skills.
+                            <br />
+                            <span className="text-[11px] text-blue-400 mt-2 block font-medium">To use a Skill, it must be assigned to an Agent first. When you create or edit an agent, you can equip them with these specialized capabilities.</span>
                         </p>
                         <ul className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
                             <li className="flex items-center gap-2 text-xs text-neutral-500">

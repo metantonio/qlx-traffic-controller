@@ -45,6 +45,7 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged, in
     const [agents, setAgents] = useState<CustomAgent[]>([]);
     const [mcpServers, setMcpServers] = useState<MCPServer[]>([]);
     const [allTools, setAllTools] = useState<Tool[]>([]);
+    const [installedSkills, setInstalledSkills] = useState<{ id: string, name: string, description: string, system_prompt?: string, mcp_servers?: string[], static_tools?: string[] }[]>([]);
     const [llmProviders, setLlmProviders] = useState<LLMProvider[]>([]);
     const [loading, setLoading] = useState(true);
     const [view, setView] = useState<'list' | 'create'>('list');
@@ -70,7 +71,8 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged, in
                 `${apiUrl}/api/agents/custom`,
                 `${apiUrl}/api/mcp/servers`,
                 `${apiUrl}/api/tools`,
-                `${apiUrl}/api/llm/models`
+                `${apiUrl}/api/llm/models`,
+                `${apiUrl}/api/store/skills`
             ];
 
             const results = await Promise.all(urls.map(url =>
@@ -87,7 +89,7 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged, in
             if (!toolsRes.ok) throw new Error(`Tools API error: ${toolsRes.status}`);
             if (!modelsRes.ok) throw new Error(`Models API error: ${modelsRes.status}`);
 
-            const [agentsData, serversData, toolsData, modelsData] = await Promise.all(
+            const [agentsData, serversData, toolsData, modelsData, skillsData] = await Promise.all(
                 results.map(res => res.json())
             );
 
@@ -95,6 +97,10 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged, in
             setMcpServers(serversData);
             setAllTools(toolsData);
             setLlmProviders(modelsData);
+            setInstalledSkills(Object.entries(skillsData).map(([id, s]) => ({
+                id,
+                ...(s as { name: string, description: string, system_prompt?: string, mcp_servers?: string[], static_tools?: string[] })
+            })));
 
             // Set a default model if not set
             if (modelsData.length > 0 && !formData.model) {
@@ -204,6 +210,25 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged, in
                 ? prev.static_tools.filter(name => name !== toolName)
                 : [...prev.static_tools, toolName]
         }));
+    };
+
+    const attachSkill = (skill: { system_prompt?: string, mcp_servers?: string[], static_tools?: string[] }) => {
+        setFormData(prev => {
+            const newPrompt = prev.system_prompt
+                ? `${prev.system_prompt}\n\n[Skill Extension]\n${skill.system_prompt || ''}`
+                : skill.system_prompt || '';
+
+            const newServers = Array.from(new Set([...prev.mcp_servers, ...(skill.mcp_servers || [])]));
+            const newTools = Array.from(new Set([...prev.static_tools, ...(skill.static_tools || [])]));
+
+            return {
+                ...prev,
+                system_prompt: newPrompt,
+                mcp_servers: newServers,
+                static_tools: newTools
+            };
+        });
+        alert(`Skill capabilities attached to ${formData.name || 'agent'}`);
     };
 
     // Heuristic: tools that are NOT in the static registry list often come from MCP servers.
@@ -427,6 +452,32 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged, in
                                     )}
                                 </div>
                             </div>
+
+                            {/* Skills Ecosystem section */}
+                            {installedSkills.length > 0 && (
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between ml-1">
+                                        <h4 className="text-[10px] text-neutral-500 uppercase font-black flex items-center gap-1.5"><Sparkles size={10} /> Equip Skills (Templates)</h4>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {installedSkills.map(s => (
+                                            <div
+                                                key={s.id}
+                                                onClick={() => attachSkill(s)}
+                                                className="p-4 rounded-2xl border bg-neutral-950 border-neutral-800 hover:border-purple-500/50 hover:bg-purple-500/5 cursor-pointer transition-all flex items-center justify-between group"
+                                            >
+                                                <div className="min-w-0">
+                                                    <div className="text-xs font-bold text-neutral-500 group-hover:text-purple-300">{s.name}</div>
+                                                    <div className="text-[9px] text-neutral-600 truncate">{s.description}</div>
+                                                </div>
+                                                <div className="p-1.5 bg-neutral-900 rounded-lg group-hover:bg-purple-500/20 transition-colors">
+                                                    <Plus size={10} className="text-neutral-700 group-hover:text-purple-400" />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* MCP Bridges Selection */}
                             <div className="space-y-4">
