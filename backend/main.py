@@ -526,6 +526,10 @@ async def websocket_endpoint(websocket: WebSocket):
                     llm_provider = msg.get("provider")
                     llm_model = msg.get("model")
                     
+                    # Capture the session selection for persistent fallback
+                    session_provider = llm_provider
+                    session_model = llm_model
+                    
                     # Custom Agent resolution
                     custom_agent = agent_manager.get_agent(agent_name)
                     
@@ -536,9 +540,10 @@ async def websocket_endpoint(websocket: WebSocket):
                         resolved_tools = custom_agent.static_tools + [f"mcp:{s}" for s in custom_agent.mcp_servers]
                         system_prompt_override = custom_agent.system_prompt
                         
-                        if not llm_provider and custom_agent.provider:
+                        # Priority: 1. Agent definition, 2. Global session selection
+                        if custom_agent.provider:
                             llm_provider = custom_agent.provider
-                        if not llm_model and custom_agent.model:
+                        if custom_agent.model:
                             llm_model = custom_agent.model
                             
                         logger.info(f"Using Custom Agent: {custom_agent.name} with tools {resolved_tools}")
@@ -568,6 +573,8 @@ async def websocket_endpoint(websocket: WebSocket):
                     
                     if llm_provider: proc.memory_context["llm_provider"] = llm_provider
                     if llm_model: proc.memory_context["llm_model"] = llm_model
+                    if session_provider: proc.memory_context["llm_session_provider"] = session_provider
+                    if session_model: proc.memory_context["llm_session_model"] = session_model
                     
                     await system_scheduler.submit(proc, Priority.MEDIUM)
                     await websocket.send_json({"type": "info", "message": f"Spawned {proc.pid}: {task_text[:20]}..."})

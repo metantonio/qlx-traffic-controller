@@ -168,8 +168,15 @@ class TaskScheduler:
             
             provider_override = process.memory_context.get("llm_provider")
             model_override = process.memory_context.get("llm_model")
+            fallback_provider = process.memory_context.get("llm_session_provider")
+            fallback_model = process.memory_context.get("llm_session_model")
             
-            llm = LLMProvider(provider=provider_override, model=model_override)
+            llm = LLMProvider(
+                provider=provider_override, 
+                model=model_override,
+                fallback_provider=fallback_provider,
+                fallback_model=fallback_model
+            )
             
             # 4. Agent Execution Loop
             initial_history = process.memory_context.get("initial_history")

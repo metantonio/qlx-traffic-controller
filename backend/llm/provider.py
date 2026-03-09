@@ -18,24 +18,99 @@ current_pid = ContextVar("current_pid", default="kernel")
 class LLMProvider:
     """Abstraction layer for language models."""
     
-    def __init__(self, provider: str = None, model: str = None):
+    def __init__(self, provider: str = None, model: str = None, fallback_provider: str = None, fallback_model: str = None):
         self.provider = provider or settings.DEFAULT_PROVIDER
         self.model = model or settings.DEFAULT_MODEL
+        self.fallback_provider = fallback_provider
+        self.fallback_model = fallback_model
         self._client = self._initialize_client()
+
+    def _is_model_available(self, provider: str, model: str) -> bool:
+        """Checks if the requested model is actually usable."""
+        if provider == "ollama":
+            try:
+                import requests
+                resp = requests.get(f"{settings.OLLAMA_BASE_URL}/api/tags", timeout=2)
+                if resp.status_code == 200:
+                    models = [m["name"] for m in resp.json().get("models", [])]
+                    # Check for exact match or implied :latest
+                    if model in models or f"{model}:latest" in models:
+                        return True
+                    # Also check for name-only match in case tags have different versions
+                    if any(m.startswith(f"{model}:") for m in models):
+                        return True
+                    return False
+                return False
+            except:
+                return False
+        elif provider == "anthropic":
+            return bool(settings.ANTHROPIC_API_KEY)
+        elif provider == "google":
+            return bool(settings.GOOGLE_API_KEY)
+        return False
         
+    def _get_any_available_ollama_model(self) -> Optional[str]:
+        """Last resort: find ANY model that exists in local Ollama."""
+        try:
+            import requests
+            resp = requests.get(f"{settings.OLLAMA_BASE_URL}/api/tags", timeout=2)
+            if resp.status_code == 200:
+                models = resp.json().get("models", [])
+                if models:
+                    return models[0]["name"]
+        except:
+            pass
+        return None
+
     def _initialize_client(self):
-        logger.info(f"Initializing LLM Client: {self.provider} / {self.model}")
+        logger.info(f"Attempting to initialize LLM: {self.provider} / {self.model}")
         
-        if self.provider == "ollama":
-            return ChatOllama(model=self.model, base_url=settings.OLLAMA_BASE_URL)
+        # 1. Try Primary (Agent/Request)
+        if self._is_model_available(self.provider, self.model):
+            return self._create_client(self.provider, self.model)
             
-        elif self.provider == "anthropic":
+        # 2. Try Fallback (Session/User Select)
+        if self.fallback_provider and self.fallback_model:
+            if self._is_model_available(self.fallback_provider, self.fallback_model):
+                logger.warning(f"Primary LLM {self.provider}/{self.model} unavailable. Falling back to SESSION selection: {self.fallback_provider}/{self.fallback_model}")
+                self.provider = self.fallback_provider
+                self.model = self.fallback_model
+                return self._create_client(self.provider, self.model)
+
+        # 3. Try System Default (.env)
+        if self.provider != settings.DEFAULT_PROVIDER or self.model != settings.DEFAULT_MODEL:
+            if self._is_model_available(settings.DEFAULT_PROVIDER, settings.DEFAULT_MODEL):
+                logger.warning(f"LLM {self.provider}/{self.model} and Session Fallback unavailable. Falling back to SYSTEM default: {settings.DEFAULT_PROVIDER}/{settings.DEFAULT_MODEL}")
+                self.provider = settings.DEFAULT_PROVIDER
+                self.model = settings.DEFAULT_MODEL
+                return self._create_client(self.provider, self.model)
+
+        # 4. Last Resort: Any Ollama model (Handles wrong .env + no user select)
+        any_model = self._get_any_available_ollama_model()
+        if any_model:
+            logger.warning(f"All specified LLMs unavailable. Last resort discovery: using Ollama local model '{any_model}'")
+            self.provider = "ollama"
+            self.model = any_model
+            return self._create_client(self.provider, self.model)
+
+        # If everything fails, we still try to create the client with original settings to trigger standard errors
+        logger.error(f"CRITICAL: No usable LLM found for {self.provider}/{self.model}. Trying to initialize anyway...")
+        return self._create_client(self.provider, self.model)
+
+    def _create_client(self, provider: str, model: str):
+        """Internal helper to create the actual LangChain client."""
+        logger.info(f"Creating LLM Client: {provider} / {model}")
+        
+        if provider == "ollama":
+            return ChatOllama(model=model, base_url=settings.OLLAMA_BASE_URL)
+            
+        elif provider == "anthropic":
             if not settings.ANTHROPIC_API_KEY:
                 raise ValueError("ANTHROPIC_API_KEY not found in settings")
             try:
                 from langchain_anthropic import ChatAnthropic
                 return ChatAnthropic(
-                    model=self.model, 
+                    model=model, 
                     anthropic_api_key=settings.ANTHROPIC_API_KEY,
                     timeout=None,
                     stop=None
@@ -43,20 +118,20 @@ class LLMProvider:
             except ImportError:
                 raise ImportError("langchain-anthropic is not installed. Please run 'pip install langchain-anthropic'")
             
-        elif self.provider == "google":
+        elif provider == "google":
             if not settings.GOOGLE_API_KEY:
                 raise ValueError("GOOGLE_API_KEY not found in settings")
             try:
                 from langchain_google_genai import ChatGoogleGenerativeAI
                 return ChatGoogleGenerativeAI(
-                    model=self.model, 
+                    model=model, 
                     google_api_key=settings.GOOGLE_API_KEY
                 )
             except ImportError:
                 raise ImportError("langchain-google-genai is not installed. Please run 'pip install langchain-google-genai'")
             
         else:
-            raise ValueError(f"Unknown LLM Provider {self.provider}")
+            raise ValueError(f"Unknown LLM Provider {provider}")
             
     def generate(self, system_prompt: str, user_prompt: str) -> str:
         """Synchronous generation."""
