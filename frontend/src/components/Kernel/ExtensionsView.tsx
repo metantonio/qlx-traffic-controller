@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Info, Search, Sparkles, ExternalLink, RefreshCw } from "lucide-react";
+import { Info, Search, Sparkles, ExternalLink, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import ExtensionCard from "./ExtensionCard";
 import CustomAgentManagerModal from "./CustomAgentManagerModal";
 
@@ -25,6 +25,10 @@ export default function ExtensionsView() {
     const [refreshing, setRefreshing] = useState(false);
     const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
     const [editingAgentId, setEditingAgentId] = useState<string | null>(null);
+
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -51,12 +55,12 @@ export default function ExtensionsView() {
                     description: a.description,
                     type: 'skill' as const,
                     status: 'installed' as const,
-                    enabled: true // Agents are "enabled" by existing
+                    enabled: true
                 })),
                 ...mcps.map((m: { id: string; name: string; command: string; args: string[]; enabled: boolean }) => ({
                     id: m.id,
                     name: m.name,
-                    description: `${m.command} ${m.args.join(' ')}`,
+                    description: `${m.name} Bridge (${m.id})`,
                     type: 'mcp' as const,
                     status: 'installed' as const,
                     enabled: m.enabled
@@ -105,11 +109,6 @@ export default function ExtensionsView() {
                     body: JSON.stringify({ enabled })
                 });
                 if (!res.ok) throw new Error("Failed to toggle MCP");
-            } else {
-                // For Skills (Custom Agents), we don't have a toggle yet, 
-                // but we could implement it. For now, we'll just log or 
-                // update the config if we had an "enabled" field.
-                console.log(`Toggling Skill ${id} to ${enabled}`);
             }
             setInstalledExtensions(prev => prev.map(ext => ext.id === id ? { ...ext, enabled } : ext));
         } catch (err) {
@@ -137,19 +136,11 @@ export default function ExtensionsView() {
                     setActiveTab('installed');
                 }
             } else {
-                // Skill installation
                 const skillsData = await (await fetch(`${apiUrl}/api/store/skills`)).json();
                 const skillEntry = Object.entries(skillsData).find(([sId]) => sId === id);
                 if (!skillEntry) return;
 
-                const skill = skillEntry[1] as {
-                    name: string;
-                    description: string;
-                    system_prompt?: string;
-                    mcp_servers?: string[];
-                    static_tools?: string[];
-                };
-
+                const skill = skillEntry[1] as any;
                 const res = await fetch(`${apiUrl}/api/agents/custom`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -187,9 +178,6 @@ export default function ExtensionsView() {
         if (type === 'skill') {
             setEditingAgentId(id);
             setIsAgentModalOpen(true);
-        } else {
-            console.log("Configure MCP", id);
-            // Future: MCP configuration modal
         }
     };
 
@@ -204,6 +192,13 @@ export default function ExtensionsView() {
     const currentList = activeTab === 'installed' ? filterExtensions(installedExtensions) :
         activeTab === 'skills-store' ? filterExtensions(skillStore) :
             filterExtensions(mcpStore);
+
+    const totalPages = Math.ceil(currentList.length / itemsPerPage);
+    const paginatedList = currentList.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, activeTab]);
 
     return (
         <div className="flex-grow p-10 overflow-y-auto custom-scrollbar bg-[#0a0a0b]">
@@ -247,7 +242,7 @@ export default function ExtensionsView() {
                         <ul className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
                             <li className="flex items-center gap-2 text-xs text-neutral-500">
                                 <span className="w-1.5 h-1.5 rounded-full bg-orange-600/50" />
-                                <strong>Prompt-only</strong> — context and instructions (most ClawHub skills)
+                                <strong>Prompt-only</strong> — context and instructions (ClawHub skills)
                             </li>
                             <li className="flex items-center gap-2 text-xs text-neutral-500">
                                 <span className="w-1.5 h-1.5 rounded-full bg-orange-600/50" />
@@ -267,7 +262,7 @@ export default function ExtensionsView() {
                 ].map(tab => (
                     <button
                         key={tab.id}
-                        onClick={() => setActiveTab(tab.id as 'installed' | 'skills-store' | 'mcp-store')}
+                        onClick={() => setActiveTab(tab.id as any)}
                         className={`flex items-center gap-2 px-6 py-4 text-xs font-black uppercase tracking-[0.2em] transition-all relative ${activeTab === tab.id ? 'text-orange-500' : 'text-neutral-500 hover:text-neutral-300'}`}
                     >
                         {tab.icon}
@@ -298,24 +293,65 @@ export default function ExtensionsView() {
                     <p className="text-xs text-neutral-600 mt-1">Try searching for something else or browse the store.</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    {currentList.map(ext => (
-                        <ExtensionCard
-                            key={ext.id}
-                            id={ext.id}
-                            name={ext.name}
-                            description={ext.description}
-                            type={ext.type}
-                            status={ext.status}
-                            enabled={ext.enabled}
-                            requiresKey={ext.requiresKey}
-                            onToggle={(val) => handleToggle(ext.id, ext.type, val)}
-                            onInstall={() => handleInstall(ext.id, ext.type, ext.requiresKey)}
-                            onUninstall={() => handleUninstall(ext.id, ext.type)}
-                            onConfigure={() => handleConfigure(ext.id, ext.type)}
-                        />
-                    ))}
-                </div>
+                <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 mb-10">
+                        {paginatedList.map(ext => (
+                            <ExtensionCard
+                                key={ext.id}
+                                id={ext.id}
+                                name={ext.name}
+                                description={ext.description}
+                                type={ext.type}
+                                status={ext.status}
+                                enabled={ext.enabled}
+                                requiresKey={ext.requiresKey}
+                                onToggle={(val) => handleToggle(ext.id, ext.type, val)}
+                                onInstall={() => handleInstall(ext.id, ext.type, ext.requiresKey)}
+                                onUninstall={() => handleUninstall(ext.id, ext.type)}
+                                onConfigure={() => handleConfigure(ext.id, ext.type)}
+                            />
+                        ))}
+                    </div>
+
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                        <div className="flex items-center justify-center gap-4 py-8 border-t border-neutral-800/30">
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                disabled={currentPage === 1}
+                                className="flex items-center gap-2 px-4 py-2 bg-neutral-900 border border-neutral-800 rounded-xl text-neutral-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-[10px] uppercase tracking-widest"
+                            >
+                                <ChevronLeft size={14} /> Prev
+                            </button>
+                            <div className="flex items-center gap-2">
+                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                    // Show pages around current
+                                    let pageNum = i + 1;
+                                    if (totalPages > 5 && currentPage > 3) {
+                                        pageNum = currentPage - 2 + i;
+                                        if (pageNum > totalPages) pageNum = totalPages - 4 + i;
+                                    }
+                                    return (
+                                        <button
+                                            key={pageNum}
+                                            onClick={() => setCurrentPage(pageNum)}
+                                            className={`w-10 h-10 rounded-xl border font-mono text-xs transition-all ${currentPage === pageNum ? 'bg-orange-600 border-orange-500 text-white' : 'bg-neutral-900 border-neutral-800 text-neutral-500 hover:border-neutral-700'}`}
+                                        >
+                                            {pageNum}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                disabled={currentPage === totalPages}
+                                className="flex items-center gap-2 px-4 py-2 bg-neutral-900 border border-neutral-800 rounded-xl text-neutral-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-[10px] uppercase tracking-widest"
+                            >
+                                Next <ChevronRight size={14} />
+                            </button>
+                        </div>
+                    )}
+                </>
             )}
 
             <CustomAgentManagerModal

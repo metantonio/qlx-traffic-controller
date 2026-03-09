@@ -13,7 +13,7 @@ import logging
 from typing import List
 from langchain_mcp_adapters.client import MultiServerMCPClient
 
-logger = logging.getLogger("AgentOS.MCP.Filesystem")
+logger = logging.getLogger("QLX.MCP.Filesystem")
 
 # Default allowed directories
 _DEFAULT_ALLOWED = [

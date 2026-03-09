@@ -71,5 +71,163 @@
         ],
         "icon": "Database",
         "requires_api_key": false
+    },
+    "playwright": {
+        "name": "Playwright",
+        "description": "Full browser automation for web interaction and screenshots",
+        "command": "npx",
+        "args": [
+            "-y",
+            "@modelcontextprotocol/server-playwright"
+        ],
+        "icon": "Monitor",
+        "requires_api_key": false
+    },
+    "slack": {
+        "name": "Slack",
+        "description": "Send messages and integrate with Slack workspaces",
+        "command": "npx",
+        "args": [
+            "-y",
+            "@modelcontextprotocol/server-slack"
+        ],
+        "icon": "MessageSquare",
+        "requires_api_key": true
+    },
+    "sqlite": {
+        "name": "SQLite",
+        "description": "Compact and efficient local database management",
+        "command": "npx",
+        "args": [
+            "-y",
+            "@modelcontextprotocol/server-sqlite",
+            "--db-path",
+            "local.db"
+        ],
+        "icon": "Database",
+        "requires_api_key": false
+    },
+    "googlesheets": {
+        "name": "Google Sheets",
+        "description": "Read and write to Google Sheets spreadsheets",
+        "command": "npx",
+        "args": [
+            "-y",
+            "@modelcontextprotocol/server-google-sheets"
+        ],
+        "icon": "FileText",
+        "requires_api_key": true
+    },
+    "everything": {
+        "name": "Everything",
+        "description": "Reference MCP server demonstrating all possible tool types",
+        "command": "npx",
+        "args": [
+            "-y",
+            "@modelcontextprotocol/server-everything"
+        ],
+        "icon": "Layers",
+        "requires_api_key": false
+    },
+    "sentry": {
+        "name": "Sentry",
+        "description": "Retrieve error reports and performance metrics from Sentry",
+        "command": "npx",
+        "args": [
+            "-y",
+            "@modelcontextprotocol/server-sentry",
+            "--auth-token",
+            "YOUR_SENTRY_TOKEN"
+        ],
+        "icon": "Activity",
+        "requires_api_key": true
+    },
+    "gitlab": {
+        "name": "GitLab",
+        "description": "Manage repositories and pipelines in GitLab",
+        "command": "npx",
+        "args": [
+            "-y",
+            "@modelcontextprotocol/server-gitlab"
+        ],
+        "icon": "Gitlab",
+        "requires_api_key": true
+    },
+    "linear": {
+        "name": "Linear",
+        "description": "Manage issues and projects in Linear",
+        "command": "npx",
+        "args": [
+            "-y",
+            "@modelcontextprotocol/server-linear"
+        ],
+        "icon": "CheckSquare",
+        "requires_api_key": true
+    },
+    "notion": {
+        "name": "Notion",
+        "description": "Integrate Notion databases and pages",
+        "command": "npx",
+        "args": [
+            "-y",
+            "@modelcontextprotocol/server-notion"
+        ],
+        "icon": "BookOpen",
+        "requires_api_key": true
+    },
+    "braintree": {
+        "name": "Braintree",
+        "description": "Manage payments and transactions via Braintree",
+        "command": "npx",
+        "args": [
+            "-y",
+            "@modelcontextprotocol/server-braintree"
+        ],
+        "icon": "CreditCard",
+        "requires_api_key": true
+    },
+    "docker": {
+        "name": "Docker",
+        "description": "Manage containers and images directly",
+        "command": "npx",
+        "args": [
+            "-y",
+            "@modelcontextprotocol/server-docker"
+        ],
+        "icon": "Box",
+        "requires_api_key": false
+    },
+    "redis": {
+        "name": "Redis",
+        "description": "Interact with Redis key-value stores",
+        "command": "npx",
+        "args": [
+            "-y",
+            "@modelcontextprotocol/server-redis"
+        ],
+        "icon": "Zap",
+        "requires_api_key": false
+    },
+    "aws-s3": {
+        "name": "AWS S3",
+        "description": "Manage files and buckets on Amazon S3",
+        "command": "npx",
+        "args": [
+            "-y",
+            "@modelcontextprotocol/server-aws-s3"
+        ],
+        "icon": "Cloud",
+        "requires_api_key": true
+    },
+    "trello": {
+        "name": "Trello",
+        "description": "Interact with Trello boards and cards",
+        "command": "npx",
+        "args": [
+            "-y",
+            "@modelcontextprotocol/server-trello"
+        ],
+        "icon": "Columns",
+        "requires_api_key": true
     }
 }

@@ -3,7 +3,7 @@ import logging
 from typing import List
 from langchain_mcp_adapters.client import MultiServerMCPClient
 
-logger = logging.getLogger("AgentOS.MCP.Memory")
+logger = logging.getLogger("QLX.MCP.Memory")
 
 # Knowledge Graph persistence path
 MEMORY_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "data", "memory.json"))

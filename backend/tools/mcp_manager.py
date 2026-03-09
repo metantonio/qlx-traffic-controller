@@ -6,7 +6,7 @@ import time
 from typing import Dict, Any, List, Optional
 from langchain_mcp_adapters.client import MultiServerMCPClient
 
-logger = logging.getLogger("AgentOS.MCP.Manager")
+logger = logging.getLogger("QLX.MCP.Manager")
 
 class MCPManager:
     def __init__(self, config_path: str):
@@ -15,7 +15,37 @@ class MCPManager:
         self._cache_time = 0
         self._ttl = 300  # 5 minutes
         self._ensure_config_exists()
+        self.store_path = os.path.join(os.path.dirname(self.config_path), "mcp_store.json")
         self._fix_mcp_paths()
+
+    def refresh_store(self, registry_url: str = "https://raw.githubusercontent.com/modelcontextprotocol/servers/main/index.json"):
+        """Fetches and merges external MCP servers into the store."""
+        try:
+            import requests
+            response = requests.get(registry_url, timeout=10)
+            if response.status_code == 200:
+                external_data = response.json()
+                # Merge logic: prefix external IDs to avoid collisions
+                # Ensure store file exists
+                os.makedirs(os.path.dirname(self.store_path), exist_ok=True)
+                if not os.path.exists(self.store_path):
+                    with open(self.store_path, 'w', encoding='utf-8') as f:
+                        json.dump({}, f)
+
+                with open(self.store_path, 'r', encoding='utf-8') as f:
+                    current_store = json.load(f)
+                
+                # Simple merge for now
+                for key, value in external_data.items():
+                    if key not in current_store:
+                        current_store[key] = value
+                
+                with open(self.store_path, 'w', encoding='utf-8') as f:
+                    json.dump(current_store, f, indent=4)
+                return True, f"Synchronized {len(external_data)} servers."
+            return False, f"Registry returned {response.status_code}"
+        except Exception as e:
+            return False, str(e)
 
     def _fix_mcp_paths(self):
         """Fixes MCP server paths to be absolute and cross-platform."""
