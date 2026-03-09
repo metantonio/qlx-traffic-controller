@@ -23,6 +23,7 @@ export default function ExtensionsView() {
     const [mcpStore, setMcpStore] = useState<Extension[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [searching, setSearching] = useState(false);
     const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
     const [editingAgentId, setEditingAgentId] = useState<string | null>(null);
 
@@ -100,6 +101,35 @@ export default function ExtensionsView() {
         fetchData();
     }, [fetchData]);
 
+    // Live Search for ClawHub
+    useEffect(() => {
+        if (activeTab !== 'skills-store' || !searchTerm.trim()) return;
+
+        const delayDebounceFn = setTimeout(async () => {
+            setSearching(true);
+            try {
+                const res = await fetch(`${apiUrl}/api/store/search?q=${encodeURIComponent(searchTerm)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const liveResults: Extension[] = (data.results || []).map((s: { slug: string; displayName?: string; summary?: string }) => ({
+                        id: s.slug,
+                        name: s.displayName || s.slug,
+                        description: s.summary || "",
+                        type: 'skill' as const,
+                        status: 'available' as const
+                    }));
+                    setSkillStore(liveResults);
+                }
+            } catch (err) {
+                console.error("ClawHub search error:", err);
+            } finally {
+                setSearching(false);
+            }
+        }, 500);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchTerm, activeTab, apiUrl]);
+
     const handleToggle = async (id: string, type: 'skill' | 'mcp', enabled: boolean) => {
         try {
             if (type === 'mcp') {
@@ -136,17 +166,34 @@ export default function ExtensionsView() {
                     setActiveTab('installed');
                 }
             } else {
+                // Install Skill
+                let skill: { name: string; description: string; system_prompt?: string; mcp_servers?: string[]; static_tools?: string[] } | null = null;
                 const skillsData = await (await fetch(`${apiUrl}/api/store/skills`)).json();
-                const skillEntry = Object.entries(skillsData).find(([sId]) => sId === id);
-                if (!skillEntry) return;
 
-                const skill = skillEntry[1] as {
-                    name: string;
-                    description: string;
-                    system_prompt?: string;
-                    mcp_servers?: string[];
-                    static_tools?: string[];
-                };
+                if (skillsData[id]) {
+                    skill = skillsData[id];
+                } else {
+                    // Try fetching details from ClawHub via backend proxy if available, or directly (with CORS risk)
+                    // Better to use search/details via backend
+                    const detailRes = await fetch(`${apiUrl}/api/store/search?q=${id}`); // Re-using search as a quick detail check or specific endpoint
+                    const searchData = await detailRes.json();
+                    const found = searchData.results?.find((s: { slug: string; displayName?: string; summary?: string }) => s.slug === id);
+                    if (found) {
+                        skill = {
+                            name: found.displayName || found.slug,
+                            description: found.summary || "",
+                            system_prompt: `I am the specialized agent for ${found.displayName}. My purpose is to ${found.summary}.`,
+                            mcp_servers: [],
+                            static_tools: []
+                        };
+                    }
+                }
+
+                if (!skill) {
+                    alert("Could not find skill details for installation.");
+                    return;
+                }
+
                 const res = await fetch(`${apiUrl}/api/agents/custom`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -154,9 +201,9 @@ export default function ExtensionsView() {
                         id,
                         name: skill.name,
                         description: skill.description,
-                        system_prompt: skill.system_prompt,
-                        mcp_servers: skill.mcp_servers,
-                        static_tools: skill.static_tools
+                        system_prompt: skill.system_prompt || `I am the ${skill.name} specialist.`,
+                        mcp_servers: skill.mcp_servers || [],
+                        static_tools: skill.static_tools || []
                     })
                 });
                 if (res.ok) {
@@ -196,7 +243,7 @@ export default function ExtensionsView() {
     };
 
     const currentList = activeTab === 'installed' ? filterExtensions(installedExtensions) :
-        activeTab === 'skills-store' ? filterExtensions(skillStore) :
+        activeTab === 'skills-store' ? (searchTerm ? skillStore : filterExtensions(skillStore)) :
             filterExtensions(mcpStore);
 
     const totalPages = Math.ceil(currentList.length / itemsPerPage);
@@ -247,8 +294,13 @@ export default function ExtensionsView() {
                             placeholder="Search extensions..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="bg-neutral-900/50 border border-neutral-800 rounded-2xl pl-11 pr-6 py-3 text-sm text-white focus:border-blue-500/50 outline-none w-64 transition-all"
+                            className="bg-neutral-900/50 border border-neutral-800 rounded-2xl pl-11 pr-12 py-3 text-sm text-white focus:border-blue-500/50 outline-none w-64 transition-all"
                         />
+                        {searching && (
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                <RefreshCw className="w-3 h-3 text-blue-400 animate-spin" />
+                            </div>
+                        )}
                     </div>
                     <button
                         onClick={handleSyncRegistry}

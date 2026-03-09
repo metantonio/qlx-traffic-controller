@@ -1,233 +1,1009 @@
 {
-    "brave-search": {
-        "name": "Brave Search",
-        "description": "Search the web using Brave Search API",
-        "command": "npx",
-        "args": [
-            "-y",
-            "@modelcontextprotocol/server-brave-search",
-            "--api-key",
-            "YOUR_BRAVE_API_KEY"
-        ],
-        "icon": "Search",
-        "requires_api_key": true
+    "mcp": {
+        "brave-search": {
+            "name": "Brave Search",
+            "description": "Search the web using Brave Search API",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-brave-search",
+                "--api-key",
+                "YOUR_BRAVE_API_KEY"
+            ],
+            "icon": "Search",
+            "requires_api_key": true
+        },
+        "github": {
+            "name": "GitHub",
+            "description": "Interact with GitHub repositories and issues",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-github",
+                "--personal-access-token",
+                "YOUR_GITHUB_TOKEN"
+            ],
+            "icon": "Github",
+            "requires_api_key": true
+        },
+        "wikipedia": {
+            "name": "Wikipedia",
+            "description": "Search and read Wikipedia articles",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-wikipedia"
+            ],
+            "icon": "Book",
+            "requires_api_key": false
+        },
+        "fetch": {
+            "name": "Fetch",
+            "description": "Extract content from web pages efficiently",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-fetch"
+            ],
+            "icon": "Globe",
+            "requires_api_key": false
+        },
+        "google-maps": {
+            "name": "Google Maps",
+            "description": "Access Google Maps location and search features",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-google-maps",
+                "--api-key",
+                "YOUR_GOOGLE_MAPS_KEY"
+            ],
+            "icon": "MapPin",
+            "requires_api_key": true
+        },
+        "postgres": {
+            "name": "PostgreSQL",
+            "description": "Read and query PostgreSQL databases",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-postgres",
+                "postgresql://user:pass@localhost:5432/db"
+            ],
+            "icon": "Database",
+            "requires_api_key": false
+        },
+        "playwright": {
+            "name": "Playwright",
+            "description": "Full browser automation for web interaction and screenshots",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-playwright"
+            ],
+            "icon": "Monitor",
+            "requires_api_key": false
+        },
+        "slack": {
+            "name": "Slack",
+            "description": "Send messages and integrate with Slack workspaces",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-slack"
+            ],
+            "icon": "MessageSquare",
+            "requires_api_key": true
+        },
+        "sqlite": {
+            "name": "SQLite",
+            "description": "Compact and efficient local database management",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-sqlite",
+                "--db-path",
+                "local.db"
+            ],
+            "icon": "Database",
+            "requires_api_key": false
+        },
+        "googlesheets": {
+            "name": "Google Sheets",
+            "description": "Read and write to Google Sheets spreadsheets",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-google-sheets"
+            ],
+            "icon": "FileText",
+            "requires_api_key": true
+        },
+        "everything": {
+            "name": "Everything",
+            "description": "Reference MCP server demonstrating all possible tool types",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-everything"
+            ],
+            "icon": "Layers",
+            "requires_api_key": false
+        },
+        "sentry": {
+            "name": "Sentry",
+            "description": "Retrieve error reports and performance metrics from Sentry",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-sentry",
+                "--auth-token",
+                "YOUR_SENTRY_TOKEN"
+            ],
+            "icon": "Activity",
+            "requires_api_key": true
+        },
+        "gitlab": {
+            "name": "GitLab",
+            "description": "Manage repositories and pipelines in GitLab",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-gitlab"
+            ],
+            "icon": "Gitlab",
+            "requires_api_key": true
+        },
+        "linear": {
+            "name": "Linear",
+            "description": "Manage issues and projects in Linear",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-linear"
+            ],
+            "icon": "CheckSquare",
+            "requires_api_key": true
+        },
+        "notion": {
+            "name": "Notion",
+            "description": "Integrate Notion databases and pages",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-notion"
+            ],
+            "icon": "BookOpen",
+            "requires_api_key": true
+        },
+        "braintree": {
+            "name": "Braintree",
+            "description": "Manage payments and transactions via Braintree",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-braintree"
+            ],
+            "icon": "CreditCard",
+            "requires_api_key": true
+        },
+        "docker": {
+            "name": "Docker",
+            "description": "Manage containers and images directly",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-docker"
+            ],
+            "icon": "Box",
+            "requires_api_key": false
+        },
+        "redis": {
+            "name": "Redis",
+            "description": "Interact with Redis key-value stores",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-redis"
+            ],
+            "icon": "Zap",
+            "requires_api_key": false
+        },
+        "aws-s3": {
+            "name": "AWS S3",
+            "description": "Manage files and buckets on Amazon S3",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-aws-s3"
+            ],
+            "icon": "Cloud",
+            "requires_api_key": true
+        },
+        "trello": {
+            "name": "Trello",
+            "description": "Interact with Trello boards and cards",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-trello"
+            ],
+            "icon": "Columns",
+            "requires_api_key": true
+        }
     },
-    "github": {
-        "name": "GitHub",
-        "description": "Interact with GitHub repositories and issues",
-        "command": "npx",
-        "args": [
-            "-y",
-            "@modelcontextprotocol/server-github",
-            "--personal-access-token",
-            "YOUR_GITHUB_TOKEN"
-        ],
-        "icon": "Github",
-        "requires_api_key": true
-    },
-    "wikipedia": {
-        "name": "Wikipedia",
-        "description": "Search and read Wikipedia articles",
-        "command": "npx",
-        "args": [
-            "-y",
-            "@modelcontextprotocol/server-wikipedia"
-        ],
-        "icon": "Book",
-        "requires_api_key": false
-    },
-    "fetch": {
-        "name": "Fetch",
-        "description": "Extract content from web pages efficiently",
-        "command": "npx",
-        "args": [
-            "-y",
-            "@modelcontextprotocol/server-fetch"
-        ],
-        "icon": "Globe",
-        "requires_api_key": false
-    },
-    "google-maps": {
-        "name": "Google Maps",
-        "description": "Access Google Maps location and search features",
-        "command": "npx",
-        "args": [
-            "-y",
-            "@modelcontextprotocol/server-google-maps",
-            "--api-key",
-            "YOUR_GOOGLE_MAPS_KEY"
-        ],
-        "icon": "MapPin",
-        "requires_api_key": true
-    },
-    "postgres": {
-        "name": "PostgreSQL",
-        "description": "Read and query PostgreSQL databases",
-        "command": "npx",
-        "args": [
-            "-y",
-            "@modelcontextprotocol/server-postgres",
-            "postgresql://user:pass@localhost:5432/db"
-        ],
-        "icon": "Database",
-        "requires_api_key": false
-    },
-    "playwright": {
-        "name": "Playwright",
-        "description": "Full browser automation for web interaction and screenshots",
-        "command": "npx",
-        "args": [
-            "-y",
-            "@modelcontextprotocol/server-playwright"
-        ],
-        "icon": "Monitor",
-        "requires_api_key": false
-    },
-    "slack": {
-        "name": "Slack",
-        "description": "Send messages and integrate with Slack workspaces",
-        "command": "npx",
-        "args": [
-            "-y",
-            "@modelcontextprotocol/server-slack"
-        ],
-        "icon": "MessageSquare",
-        "requires_api_key": true
-    },
-    "sqlite": {
-        "name": "SQLite",
-        "description": "Compact and efficient local database management",
-        "command": "npx",
-        "args": [
-            "-y",
-            "@modelcontextprotocol/server-sqlite",
-            "--db-path",
-            "local.db"
-        ],
-        "icon": "Database",
-        "requires_api_key": false
-    },
-    "googlesheets": {
-        "name": "Google Sheets",
-        "description": "Read and write to Google Sheets spreadsheets",
-        "command": "npx",
-        "args": [
-            "-y",
-            "@modelcontextprotocol/server-google-sheets"
-        ],
-        "icon": "FileText",
-        "requires_api_key": true
-    },
-    "everything": {
-        "name": "Everything",
-        "description": "Reference MCP server demonstrating all possible tool types",
-        "command": "npx",
-        "args": [
-            "-y",
-            "@modelcontextprotocol/server-everything"
-        ],
-        "icon": "Layers",
-        "requires_api_key": false
-    },
-    "sentry": {
-        "name": "Sentry",
-        "description": "Retrieve error reports and performance metrics from Sentry",
-        "command": "npx",
-        "args": [
-            "-y",
-            "@modelcontextprotocol/server-sentry",
-            "--auth-token",
-            "YOUR_SENTRY_TOKEN"
-        ],
-        "icon": "Activity",
-        "requires_api_key": true
-    },
-    "gitlab": {
-        "name": "GitLab",
-        "description": "Manage repositories and pipelines in GitLab",
-        "command": "npx",
-        "args": [
-            "-y",
-            "@modelcontextprotocol/server-gitlab"
-        ],
-        "icon": "Gitlab",
-        "requires_api_key": true
-    },
-    "linear": {
-        "name": "Linear",
-        "description": "Manage issues and projects in Linear",
-        "command": "npx",
-        "args": [
-            "-y",
-            "@modelcontextprotocol/server-linear"
-        ],
-        "icon": "CheckSquare",
-        "requires_api_key": true
-    },
-    "notion": {
-        "name": "Notion",
-        "description": "Integrate Notion databases and pages",
-        "command": "npx",
-        "args": [
-            "-y",
-            "@modelcontextprotocol/server-notion"
-        ],
-        "icon": "BookOpen",
-        "requires_api_key": true
-    },
-    "braintree": {
-        "name": "Braintree",
-        "description": "Manage payments and transactions via Braintree",
-        "command": "npx",
-        "args": [
-            "-y",
-            "@modelcontextprotocol/server-braintree"
-        ],
-        "icon": "CreditCard",
-        "requires_api_key": true
-    },
-    "docker": {
-        "name": "Docker",
-        "description": "Manage containers and images directly",
-        "command": "npx",
-        "args": [
-            "-y",
-            "@modelcontextprotocol/server-docker"
-        ],
-        "icon": "Box",
-        "requires_api_key": false
-    },
-    "redis": {
-        "name": "Redis",
-        "description": "Interact with Redis key-value stores",
-        "command": "npx",
-        "args": [
-            "-y",
-            "@modelcontextprotocol/server-redis"
-        ],
-        "icon": "Zap",
-        "requires_api_key": false
-    },
-    "aws-s3": {
-        "name": "AWS S3",
-        "description": "Manage files and buckets on Amazon S3",
-        "command": "npx",
-        "args": [
-            "-y",
-            "@modelcontextprotocol/server-aws-s3"
-        ],
-        "icon": "Cloud",
-        "requires_api_key": true
-    },
-    "trello": {
-        "name": "Trello",
-        "description": "Interact with Trello boards and cards",
-        "command": "npx",
-        "args": [
-            "-y",
-            "@modelcontextprotocol/server-trello"
-        ],
-        "icon": "Columns",
-        "requires_api_key": true
+    "skills": {
+        "sales-engineer": {
+            "name": "Sales Engineer",
+            "description": "Analyzes RFP/RFI responses for coverage gaps, builds competitive feature comparison matrices, and plans proof-of-concept (POC) engagements for pre-sales engi...",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "sales-engineer",
+                "displayName": "Sales Engineer",
+                "summary": "Analyzes RFP/RFI responses for coverage gaps, builds competitive feature comparison matrices, and plans proof-of-concept (POC) engagements for pre-sales engi...",
+                "tags": {
+                    "latest": "1.0.0"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 81,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 0,
+                    "versions": 2
+                },
+                "createdAt": 1772590327126,
+                "updatedAt": 1773072108669,
+                "latestVersion": {
+                    "version": "1.0.0",
+                    "createdAt": 1773070460883,
+                    "changelog": "v2.1.1 release",
+                    "license": null
+                },
+                "metadata": null
+            }
+        },
+        "remote-viewing-protocol": {
+            "name": "Remote Viewing Protocol",
+            "description": "Standardized remote viewing protocol for AI agents. Test whether your agent can identify hidden targets from coordinate-style prompts using controlled, doubl...",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "remote-viewing-protocol",
+                "displayName": "Remote Viewing Protocol",
+                "summary": "Standardized remote viewing protocol for AI agents. Test whether your agent can identify hidden targets from coordinate-style prompts using controlled, doubl...",
+                "tags": {
+                    "latest": "2.0.0"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 0,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 0,
+                    "versions": 3
+                },
+                "createdAt": 1773062110504,
+                "updatedAt": 1773072108484,
+                "latestVersion": {
+                    "version": "2.0.0",
+                    "createdAt": 1773072071375,
+                    "changelog": "Version 2.0.0 of remote-viewing-protocol\n\n- No file changes detected in this release.\n- Functionality and documentation remain unchanged from the previous version.",
+                    "license": null
+                },
+                "metadata": null
+            }
+        },
+        "video-summary": {
+            "name": "Video Summary",
+            "description": "Video summarization for Bilibili, Xiaohongshu, Douyin, and YouTube. Extract insights from video content through transcription and summarization.",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "video-summary",
+                "displayName": "Video Summary",
+                "summary": "Video summarization for Bilibili, Xiaohongshu, Douyin, and YouTube. Extract insights from video content through transcription and summarization.",
+                "tags": {
+                    "ai": "1.3.3",
+                    "bilibili": "1.3.3",
+                    "douyin": "1.3.3",
+                    "latest": "1.3.5",
+                    "summarization": "1.3.3",
+                    "transcription": "1.3.3",
+                    "video": "1.3.3",
+                    "whisper": "1.3.3",
+                    "xiaohongshu": "1.3.3",
+                    "youtube": "1.3.3"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 131,
+                    "installsAllTime": 5,
+                    "installsCurrent": 5,
+                    "stars": 0,
+                    "versions": 8
+                },
+                "createdAt": 1772962558935,
+                "updatedAt": 1773072107883,
+                "latestVersion": {
+                    "version": "1.3.5",
+                    "createdAt": 1773071868307,
+                    "changelog": "Security audit: removed patterns that triggered false positive flags.",
+                    "license": null
+                },
+                "metadata": {
+                    "os": null,
+                    "systems": null
+                }
+            }
+        },
+        "openclaw-agent-compute": {
+            "name": "OpenClaw Agent Compute",
+            "description": "Public HTTP client skill exposing compute.* tools by calling a private Compute Gateway over HTTPS. Includes a starter kit to run OpenClaw preconfigured.",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "openclaw-agent-compute",
+                "displayName": "OpenClaw Agent Compute",
+                "summary": "Public HTTP client skill exposing compute.* tools by calling a private Compute Gateway over HTTPS. Includes a starter kit to run OpenClaw preconfigured.",
+                "tags": {
+                    "latest": "0.1.7"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 211,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 0,
+                    "versions": 3
+                },
+                "createdAt": 1772079427142,
+                "updatedAt": 1773072099865,
+                "latestVersion": {
+                    "version": "0.1.7",
+                    "createdAt": 1773072069247,
+                    "changelog": "- Added .env.example files for both the main project and the starter kit to clarify environment variable setup.\n- Included a LICENSE file.\n- No changes to core functionality.",
+                    "license": null
+                },
+                "metadata": null
+            }
+        },
+        "sec-13f-tracker": {
+            "name": "SEC 13F Whale Tracker",
+            "description": "Track top fund managers' holdings via SEC 13F filings. Fetches quarterly filings from SEC EDGAR, compares quarter-over-quarter changes (new positions, increa...",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "sec-13f-tracker",
+                "displayName": "SEC 13F Whale Tracker",
+                "summary": "Track top fund managers' holdings via SEC 13F filings. Fetches quarterly filings from SEC EDGAR, compares quarter-over-quarter changes (new positions, increa...",
+                "tags": {
+                    "latest": "1.0.0"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 0,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 0,
+                    "versions": 1
+                },
+                "createdAt": 1773072078904,
+                "updatedAt": 1773072092209,
+                "latestVersion": {
+                    "version": "1.0.0",
+                    "createdAt": 1773072078904,
+                    "changelog": "Initial release: track Buffett, Dalio, Ackman, Soros, Cathie Wood holdings via SEC EDGAR 13F filings with quarter-over-quarter comparison and cross-fund convergence analysis",
+                    "license": null
+                },
+                "metadata": null
+            }
+        },
+        "heartbeat-kit": {
+            "name": "Heartbeat Kit",
+            "description": "Pre-built HEARTBEAT.md templates for common agent tasks: email checking, calendar monitoring, weather alerts, system health, news digests. Drop in and go.",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "heartbeat-kit",
+                "displayName": "Heartbeat Kit",
+                "summary": "Pre-built HEARTBEAT.md templates for common agent tasks: email checking, calendar monitoring, weather alerts, system health, news digests. Drop in and go.",
+                "tags": {
+                    "latest": "1.0.0"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 19,
+                    "installsAllTime": 1,
+                    "installsCurrent": 1,
+                    "stars": 0,
+                    "versions": 1
+                },
+                "createdAt": 1773046652462,
+                "updatedAt": 1773072070057,
+                "latestVersion": {
+                    "version": "1.0.0",
+                    "createdAt": 1773046652462,
+                    "changelog": "Initial upload",
+                    "license": null
+                },
+                "metadata": {
+                    "os": null,
+                    "systems": null
+                }
+            }
+        },
+        "openbotcity": {
+            "name": "OpenBotCity",
+            "description": "A virtual city where AI agents live, work, create, date, and socialize",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "openbotcity",
+                "displayName": "OpenBotCity",
+                "summary": "A virtual city where AI agents live, work, create, date, and socialize",
+                "tags": {
+                    "latest": "2.0.72"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 1684,
+                    "installsAllTime": 2,
+                    "installsCurrent": 2,
+                    "stars": 2,
+                    "versions": 73
+                },
+                "createdAt": 1770744853369,
+                "updatedAt": 1773072042372,
+                "latestVersion": {
+                    "version": "2.0.72",
+                    "createdAt": 1773072023430,
+                    "changelog": "- Improved JWT (token) storage instructions: now uses OpenClaw's built-in credential storage system for enhanced security and automatic injection.\n- Updated registration instructions to simplify and clarify token handling for new users.\n- Streamlined shell setup guidance, focusing on essential helper functions and session checks.\n- No changes to core API functionality or features.",
+                    "license": null
+                },
+                "metadata": {
+                    "os": null,
+                    "systems": null
+                }
+            }
+        },
+        "eva-soul-by-openclaw": {
+            "name": "Eva Soul",
+            "description": "\u590f\u5a03\u4e4b\u9b42\u96c6\u6210\u6280\u80fd - \u5c06\u590f\u5a03\u4e4b\u9b42\u8ba4\u77e5\u7cfb\u7edf\u81ea\u52a8\u96c6\u6210\u5230\u6bcf\u6b21\u5bf9\u8bdd\u4e2d\uff08\u72ec\u7acb\u5b8c\u6574\u7248\uff09",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "eva-soul-by-openclaw",
+                "displayName": "Eva Soul",
+                "summary": "\u590f\u5a03\u4e4b\u9b42\u96c6\u6210\u6280\u80fd - \u5c06\u590f\u5a03\u4e4b\u9b42\u8ba4\u77e5\u7cfb\u7edf\u81ea\u52a8\u96c6\u6210\u5230\u6bcf\u6b21\u5bf9\u8bdd\u4e2d\uff08\u72ec\u7acb\u5b8c\u6574\u7248\uff09",
+                "tags": {
+                    "latest": "1.2.1"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 20,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 1,
+                    "versions": 3
+                },
+                "createdAt": 1773042251256,
+                "updatedAt": 1773072027467,
+                "latestVersion": {
+                    "version": "1.2.1",
+                    "createdAt": 1773071406174,
+                    "changelog": "eva-soul-by-openclaw v1.2.1\n\n- \u79fb\u9664\u4e86\u591a\u4e2a\u5185\u5b58\u76f8\u5173\u811a\u672c\u548c\u6570\u636e\u6587\u4ef6\n- \u6e05\u7406\uff1a\u5220\u9664\u4e86 memory \u76f8\u5173\u5197\u4f59\u5b9e\u73b0\u4e0e\u7f13\u5b58\uff086 \u4e2a\u6587\u4ef6\uff09\n- \u6ca1\u6709\u529f\u80fd\u65b0\u589e\uff0c\u4ec5\u4f5c\u7cbe\u7b80\u548c\u7ef4\u62a4",
+                    "license": null
+                },
+                "metadata": {
+                    "os": null,
+                    "systems": null
+                }
+            }
+        },
+        "freelancer-bidder": {
+            "name": "Freelancer Auto Bidder",
+            "description": "Automatically find and submit bids on Freelancer projects matching your skills to increase job acquisition efficiency.",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "freelancer-bidder",
+                "displayName": "Freelancer Auto Bidder",
+                "summary": "Automatically find and submit bids on Freelancer projects matching your skills to increase job acquisition efficiency.",
+                "tags": {
+                    "latest": "1.0.0"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 0,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 0,
+                    "versions": 1
+                },
+                "createdAt": 1773071974722,
+                "updatedAt": 1773071990213,
+                "latestVersion": {
+                    "version": "1.0.0",
+                    "createdAt": 1773071974722,
+                    "changelog": "123",
+                    "license": null
+                },
+                "metadata": null
+            }
+        },
+        "tencent-docs": {
+            "name": "\u817e\u8baf\u6587\u6863 tencent-docs",
+            "description": "\u817e\u8baf\u6587\u6863\uff0c\u63d0\u4f9b\u5b8c\u6574\u7684\u817e\u8baf\u6587\u6863\u64cd\u4f5c\u80fd\u529b\u3002\u5f53\u7528\u6237\u9700\u8981\u64cd\u4f5c\u817e\u8baf\u6587\u6863\u65f6\u4f7f\u7528\u6b64skill\uff0c\u5305\u62ec\uff1a(1) \u521b\u5efa\u5404\u7c7b\u5728\u7ebf\u6587\u6863\uff08\u667a\u80fd\u6587\u6863\u3001Word\u3001Excel\u3001\u5e7b\u706f\u7247\u3001\u601d\u7ef4\u5bfc\u56fe\u3001\u6d41\u7a0b\u56fe\uff09(2) \u67e5\u8be2\u3001\u641c\u7d22\u6587\u6863\u7a7a\u95f4\u4e0e\u6587\u4ef6 (3) \u7ba1\u7406\u7a7a\u95f4\u8282\u70b9\u3001\u6587\u4ef6\u5939\u7ed3\u6784 (4) \u8bfb\u53d6\u6587\u6863\u5185\u5bb9 (5) \u7f16\u8f91\u64cd\u4f5c\u667a\u80fd\u8868 \uff086\uff09\u7f16\u8f91\u64cd\u4f5c\u667a\u80fd\u6587\u6863\u3002",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "tencent-docs",
+                "displayName": "\u817e\u8baf\u6587\u6863 tencent-docs",
+                "summary": "\u817e\u8baf\u6587\u6863\uff0c\u63d0\u4f9b\u5b8c\u6574\u7684\u817e\u8baf\u6587\u6863\u64cd\u4f5c\u80fd\u529b\u3002\u5f53\u7528\u6237\u9700\u8981\u64cd\u4f5c\u817e\u8baf\u6587\u6863\u65f6\u4f7f\u7528\u6b64skill\uff0c\u5305\u62ec\uff1a(1) \u521b\u5efa\u5404\u7c7b\u5728\u7ebf\u6587\u6863\uff08\u667a\u80fd\u6587\u6863\u3001Word\u3001Excel\u3001\u5e7b\u706f\u7247\u3001\u601d\u7ef4\u5bfc\u56fe\u3001\u6d41\u7a0b\u56fe\uff09(2) \u67e5\u8be2\u3001\u641c\u7d22\u6587\u6863\u7a7a\u95f4\u4e0e\u6587\u4ef6 (3) \u7ba1\u7406\u7a7a\u95f4\u8282\u70b9\u3001\u6587\u4ef6\u5939\u7ed3\u6784 (4) \u8bfb\u53d6\u6587\u6863\u5185\u5bb9 (5) \u7f16\u8f91\u64cd\u4f5c\u667a\u80fd\u8868 \uff086\uff09\u7f16\u8f91\u64cd\u4f5c\u667a\u80fd\u6587\u6863\u3002",
+                "tags": {
+                    "latest": "1.0.5"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 5690,
+                    "installsAllTime": 31,
+                    "installsCurrent": 31,
+                    "stars": 5,
+                    "versions": 6
+                },
+                "createdAt": 1772185291095,
+                "updatedAt": 1773071962650,
+                "latestVersion": {
+                    "version": "1.0.5",
+                    "createdAt": 1773071932639,
+                    "changelog": "tencent-docs 1.0.5 Changelog\n\n- \u6587\u6863\u914d\u7f6e\u6307\u5357\u7ed3\u6784\u4f18\u5316\uff0c\u5206\u522b\u9488\u5bf9 CodeBuddy/IDE \u7528\u6237\u548c OpenClaw \u7528\u6237\u8be6\u7ec6\u8bf4\u660e\u914d\u7f6e\u6b65\u9aa4\u3002\n- Token \u83b7\u53d6\u4e0e\u914d\u7f6e\u76f8\u5173\u6307\u5f15\u7edf\u4e00\u66f4\u6362\u4e3a\u65b0\u7248\u6388\u6743\u5730\u5740\uff1ahttps://docs.qq.com/open/auth/mcp.html\u3002\n- \u65b0\u589e\u201c\u5e38\u89c1\u9519\u8bef\u7801\u53ca\u89e3\u51b3\u65b9\u6848\u201d\u652f\u6301\uff0c\u4fbf\u4e8e\u5feb\u901f\u6392\u67e5 Token \u9274\u6743/\u6743\u9650\u7b49\u76f8\u5173\u9519\u8bef\u3002\n- \u660e\u786e skill \u652f\u6301\u667a\u80fd\u6587\u6863\u7f16\u8f91\uff08smartcanvas.*\uff09\u7b49\u529f\u80fd\uff0c\u8865\u5145\u529f\u80fd\u63cf\u8ff0\u3002\n- \u5176\u4ed6\u90e8\u5206\u5185\u5bb9\u8868\u8fbe\u7565\u4f5c\u7b80\u5316\u3001\u4f18\u5316\uff0c\u964d\u4f4e\u4e0a\u624b\u96be\u5ea6\u3002",
+                    "license": null
+                },
+                "metadata": {
+                    "os": null,
+                    "systems": null
+                }
+            }
+        },
+        "xiaoai-speaker": {
+            "name": "\u5c0f\u7231\u97f3\u7bb1\u8bed\u97f3\u64ad\u62a5",
+            "description": "\u5c0f\u7231\u97f3\u7bb1\u8bed\u97f3\u64ad\u62a5\u3002\u4e00\u53e5\u8bdd\u8ba9\u5c0f\u7231\u8bf4\u8bdd\uff0c\u65e0\u9700\u7f16\u5199\u4ee3\u7801\uff0c\u652f\u6301\u5b9a\u65f6\u63d0\u9192\u3001\u8fdc\u7a0b\u558a\u8bdd\u3001\u5bb6\u5ead\u4f20\u8bdd\u3002",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "xiaoai-speaker",
+                "displayName": "\u5c0f\u7231\u97f3\u7bb1\u8bed\u97f3\u64ad\u62a5",
+                "summary": "\u5c0f\u7231\u97f3\u7bb1\u8bed\u97f3\u64ad\u62a5\u3002\u4e00\u53e5\u8bdd\u8ba9\u5c0f\u7231\u8bf4\u8bdd\uff0c\u65e0\u9700\u7f16\u5199\u4ee3\u7801\uff0c\u652f\u6301\u5b9a\u65f6\u63d0\u9192\u3001\u8fdc\u7a0b\u558a\u8bdd\u3001\u5bb6\u5ead\u4f20\u8bdd\u3002",
+                "tags": {
+                    "latest": "1.0.2"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 27,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 0,
+                    "versions": 3
+                },
+                "createdAt": 1773034810660,
+                "updatedAt": 1773071951280,
+                "latestVersion": {
+                    "version": "1.0.2",
+                    "createdAt": 1773071922159,
+                    "changelog": "xiaoai-speaker 1.0.2\n\n- Switched configuration to environment variables (MI_USER, MI_PASS, MI_DEVICE_NAME) for improved security and usability.\n- Updated documentation for faster setup and environment variable usage.\n- Refined CLI usage instructions and advanced use examples.\n- Clarified dependency handling; MiService SDK is now auto-installed if missing.\n- Enhanced FAQ, usage tips, and security notes in the documentation.",
+                    "license": null
+                },
+                "metadata": {
+                    "os": null,
+                    "systems": null
+                }
+            }
+        },
+        "prism-gen-demo": {
+            "name": "PRISM-GEN-DEMO",
+            "description": "English: Retrieve, filter, sort, merge, and visualize multiple CSV result files from PRISM-Gen molecular generation/screening. Provides portable query-based...",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "prism-gen-demo",
+                "displayName": "PRISM-GEN-DEMO",
+                "summary": "English: Retrieve, filter, sort, merge, and visualize multiple CSV result files from PRISM-Gen molecular generation/screening. Provides portable query-based...",
+                "tags": {
+                    "latest": "1.0.3"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 53,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 0,
+                    "versions": 3
+                },
+                "createdAt": 1772867830881,
+                "updatedAt": 1773071938263,
+                "latestVersion": {
+                    "version": "1.0.3",
+                    "createdAt": 1773071326171,
+                    "changelog": "- Expanded core functionality with new pipeline and processing scripts under core/\n- Added multiple CSV data files under data/ and demo/ for pre-computed molecule screening and analysis\n- Introduced offline-only mode for all basic functions, with Python dependencies now clearly optional for advanced visualization and analytics\n- Updated documentation to emphasize offline usage, distinguishing between basic (no install required) and advanced (Python required) features\n- Removed legacy documentation files (CONTRIBUTING.md, INSTALL.md, RELEASE_CHECKLIST.md, RELEASE_NOTES.md)\n- Refined technical requirements and usage guidance for clearer compatibility and setup steps",
+                    "license": null
+                },
+                "metadata": {
+                    "os": null,
+                    "systems": null
+                }
+            }
+        },
+        "openclaw-fomo3d": {
+            "name": "Openclaw Fomo3d",
+            "description": "Play Fomo3D, Slot Machine, and Prediction Market on BNB Chain (BSC). Fomo3D is a blockchain game where players buy shares using tokens \u2014 the last buyer befor...",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "openclaw-fomo3d",
+                "displayName": "Openclaw Fomo3d",
+                "summary": "Play Fomo3D, Slot Machine, and Prediction Market on BNB Chain (BSC). Fomo3D is a blockchain game where players buy shares using tokens \u2014 the last buyer befor...",
+                "tags": {
+                    "latest": "1.3.0"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 0,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 0,
+                    "versions": 1
+                },
+                "createdAt": 1773071765829,
+                "updatedAt": 1773071923353,
+                "latestVersion": {
+                    "version": "1.3.0",
+                    "createdAt": 1773071765829,
+                    "changelog": "Add prediction market CLI commands (pred *): 14 new subcommands for betting, creating markets, settling, and optimistic oracle flow",
+                    "license": null
+                },
+                "metadata": {
+                    "os": null,
+                    "systems": null
+                }
+            }
+        },
+        "pua-debugging-pro": {
+            "name": "pua-debugging-pro",
+            "description": "Professional anti-giveup debugging protocol for coding tasks where the agent starts looping, deflecting to users, or trying to end early without evidence. Us...",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "pua-debugging-pro",
+                "displayName": "pua-debugging-pro",
+                "summary": "Professional anti-giveup debugging protocol for coding tasks where the agent starts looping, deflecting to users, or trying to end early without evidence. Us...",
+                "tags": {
+                    "latest": "1.0.0"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 0,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 0,
+                    "versions": 1
+                },
+                "createdAt": 1773071604816,
+                "updatedAt": 1773071920594,
+                "latestVersion": {
+                    "version": "1.0.0",
+                    "createdAt": 1773071604816,
+                    "changelog": "Initial Release: Introduces a structured, dignified debugging protocol to improve problem-solving quality during repeated failures or low-agency situations.\n\n- Enforces evidence-driven debugging, verification before task completion, and escalation only after concrete checkpoints.\n- Provides a multi-level escalation ladder (L1\u2013L3) with clear checklists and required actions after each failure stage.\n- Mandates dignified, professional tone\u2014no humiliation or threatening language.\n- Specifies output contracts for progress and blocked states, ensuring transparent communication.\n- Defines strict stop conditions and closing procedure when further action is not safely possible.",
+                    "license": null
+                },
+                "metadata": null
+            }
+        },
+        "starmemo": {
+            "name": "starmemo",
+            "description": "Optimize AI memory by configuring one supported platform with API details to enable or disable local AI memory enhancement.",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "starmemo",
+                "displayName": "starmemo",
+                "summary": "Optimize AI memory by configuring one supported platform with API details to enable or disable local AI memory enhancement.",
+                "tags": {
+                    "latest": "1.1.0"
+                },
+                "stats": {
+                    "comments": 1,
+                    "downloads": 44,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 0,
+                    "versions": 11
+                },
+                "createdAt": 1773042896374,
+                "updatedAt": 1773071912734,
+                "latestVersion": {
+                    "version": "1.1.0",
+                    "createdAt": 1773071526743,
+                    "changelog": "No file changes detected for version 1.1.0.\n\n- No changes were made in this version.",
+                    "license": null
+                },
+                "metadata": null
+            }
+        },
+        "standup-scribe": {
+            "name": "standup-scribe",
+            "description": "Transform raw meeting transcripts into structured summaries, action items with assignees, key decisions, open questions, and a ready-to-send follow-up email.",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "standup-scribe",
+                "displayName": "standup-scribe",
+                "summary": "Transform raw meeting transcripts into structured summaries, action items with assignees, key decisions, open questions, and a ready-to-send follow-up email.",
+                "tags": {
+                    "latest": "1.1.0"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 12,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 0,
+                    "versions": 2
+                },
+                "createdAt": 1773058410369,
+                "updatedAt": 1773071905906,
+                "latestVersion": {
+                    "version": "1.1.0",
+                    "createdAt": 1773070967031,
+                    "changelog": "No user-facing changes detected in this version.\n\n- No file or documentation changes were found between versions.",
+                    "license": null
+                },
+                "metadata": {
+                    "os": [
+                        "darwin",
+                        "linux",
+                        "win32"
+                    ],
+                    "systems": null
+                }
+            }
+        },
+        "product-strategist": {
+            "name": "Product Strategist",
+            "description": "Strategic product leadership toolkit for Head of Product covering OKR cascade generation, quarterly planning, competitive landscape analysis, product vision...",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "product-strategist",
+                "displayName": "Product Strategist",
+                "summary": "Strategic product leadership toolkit for Head of Product covering OKR cascade generation, quarterly planning, competitive landscape analysis, product vision...",
+                "tags": {
+                    "latest": "2.1.1"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 1279,
+                    "installsAllTime": 9,
+                    "installsCurrent": 8,
+                    "stars": 0,
+                    "versions": 2
+                },
+                "createdAt": 1770402579059,
+                "updatedAt": 1773071902133,
+                "latestVersion": {
+                    "version": "2.1.1",
+                    "createdAt": 1773070359043,
+                    "changelog": "v2.1.1: optimization, reference splits",
+                    "license": null
+                },
+                "metadata": null
+            }
+        },
+        "recruiting": {
+            "name": "Recruiting",
+            "description": "Hiring workflow management with structured processes and candidate tracking. Use when user mentions hiring, job descriptions, resume screening, interviews, c...",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "recruiting",
+                "displayName": "Recruiting",
+                "summary": "Hiring workflow management with structured processes and candidate tracking. Use when user mentions hiring, job descriptions, resume screening, interviews, c...",
+                "tags": {
+                    "candidates": "2.0.0",
+                    "hiring": "2.0.0",
+                    "hr": "2.0.0",
+                    "jobs": "2.0.0",
+                    "latest": "2.3.0",
+                    "recruiting": "2.0.0"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 61,
+                    "installsAllTime": 1,
+                    "installsCurrent": 1,
+                    "stars": 0,
+                    "versions": 5
+                },
+                "createdAt": 1772919056484,
+                "updatedAt": 1773071901398,
+                "latestVersion": {
+                    "version": "2.3.0",
+                    "createdAt": 1773063833525,
+                    "changelog": "Version 2.3.0 of the recruiting skill contains no changes to existing files or features.\n\n- No modifications detected.\n- All workflows, safety policies, and script references remain unchanged.",
+                    "license": null
+                },
+                "metadata": null
+            }
+        },
+        "maestro-sdk": {
+            "name": "Maestro Sdk",
+            "description": "Build AI agents that operate Solana vaults using the Maestro SDK (@trionlabs/maestro-sdk). Use when creating agents that transfer tokens, swap, or interact w...",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "maestro-sdk",
+                "displayName": "Maestro Sdk",
+                "summary": "Build AI agents that operate Solana vaults using the Maestro SDK (@trionlabs/maestro-sdk). Use when creating agents that transfer tokens, swap, or interact w...",
+                "tags": {
+                    "latest": "0.1.0"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 0,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 0,
+                    "versions": 1
+                },
+                "createdAt": 1773071871167,
+                "updatedAt": 1773071898419,
+                "latestVersion": {
+                    "version": "0.1.0",
+                    "createdAt": 1773071871167,
+                    "changelog": "Initial release of maestro-sdk skill.\n\n- Enables building AI agents to operate Solana vaults using the Maestro SDK (@trionlabs/maestro-sdk)\n- Follows strict rules: agents only operate vaults (not hold funds), never ask for addresses, all payments use vault flows, and persist state for continuity\n- Provides auto-initialization with step-by-step onboarding and status messaging\n- Includes health checks, triggers for connection and payment actions, and detailed error handling with user-friendly guidance\n- SDK usage instructions, main constants, and app navigation paths are documented for quick integration and troubleshooting",
+                    "license": null
+                },
+                "metadata": null
+            }
+        },
+        "dead-internet": {
+            "name": "Dead Internet Forum",
+            "description": "A forum where AI bots and humans coexist. Post, reply, react, and argue.",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "dead-internet",
+                "displayName": "Dead Internet Forum",
+                "summary": "A forum where AI bots and humans coexist. Post, reply, react, and argue.",
+                "tags": {
+                    "latest": "1.0.0"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 0,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 0,
+                    "versions": 1
+                },
+                "createdAt": 1773071861875,
+                "updatedAt": 1773071881356,
+                "latestVersion": {
+                    "version": "1.0.0",
+                    "createdAt": 1773071861875,
+                    "changelog": "dead-internet 1.0.0\n\n- Initial release of the deadinternet-forum skill.\n- Browse, search, and read all forum threads and posts without registering.\n- Register as a bot to post, reply, react, and participate in discussions alongside humans and other bots.\n- Supports posting threads (including polls), replying, using hashtags, and reacting to posts.\n- Offers a variety of forum categories, post reactions, and image upload features.",
+                    "license": null
+                },
+                "metadata": {
+                    "os": null,
+                    "systems": null
+                }
+            }
+        },
+        "music-router": {
+            "name": "MusicRouter",
+            "description": "Automatically converts music sharing links across Chinese and major international platforms, extracting song details and album artwork for seamless multi-pla...",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "music-router",
+                "displayName": "MusicRouter",
+                "summary": "Automatically converts music sharing links across Chinese and major international platforms, extracting song details and album artwork for seamless multi-pla...",
+                "tags": {
+                    "latest": "1.0.0"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 0,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 0,
+                    "versions": 1
+                },
+                "createdAt": 1773071846902,
+                "updatedAt": 1773071878763,
+                "latestVersion": {
+                    "version": "1.0.0",
+                    "createdAt": 1773071846902,
+                    "changelog": "- Initial release of the Music Router Skill.\n- Automatically identifies the source platform of music sharing links.\n- Extracts song name, artist, and album artwork.\n- Provides direct conversion for Netease Cloud Music and QQ Music.\n- Resolves international links using the Odesli (song.link) API, covering Spotify, Apple Music, YouTube, Amazon Music, Tidal, Deezer, and SoundCloud.\n- Optional logging feature via command-line flag for conversion records.",
+                    "license": null
+                },
+                "metadata": null
+            }
+        },
+        "beauty-generation-api": {
+            "name": "beauty-generation-api",
+            "description": "FREE AI portrait generation with 140+ nationalities, diverse styles, professional headshots, character design, and fashion visualization. Fast generation (3-...",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "beauty-generation-api",
+                "displayName": "beauty-generation-api",
+                "summary": "FREE AI portrait generation with 140+ nationalities, diverse styles, professional headshots, character design, and fashion visualization. Fast generation (3-...",
+                "tags": {
+                    "latest": "1.2.39"
+                },
+                "stats": {
+                    "comments": 2,
+                    "downloads": 4206,
+                    "installsAllTime": 7,
+                    "installsCurrent": 7,
+                    "stars": 4,
+                    "versions": 38
+                },
+                "createdAt": 1769958071036,
+                "updatedAt": 1773071857313,
+                "latestVersion": {
+                    "version": "1.2.39",
+                    "createdAt": 1773071826218,
+                    "changelog": "- Version bump from 1.2.38 to 1.2.39.\n- No file or content changes detected in this release.",
+                    "license": null
+                },
+                "metadata": {
+                    "os": null,
+                    "systems": null
+                }
+            }
+        },
+        "openclaw-guardian-suite": {
+            "name": "OpenClaw \u5168\u80fd\u5b88\u62a4\u5305",
+            "description": "\u4e00\u952e\u5b89\u88c5\u5305\u542b\u914d\u7f6e\u5b89\u5168\u3001\u5bb9\u707e\u3001\u76d1\u63a7\u548c\u4e0a\u4e0b\u6587\u4f18\u5316\u7684 OpenClaw \u7cfb\u7edf\u5168\u94fe\u8def\u5b88\u62a4\u5957\u4ef6\u3002",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "openclaw-guardian-suite",
+                "displayName": "OpenClaw \u5168\u80fd\u5b88\u62a4\u5305",
+                "summary": "\u4e00\u952e\u5b89\u88c5\u5305\u542b\u914d\u7f6e\u5b89\u5168\u3001\u5bb9\u707e\u3001\u76d1\u63a7\u548c\u4e0a\u4e0b\u6587\u4f18\u5316\u7684 OpenClaw \u7cfb\u7edf\u5168\u94fe\u8def\u5b88\u62a4\u5957\u4ef6\u3002",
+                "tags": {
+                    "bundle": "1.0.0",
+                    "guardian": "1.0.0",
+                    "latest": "1.0.0",
+                    "monitoring": "1.0.0",
+                    "stability": "1.0.0",
+                    "system": "1.0.0"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 0,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 0,
+                    "versions": 1
+                },
+                "createdAt": 1773071251207,
+                "updatedAt": 1773071841755,
+                "latestVersion": {
+                    "version": "1.0.0",
+                    "createdAt": 1773071251207,
+                    "changelog": "\u521d\u7248 OpenClaw \u5168\u80fd\u5b88\u62a4\u5305\uff0c\u542b7\u4e2a\u7cfb\u7edf\u5b88\u62a4\u6280\u80fd + IP\u4fdd\u62a4 + \u7528\u6237\u6c34\u5370",
+                    "license": null
+                },
+                "metadata": {
+                    "os": null,
+                    "systems": null
+                }
+            }
+        }
     }
 }

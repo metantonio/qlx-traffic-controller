@@ -25,25 +25,67 @@ class MCPManager:
             response = requests.get(registry_url, timeout=10)
             if response.status_code == 200:
                 external_data = response.json()
-                # Merge logic: prefix external IDs to avoid collisions
-                # Ensure store file exists
+                # Merge logic
                 os.makedirs(os.path.dirname(self.store_path), exist_ok=True)
                 if not os.path.exists(self.store_path):
                     with open(self.store_path, 'w', encoding='utf-8') as f:
-                        json.dump({}, f)
+                        json.dump({"mcp": {}, "skills": {}}, f)
 
                 with open(self.store_path, 'r', encoding='utf-8') as f:
                     current_store = json.load(f)
                 
-                # Simple merge for now
+                # Ensure structure
+                if "mcp" not in current_store:
+                    current_store = {"mcp": current_store, "skills": {}}
+                
+                # Merge MCP servers
                 for key, value in external_data.items():
-                    if key not in current_store:
-                        current_store[key] = value
+                    if key not in current_store["mcp"]:
+                        current_store["mcp"][key] = value
                 
                 with open(self.store_path, 'w', encoding='utf-8') as f:
                     json.dump(current_store, f, indent=4)
-                return True, f"Synchronized {len(external_data)} servers."
+                return True, f"Synchronized {len(external_data)} MCP servers."
             return False, f"Registry returned {response.status_code}"
+        except Exception as e:
+            return False, str(e)
+
+    def refresh_clawhub_skills(self):
+        """Fetches skills from ClawHub API."""
+        try:
+            import requests
+            url = "https://clawhub.ai/api/v1/skills"
+            response = requests.get(url, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                skills = data.get("items", [])
+                
+                os.makedirs(os.path.dirname(self.store_path), exist_ok=True)
+                if not os.path.exists(self.store_path):
+                    current_store = {"mcp": {}, "skills": {}}
+                else:
+                    with open(self.store_path, 'r', encoding='utf-8') as f:
+                        current_store = json.load(f)
+                
+                # Ensure structure
+                if "skills" not in current_store:
+                    current_store["skills"] = {}
+                
+                # Update skills keeping metadata
+                for skill in skills:
+                    slug = skill.get("slug")
+                    current_store["skills"][slug] = {
+                        "name": skill.get("displayName", slug),
+                        "description": skill.get("summary", ""),
+                        "type": "skill",
+                        "source": "clawhub",
+                        "metadata": skill
+                    }
+                
+                with open(self.store_path, 'w', encoding='utf-8') as f:
+                    json.dump(current_store, f, indent=4)
+                return True, f"Synchronized {len(skills)} skills from ClawHub."
+            return False, f"ClawHub returned {response.status_code}"
         except Exception as e:
             return False, str(e)
 
@@ -159,18 +201,24 @@ class MCPManager:
         try:
             if os.path.exists(store_path):
                 with open(store_path, 'r') as f:
-                    return json.load(f)
-            return {}
+                    data = json.load(f)
+                    # Handle legacy format and unified format
+                    if "mcp" in data or "skills" in data:
+                        return data
+                    return {"mcp": data, "skills": {}}
+            return {"mcp": {}, "skills": {}}
         except Exception as e:
             logger.error(f"Failed to load MCP store: {e}")
-            return {}
+            return {"mcp": {}, "skills": {}}
 
     def install_from_store(self, server_id: str, overrides: Optional[Dict] = None):
-        store = self.load_store()
-        if server_id not in store:
+        store_data = self.load_store()
+        mcp_store = store_data.get("mcp", {})
+        
+        if server_id not in mcp_store:
             raise ValueError(f"Server {server_id} not found in store")
         
-        server_data = store[server_id].copy() # Copy to avoid mutating store
+        server_data = mcp_store[server_id].copy() # Copy to avoid mutating store
         
         # Simple placeholder replacement logic for args
         if overrides:

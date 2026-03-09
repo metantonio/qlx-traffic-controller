@@ -147,29 +147,48 @@ async def toggle_mcp_server(server_id: str, data: dict):
 async def refresh_mcp_store(payload: dict = None):
     from backend.tools.mcp_manager import mcp_manager
     url = payload.get("url") if payload else None
-    success, message = mcp_manager.refresh_store(url) if url else mcp_manager.refresh_store()
-    if not success:
-        raise HTTPException(status_code=500, detail=message)
-    return {"status": "ok", "message": message}
+    
+    # Refresh MCP Servers (GitHub)
+    mcp_success, mcp_msg = mcp_manager.refresh_store(url) if url else mcp_manager.refresh_store()
+    
+    # Refresh Skills (ClawHub)
+    claw_success, claw_msg = mcp_manager.refresh_clawhub_skills()
+    
+    if not mcp_success and not claw_success:
+        raise HTTPException(status_code=500, detail=f"Refresh failed. MCP: {mcp_msg}, ClawHub: {claw_msg}")
+        
+    return {
+        "status": "ok", 
+        "mcp": mcp_msg,
+        "clawhub": claw_msg
+    }
 
 # --- STORE ENDPOINTS ---
 
 @app.get("/api/store/mcp")
 async def list_mcp_store():
     from backend.tools.mcp_manager import mcp_manager
-    return mcp_manager.load_store()
+    store = mcp_manager.load_store()
+    return store.get("mcp", {})
 
 @app.get("/api/store/skills")
 async def list_skills_store():
-    store_path = os.path.join(os.path.dirname(__file__), "data", "skills_store.json")
+    from backend.tools.mcp_manager import mcp_manager
+    store = mcp_manager.load_store()
+    return store.get("skills", {})
+
+@app.get("/api/store/search")
+async def search_skills_store(q: str):
+    import requests
     try:
-        if os.path.exists(store_path):
-            with open(store_path, 'r') as f:
-                return json.load(f)
-        return {}
+        url = f"https://clawhub.ai/api/v1/search?q={q}"
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200:
+            return response.json()
+        return {"results": []}
     except Exception as e:
-        logger.error(f"Failed to load skills store: {e}")
-        return {}
+        logger.error(f"ClawHub search error: {e}")
+        return {"results": []}
 
 @app.post("/api/store/install")
 async def install_from_store(data: dict):
