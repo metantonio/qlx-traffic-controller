@@ -37,9 +37,11 @@ interface CustomAgentManagerModalProps {
     isOpen: boolean;
     onClose: () => void;
     onChanged: () => void;
+    initialAgentId?: string | null;
+    initialView?: 'list' | 'create';
 }
 
-export default function CustomAgentManagerModal({ isOpen, onClose, onChanged }: CustomAgentManagerModalProps) {
+export default function CustomAgentManagerModal({ isOpen, onClose, onChanged, initialAgentId, initialView }: CustomAgentManagerModalProps) {
     const [agents, setAgents] = useState<CustomAgent[]>([]);
     const [mcpServers, setMcpServers] = useState<MCPServer[]>([]);
     const [allTools, setAllTools] = useState<Tool[]>([]);
@@ -109,8 +111,27 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged }: 
     }, [apiUrl, formData.model]);
 
     useEffect(() => {
-        if (isOpen) fetchAllData();
-    }, [isOpen, fetchAllData]);
+        if (isOpen) {
+            fetchAllData().then(() => {
+                if (initialAgentId) {
+                    // Logic to find agent and set to edit mode
+                    // We'll need the latest agents list, so we do it after fetch
+                } else if (initialView) {
+                    setView(initialView);
+                }
+            });
+        }
+    }, [isOpen, fetchAllData, initialAgentId, initialView]);
+
+    // Second effect to handle the actual edit trigger once agents are loaded
+    useEffect(() => {
+        if (isOpen && initialAgentId && agents.length > 0) {
+            const agent = agents.find(a => a.id === initialAgentId);
+            if (agent) {
+                handleEdit(agent);
+            }
+        }
+    }, [isOpen, initialAgentId, agents]);
 
     const handleAdd = async () => {
         if (!formData.id || !formData.name) return;

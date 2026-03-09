@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Info, Search, Sparkles, ExternalLink, RefreshCw } from "lucide-react";
 import ExtensionCard from "./ExtensionCard";
+import CustomAgentManagerModal from "./CustomAgentManagerModal";
 
 interface Extension {
     id: string;
@@ -22,6 +23,8 @@ export default function ExtensionsView() {
     const [mcpStore, setMcpStore] = useState<Extension[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
+    const [editingAgentId, setEditingAgentId] = useState<string | null>(null);
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -61,7 +64,7 @@ export default function ExtensionsView() {
             ];
 
             // Format stores
-            const sStore: Extension[] = Object.entries(skillsS).map(([id, s]: [string, any]) => ({
+            const sStore: Extension[] = (Object.entries(skillsS) as [string, { name: string; description: string }][]).map(([id, s]) => ({
                 id,
                 name: s.name,
                 description: s.description,
@@ -69,7 +72,7 @@ export default function ExtensionsView() {
                 status: 'available' as const
             }));
 
-            const mStore: Extension[] = Object.entries(mcpsS).map(([id, m]: [string, any]) => ({
+            const mStore: Extension[] = (Object.entries(mcpsS) as [string, { name: string; description: string; requires_api_key?: boolean }][]).map(([id, m]) => ({
                 id,
                 name: m.name,
                 description: m.description,
@@ -180,6 +183,16 @@ export default function ExtensionsView() {
         }
     };
 
+    const handleConfigure = (id: string, type: 'skill' | 'mcp') => {
+        if (type === 'skill') {
+            setEditingAgentId(id);
+            setIsAgentModalOpen(true);
+        } else {
+            console.log("Configure MCP", id);
+            // Future: MCP configuration modal
+        }
+    };
+
     const filterExtensions = (list: Extension[]) => {
         return list.filter(ext =>
             ext.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -229,7 +242,7 @@ export default function ExtensionsView() {
                     <div className="max-w-3xl">
                         <h3 className="text-lg font-bold text-neutral-100 mb-2">Skills & Ecosystem</h3>
                         <p className="text-sm text-neutral-400 leading-relaxed">
-                            Skills extend your agents with new capabilities. OpenFang supports the <span className="text-orange-400 font-bold">OpenClaw/ClawHub</span> ecosystem (3,000+ community skills) plus local skills.
+                            Skills extend your agents with new capabilities. QLX-traffic-controller supports the <span className="text-orange-400 font-bold">OpenClaw/ClawHub</span> ecosystem (3,000+ community skills) plus local skills.
                         </p>
                         <ul className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
                             <li className="flex items-center gap-2 text-xs text-neutral-500">
@@ -254,7 +267,7 @@ export default function ExtensionsView() {
                 ].map(tab => (
                     <button
                         key={tab.id}
-                        onClick={() => setActiveTab(tab.id as any)}
+                        onClick={() => setActiveTab(tab.id as 'installed' | 'skills-store' | 'mcp-store')}
                         className={`flex items-center gap-2 px-6 py-4 text-xs font-black uppercase tracking-[0.2em] transition-all relative ${activeTab === tab.id ? 'text-orange-500' : 'text-neutral-500 hover:text-neutral-300'}`}
                     >
                         {tab.icon}
@@ -299,10 +312,21 @@ export default function ExtensionsView() {
                             onToggle={(val) => handleToggle(ext.id, ext.type, val)}
                             onInstall={() => handleInstall(ext.id, ext.type, ext.requiresKey)}
                             onUninstall={() => handleUninstall(ext.id, ext.type)}
+                            onConfigure={() => handleConfigure(ext.id, ext.type)}
                         />
                     ))}
                 </div>
             )}
+
+            <CustomAgentManagerModal
+                isOpen={isAgentModalOpen}
+                onClose={() => {
+                    setIsAgentModalOpen(false);
+                    setEditingAgentId(null);
+                }}
+                onChanged={fetchData}
+                initialAgentId={editingAgentId}
+            />
         </div>
     );
 }
