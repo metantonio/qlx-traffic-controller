@@ -41,3 +41,15 @@ class DbMessage(Base):
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
 
     process = relationship("DbProcess", back_populates="messages")
+
+class DbMCPServer(Base):
+    __tablename__ = "mcp_servers"
+
+    id = Column(String, primary_key=True, index=True)
+    name = Column(String)
+    command = Column(String)
+    args = Column(JSON) # List[str]
+    env_encrypted = Column(String, nullable=True) # Encrypted JSON
+    enabled = Column(Integer, default=1) # 1 for True, 0 for False (SQLite preference)
+    transport = Column(String, default="stdio")
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)

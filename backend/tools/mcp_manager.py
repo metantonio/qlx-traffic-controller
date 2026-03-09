@@ -1,10 +1,13 @@
-
 import os
 import json
 import logging
 import time
 from typing import Dict, Any, List, Optional
 from langchain_mcp_adapters.client import MultiServerMCPClient
+from cryptography.fernet import Fernet
+from backend.core.database import SessionLocal, init_db
+from backend.models.database_models import DbMCPServer
+from backend.core.config import settings
 
 logger = logging.getLogger("QLX.MCP.Manager")
 
@@ -14,9 +17,86 @@ class MCPManager:
         self._cache = None
         self._cache_time = 0
         self._ttl = 300  # 5 minutes
-        self._ensure_config_exists()
         self.store_path = os.path.join(os.path.dirname(self.config_path), "mcp_store.json")
+        
+        # Initialize encryption
+        if not settings.ENCRYPTION_KEY:
+            logger.warning("ENCRYPTION_KEY not set in .env. MCP secrets will not be encrypted!")
+            self.fernet = None
+        else:
+            try:
+                self.fernet = Fernet(settings.ENCRYPTION_KEY.encode())
+            except Exception as e:
+                logger.error(f"Failed to initialize Fernet with ENCRYPTION_KEY: {e}")
+                self.fernet = None
+
+        init_db()
+        self._migrate_from_json()
         self._fix_mcp_paths()
+
+    def _encrypt(self, data: dict) -> Optional[str]:
+        if not data:
+            return None
+        if not self.fernet:
+            return json.dumps(data)
+        return self.fernet.encrypt(json.dumps(data).encode()).decode()
+
+    def _decrypt(self, encrypted_str: Optional[str]) -> dict:
+        if not encrypted_str:
+            return {}
+        if not self.fernet:
+            try:
+                return json.loads(encrypted_str)
+            except:
+                return {}
+        try:
+            decrypted = self.fernet.decrypt(encrypted_str.encode()).decode()
+            return json.loads(decrypted)
+        except Exception as e:
+            # Fallback: maybe it was saved as plain json before encryption was enabled
+            try:
+                return json.loads(encrypted_str)
+            except:
+                logger.error(f"Failed to decrypt MCP env: {e}")
+                return {}
+
+    def _migrate_from_json(self):
+        """Migrates data from mcp_servers.json to the database if the file exists."""
+        if not os.path.exists(self.config_path):
+            return
+
+        try:
+            with open(self.config_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+
+            if not config:
+                return
+
+            with SessionLocal() as db:
+                for server_id, data in config.items():
+                    # Check if already exists
+                    existing = db.query(DbMCPServer).filter(DbMCPServer.id == server_id).first()
+                    if not existing:
+                        new_server = DbMCPServer(
+                            id=server_id,
+                            name=data.get("name", server_id),
+                            command=data.get("command", ""),
+                            args=data.get("args", []),
+                            env_encrypted=self._encrypt(data.get("env", {})),
+                            enabled=1 if data.get("enabled", True) else 0,
+                            transport=data.get("transport", "stdio")
+                        )
+                        db.add(new_server)
+                db.commit()
+
+            # Backup and remove the old file
+            bak_path = self.config_path + ".bak"
+            if os.path.exists(bak_path):
+                os.remove(bak_path)
+            os.rename(self.config_path, bak_path)
+            logger.info(f"Migrated MCP config from JSON to DB. Original backed up to {bak_path}")
+        except Exception as e:
+            logger.error(f"Failed to migrate MCP JSON to DB: {e}")
 
     def refresh_store(self, registry_url: str = "https://raw.githubusercontent.com/modelcontextprotocol/servers/main/index.json"):
         """Fetches and merges external MCP servers into the store."""
@@ -25,20 +105,16 @@ class MCPManager:
             response = requests.get(registry_url, timeout=10)
             if response.status_code == 200:
                 external_data = response.json()
-                # Merge logic
                 os.makedirs(os.path.dirname(self.store_path), exist_ok=True)
                 if not os.path.exists(self.store_path):
-                    with open(self.store_path, 'w', encoding='utf-8') as f:
-                        json.dump({"mcp": {}, "skills": {}}, f)
-
-                with open(self.store_path, 'r', encoding='utf-8') as f:
-                    current_store = json.load(f)
+                    current_store = {"mcp": {}, "skills": {}}
+                else:
+                    with open(self.store_path, 'r', encoding='utf-8') as f:
+                        current_store = json.load(f)
                 
-                # Ensure structure
                 if "mcp" not in current_store:
                     current_store = {"mcp": current_store, "skills": {}}
                 
-                # Merge MCP servers
                 for key, value in external_data.items():
                     if key not in current_store["mcp"]:
                         current_store["mcp"][key] = value
@@ -67,11 +143,9 @@ class MCPManager:
                     with open(self.store_path, 'r', encoding='utf-8') as f:
                         current_store = json.load(f)
                 
-                # Ensure structure
                 if "skills" not in current_store:
                     current_store["skills"] = {}
                 
-                # Update skills keeping metadata
                 for skill in skills:
                     slug = skill.get("slug")
                     current_store["skills"][slug] = {
@@ -90,70 +164,47 @@ class MCPManager:
             return False, str(e)
 
     def _fix_mcp_paths(self):
-        """Fixes MCP server paths to be absolute and cross-platform."""
-        config = self.load_config()
+        """Fixes MCP server paths in the database."""
         project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-        changed = False
-
-        if "filesystem" in config:
-            workspace_dir = os.path.join(project_root, "workspace")
-            os.makedirs(workspace_dir, exist_ok=True)
-            config["filesystem"]["args"] = ["-y", "@modelcontextprotocol/server-filesystem", workspace_dir, project_root]
-            changed = True
-
-        if "excel" in config:
-            # Determine python path based on OS
-            python_exe = "python.exe" if os.name == "nt" else "python"
-            venv_path = os.path.join(project_root, "backend", "venv", "Scripts" if os.name == "nt" else "bin", python_exe)
-            excel_path = os.path.join(project_root, "backend", "servers", "sv-excel-agent")
+        
+        with SessionLocal() as db:
+            # Filesystem
+            fs = db.query(DbMCPServer).filter(DbMCPServer.id == "filesystem").first()
+            if fs:
+                workspace_dir = os.path.join(project_root, "workspace")
+                os.makedirs(workspace_dir, exist_ok=True)
+                fs.args = ["-y", "@modelcontextprotocol/server-filesystem", workspace_dir, project_root]
             
-            config["excel"]["command"] = venv_path
-            if "env" not in config["excel"]:
-                config["excel"]["env"] = {}
-            config["excel"]["env"]["PYTHONPATH"] = excel_path
-            changed = True
-
-        if changed:
-            self.save_config(config)
-            logger.info("Updated MCP server paths to be dynamic.")
-
-    def _ensure_config_exists(self):
-        os.makedirs(os.path.dirname(self.config_path), exist_ok=True)
-        if not os.path.exists(self.config_path):
-            with open(self.config_path, 'w') as f:
-                json.dump({}, f)
-
-    def load_config(self) -> Dict[str, Any]:
-        try:
-            with open(self.config_path, 'r') as f:
-                return json.load(f)
-        except Exception as e:
-            logger.error(f"Failed to load MCP config: {e}")
-            return {}
-
-    def save_config(self, config: Dict[str, Any]):
-        try:
-            with open(self.config_path, 'w') as f:
-                json.dump(config, f, indent=4)
-            self._cache = None  # Invalidate cache
-        except Exception as e:
-            logger.error(f"Failed to save MCP config: {e}")
+            # Excel
+            excel = db.query(DbMCPServer).filter(DbMCPServer.id == "excel").first()
+            if excel:
+                python_exe = "python.exe" if os.name == "nt" else "python"
+                venv_path = os.path.join(project_root, "backend", "venv", "Scripts" if os.name == "nt" else "bin", python_exe)
+                excel_path = os.path.join(project_root, "backend", "servers", "sv-excel-agent")
+                
+                excel.command = venv_path
+                env = self._decrypt(excel.env_encrypted)
+                env["PYTHONPATH"] = excel_path
+                excel.env_encrypted = self._encrypt(env)
+            
+            db.commit()
 
     async def get_all_tools(self) -> list:
         now = time.time()
         if self._cache is not None and (now - self._cache_time) < self._ttl:
             return self._cache
 
-        config = self.load_config()
-        enabled_servers = {
-            k: {
-                "command": v["command"],
-                "args": v["args"],
-                "transport": v.get("transport", "stdio"),
-                "env": v.get("env")
+        with SessionLocal() as db:
+            servers = db.query(DbMCPServer).filter(DbMCPServer.enabled == 1).all()
+            enabled_servers = {
+                s.id: {
+                    "command": s.command,
+                    "args": s.args,
+                    "transport": s.transport,
+                    "env": self._decrypt(s.env_encrypted)
+                }
+                for s in servers
             }
-            for k, v in config.items() if v.get("enabled", True)
-        }
 
         if not enabled_servers:
             return []
@@ -169,40 +220,55 @@ class MCPManager:
             return self._cache if self._cache else []
 
     def add_server(self, id: str, name: str, command: str, args: List[str], env: Optional[Dict] = None):
-        config = self.load_config()
-        config[id] = {
-            "name": name,
-            "command": command,
-            "args": args,
-            "transport": "stdio",
-            "env": env,
-            "enabled": True
-        }
-        self.save_config(config)
+        with SessionLocal() as db:
+            server = DbMCPServer(
+                id=id,
+                name=name,
+                command=command,
+                args=args,
+                env_encrypted=self._encrypt(env) if env else None,
+                enabled=1,
+                transport="stdio"
+            )
+            db.merge(server)
+            db.commit()
+            self._cache = None
 
     def remove_server(self, id: str):
-        config = self.load_config()
-        if id in config:
-            del config[id]
-            self.save_config(config)
+        with SessionLocal() as db:
+            db.query(DbMCPServer).filter(DbMCPServer.id == id).delete()
+            db.commit()
+            self._cache = None
 
     def toggle_server(self, id: str, enabled: bool):
-        config = self.load_config()
-        if id in config:
-            config[id]["enabled"] = enabled
-            self.save_config(config)
+        with SessionLocal() as db:
+            server = db.query(DbMCPServer).filter(DbMCPServer.id == id).first()
+            if server:
+                server.enabled = 1 if enabled else 0
+                db.commit()
+                self._cache = None
 
     def list_servers(self) -> List[Dict[str, Any]]:
-        config = self.load_config()
-        return [{"id": k, **v} for k, v in config.items()]
+        with SessionLocal() as db:
+            servers = db.query(DbMCPServer).all()
+            return [
+                {
+                    "id": s.id,
+                    "name": s.name,
+                    "command": s.command,
+                    "args": s.args,
+                    "enabled": bool(s.enabled),
+                    "transport": s.transport,
+                    "env": self._decrypt(s.env_encrypted)
+                }
+                for s in servers
+            ]
 
     def load_store(self) -> Dict[str, Any]:
-        store_path = os.path.join(os.path.dirname(self.config_path), "mcp_store.json")
         try:
-            if os.path.exists(store_path):
-                with open(store_path, 'r') as f:
+            if os.path.exists(self.store_path):
+                with open(self.store_path, 'r', encoding='utf-8') as f:
                     data = json.load(f)
-                    # Handle legacy format and unified format
                     if "mcp" in data or "skills" in data:
                         return data
                     return {"mcp": data, "skills": {}}
@@ -218,28 +284,35 @@ class MCPManager:
         if server_id not in mcp_store:
             raise ValueError(f"Server {server_id} not found in store")
         
-        server_data = mcp_store[server_id].copy() # Copy to avoid mutating store
+        server_data = mcp_store[server_id].copy()
         
-        # Simple placeholder replacement logic for args
         if overrides:
             new_args = []
+            final_env = server_data.get("env", {}) or {}
+            
             for arg in server_data.get("args", []):
                 new_arg = arg
                 for key, value in overrides.items():
                     placeholder = f"YOUR_{key.upper()}_KEY"
                     if placeholder in new_arg:
                         new_arg = new_arg.replace(placeholder, value)
-                    # Also check for generic placeholder from common names
                     elif key.upper() in new_arg and ("YOUR_" in new_arg or "TOKEN" in new_arg):
                         new_arg = value
+                    
+                    # Also handle overrides into ENV if specified in store or by common pattern
+                    if key.upper() in ["API_KEY", "TOKEN", "SECRET"]:
+                        final_env[key.upper()] = value
                 new_args.append(new_arg)
+            
             server_data["args"] = new_args
+            server_data["env"] = final_env
 
         self.add_server(
             id=server_id,
             name=server_data["name"],
             command=server_data["command"],
-            args=server_data["args"]
+            args=server_data["args"],
+            env=server_data.get("env")
         )
 
 # Singleton instance
