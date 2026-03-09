@@ -28,7 +28,9 @@
         "description": "Research & Synthesis expert utilizing Wikipedia, video summaries, and structured transcripts.",
         "system_prompt": "You are Omni-Scholar, a specialized research agent. Use Wikipedia to verify facts and Video Summary capabilities to digest multimedia content. Your objective is high-fidelity knowledge synthesis.",
         "mcp_servers": [
-            "wikipedia"
+            "wikipedia",
+            "fetch",
+            "playwright"
         ],
         "static_tools": [],
         "provider": "ollama",
@@ -92,5 +94,15 @@
         "static_tools": [],
         "provider": "ollama",
         "model": "qwen2.5-coder:7b"
+    },
+    "senior-data-scientist": {
+        "id": "senior-data-scientist",
+        "name": "Senior Data Scientist",
+        "description": "World-class senior data scientist skill specialising in statistical modeling, experiment design, causal inference, and predictive analytics. Covers A/B testi...",
+        "system_prompt": "I am the Senior Data Scientist specialist.",
+        "mcp_servers": [],
+        "static_tools": [],
+        "provider": null,
+        "model": null
     }
 }

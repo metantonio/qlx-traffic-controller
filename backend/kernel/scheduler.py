@@ -144,9 +144,10 @@ class TaskScheduler:
                     # But for now, get_all_tools uses a multi-client. 
                     # Let's see if we can filter by server in the client.
                     
-                    config = mcp_manager.load_config()
+                    all_servers = mcp_manager.list_servers()
                     enabled_for_agent = {
-                        s_id: config[s_id] for s_id in target_mcp_servers if s_id in config and config[s_id].get("enabled", True)
+                        s["id"]: s for s in all_servers 
+                        if s["id"] in target_mcp_servers and s.get("enabled", True)
                     }
                     
                     if enabled_for_agent:
