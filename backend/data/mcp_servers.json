@@ -33,5 +33,16 @@
         },
         "transport": "stdio",
         "enabled": true
+    },
+    "wikipedia": {
+        "name": "Wikipedia",
+        "command": "npx",
+        "args": [
+            "-y",
+            "@modelcontextprotocol/server-wikipedia"
+        ],
+        "transport": "stdio",
+        "env": null,
+        "enabled": true
     }
 }

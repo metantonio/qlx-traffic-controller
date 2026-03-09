@@ -32,7 +32,7 @@ export default function Dashboard() {
   const [events, setEvents] = useState<CommandEvent[]>([]);
   const [kernelMetrics, setKernelMetrics] = useState<KernelMetrics | null>(null);
   const [taskText, setTaskText] = useState("");
-  const [enabledTools, setEnabledTools] = useState<string[]>([]);
+  const [enabledTools] = useState<string[]>([]);
   const [selectedPid, setSelectedPid] = useState<string | null>(null);
   const [llmProvider, setLlmProvider] = useState<string>("");
   const [llmModel, setLlmModel] = useState<string>("");
@@ -107,7 +107,7 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0b] text-neutral-100 font-sans antialiased selection:bg-blue-500/30 overflow-hidden flex">
+    <div className="h-screen bg-[#0a0a0b] text-neutral-100 font-sans antialiased selection:bg-blue-500/30 overflow-hidden flex">
       {/* Sidebar */}
       <aside className="w-64 border-r border-neutral-800/50 bg-neutral-900/20 backdrop-blur-xl flex flex-col shrink-0">
         <div className="p-6 border-b border-neutral-800/50">
@@ -186,8 +186,8 @@ export default function Dashboard() {
         </div>
 
         {activeView === 'dashboard' ? (
-          <div className="flex-grow p-8 overflow-y-auto custom-scrollbar flex flex-col">
-            {/* Header */}
+          <div className="flex-grow flex flex-col overflow-hidden p-4 md:p-8">
+            {/* Header - Fixed at top */}
             <header className="flex items-end justify-between mb-8 border-b border-neutral-800/50 pb-8 shrink-0">
               <div>
                 <h2 className="text-4xl font-black tracking-tighter text-white">Dashboard</h2>
@@ -219,50 +219,53 @@ export default function Dashboard() {
               </div>
             </header>
 
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 flex-grow mb-8">
-              {/* TOP LEFT: Workers */}
-              <div className="xl:col-span-4 space-y-8">
-                <div className="bg-neutral-900/60 border border-neutral-800/80 rounded-3xl p-6 shadow-xl backdrop-blur-xl">
-                  <div className="flex items-center gap-2 mb-6">
-                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.4)]" />
-                    <h2 className="text-xs font-black text-neutral-400 uppercase tracking-[0.2em]">Active Threads</h2>
+            {/* Scrollable Center Content */}
+            <div className="flex-grow overflow-y-auto custom-scrollbar pr-2 mb-8">
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+                {/* TOP LEFT: Workers */}
+                <div className="xl:col-span-4 space-y-8">
+                  <div className="bg-neutral-900/60 border border-neutral-800/80 rounded-3xl p-6 shadow-xl backdrop-blur-xl">
+                    <div className="flex items-center gap-2 mb-6">
+                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.4)]" />
+                      <h2 className="text-xs font-black text-neutral-400 uppercase tracking-[0.2em]">Active Threads</h2>
+                    </div>
+                    <ProcessMonitor metrics={kernelMetrics} onProcessClick={setSelectedPid} />
                   </div>
-                  <ProcessMonitor metrics={kernelMetrics} onProcessClick={setSelectedPid} />
-                </div>
 
-                <div className="bg-neutral-900/40 border border-neutral-800/50 rounded-3xl p-6 backdrop-blur-md">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xs font-black text-neutral-500 uppercase tracking-[0.2em]">System State</h2>
-                    <div className="px-2 py-0.5 bg-neutral-800 rounded text-[9px] font-mono text-neutral-500">LATEST_SYNC_2MS</div>
-                  </div>
-                  <div className="h-[300px]">
-                    <KnowledgeGraphExplorer />
-                  </div>
-                </div>
-              </div>
-
-              {/* TOP RIGHT / MIDDLE: Metrics & Vis */}
-              <div className="xl:col-span-8 space-y-8">
-                <TaskSchedulerVisualizer metrics={kernelMetrics} />
-
-                <div className="bg-neutral-900/60 border border-neutral-800/80 rounded-[2.5rem] p-8 shadow-xl backdrop-blur-xl shrink-0">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-500/10 rounded-xl">
-                        <MessageSquare size={16} className="text-blue-400" />
-                      </div>
-                      <h2 className="text-xs font-black text-neutral-400 uppercase tracking-[0.2em]">System Output</h2>
+                  <div className="bg-neutral-900/40 border border-neutral-800/50 rounded-3xl p-6 backdrop-blur-md">
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-xs font-black text-neutral-500 uppercase tracking-[0.2em]">System State</h2>
+                      <div className="px-2 py-0.5 bg-neutral-800 rounded text-[9px] font-mono text-neutral-500">LATEST_SYNC_2MS</div>
+                    </div>
+                    <div className="h-[300px]">
+                      <KnowledgeGraphExplorer />
                     </div>
                   </div>
-                  <div className="h-[400px]">
-                    <CommandMonitor events={events} />
+                </div>
+
+                {/* TOP RIGHT / MIDDLE: Metrics & Vis */}
+                <div className="xl:col-span-8 space-y-8">
+                  <TaskSchedulerVisualizer metrics={kernelMetrics} />
+
+                  <div className="bg-neutral-900/60 border border-neutral-800/80 rounded-[2.5rem] p-8 shadow-xl backdrop-blur-xl shrink-0">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-500/10 rounded-xl">
+                          <MessageSquare size={16} className="text-blue-400" />
+                        </div>
+                        <h2 className="text-xs font-black text-neutral-400 uppercase tracking-[0.2em]">System Output</h2>
+                      </div>
+                    </div>
+                    <div className="h-[400px]">
+                      <CommandMonitor events={events} />
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* BOTTOM CENTER: Chat Interface */}
-            <div className="max-w-4xl w-full mx-auto shrink-0 pb-4">
+            {/* BOTTOM CENTER: Chat Interface - Fixed at bottom */}
+            <div className="max-w-4xl w-full mx-auto shrink-0">
               <section className="relative overflow-hidden group">
                 <div className="p-6 bg-neutral-950/80 border border-neutral-800/80 rounded-[2.5rem] shadow-2xl backdrop-blur-2xl relative border-t-neutral-700/50 shadow-blue-500/5">
                   <div className="relative flex items-end gap-4">
