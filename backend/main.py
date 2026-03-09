@@ -454,14 +454,15 @@ async def websocket_endpoint(websocket: WebSocket):
                             
                         logger.info(f"Using Custom Agent: {custom_agent.name} with tools {resolved_tools}")
                     elif agent_name.lower() == "kernel":
-                        # Grant ALL tools and ALL enabled MCP servers to Kernel
-                        from backend.tools.mcp_registry import system_registry
-                        from backend.tools.mcp_manager import mcp_manager
-                        
-                        static_tools = [t["name"] for t in system_registry.list_tools()]
-                        mcp_servers = [s["id"] for s in mcp_manager.list_servers() if s.get("enabled", True)]
-                        resolved_tools = static_tools + [f"mcp:{s}" for s in mcp_servers]
-                        logger.info(f"Using Superuser Kernel: tool access granted for {resolved_tools}")
+                        # Kernel stays as Orchestrator: Base system tools + delegation
+                        resolved_tools = [
+                            "shell_execute", 
+                            "filesystem_read", 
+                            "filesystem_append", 
+                            "delegate_to_agent",
+                            "list_available_agents"
+                        ]
+                        logger.info(f"Using Orchestrator Kernel: restricted to {resolved_tools}")
                     
                     proc = AIProcess(
                         agent_name=agent_name,

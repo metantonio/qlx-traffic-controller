@@ -333,24 +333,92 @@ export default function ExtensionsView() {
                 </div>
             ) : (
                 <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 mb-10">
-                        {paginatedList.map(ext => (
-                            <ExtensionCard
-                                key={ext.id}
-                                id={ext.id}
-                                name={ext.name}
-                                description={ext.description}
-                                type={ext.type}
-                                status={ext.status}
-                                enabled={ext.enabled}
-                                requiresKey={ext.requiresKey}
-                                onToggle={(val) => handleToggle(ext.id, ext.type, val)}
-                                onInstall={() => handleInstall(ext.id, ext.type, ext.requiresKey)}
-                                onUninstall={() => handleUninstall(ext.id, ext.type)}
-                                onConfigure={() => handleConfigure(ext.id, ext.type)}
-                            />
-                        ))}
-                    </div>
+                    {activeTab === 'installed' ? (
+                        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500 mb-10">
+                            {/* Active Agents Section */}
+                            <section>
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="w-1.5 h-6 bg-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+                                    <h3 className="text-xl font-bold text-white tracking-tight">Active Agents & Skills</h3>
+                                    <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 text-[10px] font-mono rounded-lg border border-blue-500/20">SPECIALISTS</span>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
+                                    {paginatedList.filter(ext => ext.type === 'skill').map(ext => (
+                                        <ExtensionCard
+                                            key={ext.id}
+                                            id={ext.id}
+                                            name={ext.name}
+                                            description={ext.description}
+                                            type={ext.type}
+                                            status={ext.status}
+                                            enabled={ext.enabled}
+                                            requiresKey={ext.requiresKey}
+                                            onToggle={(val) => handleToggle(ext.id, ext.type, val)}
+                                            onInstall={() => handleInstall(ext.id, ext.type, ext.requiresKey)}
+                                            onUninstall={() => handleUninstall(ext.id, ext.type)}
+                                            onConfigure={() => handleConfigure(ext.id, ext.type)}
+                                        />
+                                    ))}
+                                    {paginatedList.filter(ext => ext.type === 'skill').length === 0 && (
+                                        <div className="col-span-full py-8 px-8 border border-neutral-800/50 rounded-3xl bg-neutral-900/20">
+                                            <p className="text-neutral-600 text-xs italic">No custom agents or skills active in this page.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </section>
+
+                            {/* Active Bridges Section */}
+                            <section>
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="w-1.5 h-6 bg-orange-500 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.5)]" />
+                                    <h3 className="text-xl font-bold text-white tracking-tight">Active Bridges (MCP)</h3>
+                                    <span className="px-2 py-0.5 bg-orange-500/10 text-orange-400 text-[10px] font-mono rounded-lg border border-orange-500/20">INFRASTRUCTURE</span>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
+                                    {paginatedList.filter(ext => ext.type === 'mcp').map(ext => (
+                                        <ExtensionCard
+                                            key={ext.id}
+                                            id={ext.id}
+                                            name={ext.name}
+                                            description={ext.description}
+                                            type={ext.type}
+                                            status={ext.status}
+                                            enabled={ext.enabled}
+                                            requiresKey={ext.requiresKey}
+                                            onToggle={(val) => handleToggle(ext.id, ext.type, val)}
+                                            onInstall={() => handleInstall(ext.id, ext.type, ext.requiresKey)}
+                                            onUninstall={() => handleUninstall(ext.id, ext.type)}
+                                            onConfigure={() => handleConfigure(ext.id, ext.type)}
+                                        />
+                                    ))}
+                                    {paginatedList.filter(ext => ext.type === 'mcp').length === 0 && (
+                                        <div className="col-span-full py-8 px-8 border border-neutral-800/50 rounded-3xl bg-neutral-900/20">
+                                            <p className="text-neutral-600 text-xs italic">No MCP bridges active in this page.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </section>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 mb-10">
+                            {paginatedList.map(ext => (
+                                <ExtensionCard
+                                    key={ext.id}
+                                    id={ext.id}
+                                    name={ext.name}
+                                    description={ext.description}
+                                    type={ext.type}
+                                    status={ext.status}
+                                    enabled={ext.enabled}
+                                    requiresKey={ext.requiresKey}
+                                    onToggle={(val) => handleToggle(ext.id, ext.type, val)}
+                                    onInstall={() => handleInstall(ext.id, ext.type, ext.requiresKey)}
+                                    onUninstall={() => handleUninstall(ext.id, ext.type)}
+                                    onConfigure={() => handleConfigure(ext.id, ext.type)}
+                                />
+                            ))}
+                        </div>
+                    )}
 
                     {/* Pagination Controls */}
                     {totalPages > 1 && (
