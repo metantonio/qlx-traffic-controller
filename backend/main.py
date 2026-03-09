@@ -22,6 +22,7 @@ import backend.tools.shell
 import backend.tools.filesystem
 import backend.tools.memory
 import backend.tools.pipeline_tools
+import backend.tools.agent_tools
 logger = get_kernel_logger("QLX-TC.Main")
 
 app = FastAPI(title="AI Control Tower API", version="0.1.0")
@@ -451,7 +452,16 @@ async def websocket_endpoint(websocket: WebSocket):
                         if not llm_model and custom_agent.model:
                             llm_model = custom_agent.model
                             
-                        logger.info(f"Using Custom Agent: {custom_agent.name} with tools {resolved_tools}, LLM={llm_provider}/{llm_model}")
+                        logger.info(f"Using Custom Agent: {custom_agent.name} with tools {resolved_tools}")
+                    elif agent_name.lower() == "kernel":
+                        # Grant ALL tools and ALL enabled MCP servers to Kernel
+                        from backend.tools.mcp_registry import system_registry
+                        from backend.tools.mcp_manager import mcp_manager
+                        
+                        static_tools = [t["name"] for t in system_registry.list_tools()]
+                        mcp_servers = [s["id"] for s in mcp_manager.list_servers() if s.get("enabled", True)]
+                        resolved_tools = static_tools + [f"mcp:{s}" for s in mcp_servers]
+                        logger.info(f"Using Superuser Kernel: tool access granted for {resolved_tools}")
                     
                     proc = AIProcess(
                         agent_name=agent_name,
