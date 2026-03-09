@@ -25,6 +25,12 @@ import backend.tools.pipeline_tools
 import backend.tools.agent_tools
 logger = get_kernel_logger("QLX-TC.Main")
 
+KERNEL_SYSTEM_PROMPT = """You are the QLX-TC Orchestrator (Kernel). 
+Your role is to manage the system and delegate complex tasks to specialized agents or skills.
+If you don't have a specific tool to fulfill a request (like Wikipedia search or Excel manipulation), 
+use 'list_available_agents' to find an expert and 'delegate_to_agent' to send them the task.
+Always be concise and professional. You act as the brain of the operation."""
+
 app = FastAPI(title="AI Control Tower API", version="0.1.0")
 
 @app.on_event("startup")
@@ -472,7 +478,7 @@ async def websocket_endpoint(websocket: WebSocket):
                             llm_model = custom_agent.model
                             
                         logger.info(f"Using Custom Agent: {custom_agent.name} with tools {resolved_tools}")
-                    elif agent_name.lower() == "kernel":
+                    elif agent_name.lower() in ["kernel", "kernel_agent"]:
                         # Kernel stays as Orchestrator: Base system tools + delegation
                         resolved_tools = [
                             "shell_execute", 
@@ -481,6 +487,7 @@ async def websocket_endpoint(websocket: WebSocket):
                             "delegate_to_agent",
                             "list_available_agents"
                         ]
+                        system_prompt_override = KERNEL_SYSTEM_PROMPT
                         logger.info(f"Using Orchestrator Kernel: restricted to {resolved_tools}")
                     
                     proc = AIProcess(

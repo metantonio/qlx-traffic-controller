@@ -57,7 +57,7 @@ export default function Dashboard() {
 
     const payload = {
       action: 'spawn',
-      agent_name: selectedAgentId || 'kernel_agent',
+      agent_name: selectedAgentId || 'kernel',
       task: finalTask,
       allowed_tools: enabledTools,
       parent_pid: parent_pid,

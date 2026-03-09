@@ -70,5 +70,15 @@
         "static_tools": [],
         "provider": "ollama",
         "model": "qwen2.5-coder:7b"
+    },
+    "sec-13f-tracker": {
+        "id": "sec-13f-tracker",
+        "name": "SEC 13F Whale Tracker",
+        "description": "Track top fund managers' holdings via SEC 13F filings. Fetches quarterly filings from SEC EDGAR, compares quarter-over-quarter changes (new positions, increa...",
+        "system_prompt": "I am the SEC 13F Whale Tracker specialist.",
+        "mcp_servers": [],
+        "static_tools": [],
+        "provider": null,
+        "model": null
     }
 }
