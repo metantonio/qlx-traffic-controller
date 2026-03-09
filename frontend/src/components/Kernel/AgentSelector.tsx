@@ -18,9 +18,10 @@ export interface CustomAgent {
 interface AgentSelectorProps {
     onSelect: (agent: CustomAgent | null) => void;
     currentAgentId: string | null;
+    onViewChange?: (view: 'dashboard' | 'extensions' | 'history') => void;
 }
 
-export default function AgentSelector({ onSelect, currentAgentId }: AgentSelectorProps) {
+export default function AgentSelector({ onSelect, currentAgentId, onViewChange }: AgentSelectorProps) {
     const [agents, setAgents] = useState<CustomAgent[]>([]);
     const [isOpen, setIsOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -30,13 +31,8 @@ export default function AgentSelector({ onSelect, currentAgentId }: AgentSelecto
     const fetchAgents = useCallback(async () => {
         try {
             const url = `${apiUrl}/api/agents/custom`;
-            const res = await fetch(url).catch(e => {
-                console.error(`Network error reaching ${url}:`, e);
-                throw new Error(`Unreachable: ${url}`);
-            });
-
-            if (!res.ok) throw new Error(`HTTP Error: ${res.status} at ${url}`);
-
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
             const data = await res.json();
             setAgents(data);
         } catch (err) {
@@ -45,12 +41,7 @@ export default function AgentSelector({ onSelect, currentAgentId }: AgentSelecto
     }, [apiUrl]);
 
     useEffect(() => {
-        let isMounted = true;
-        const load = async () => {
-            if (isMounted) await fetchAgents();
-        };
-        load();
-        return () => { isMounted = false; };
+        fetchAgents();
     }, [fetchAgents]);
 
     const selectedAgent = agents.find(a => a.id === currentAgentId) || null;
@@ -80,13 +71,22 @@ export default function AgentSelector({ onSelect, currentAgentId }: AgentSelecto
                         <div className="p-2 border-b border-neutral-800 bg-neutral-950/30">
                             <div className="flex items-center justify-between px-2 py-1">
                                 <span className="text-[10px] text-neutral-500 uppercase font-black tracking-widest">Available Personalities</span>
-                                <button
-                                    onClick={() => { setIsModalOpen(true); setIsOpen(false); }}
-                                    className="p-1 hover:bg-neutral-800 rounded-lg text-blue-400 transition-colors"
-                                    title="Create Custom Persona"
-                                >
-                                    <Plus size={14} />
-                                </button>
+                                <div className="flex gap-1">
+                                    <button
+                                        onClick={() => { onViewChange?.('extensions'); setIsOpen(false); }}
+                                        className="p-1 hover:bg-neutral-800 rounded-lg text-purple-400 transition-colors"
+                                        title="Browse Skill Store"
+                                    >
+                                        <Sparkles size={14} />
+                                    </button>
+                                    <button
+                                        onClick={() => { setIsModalOpen(true); setIsOpen(false); }}
+                                        className="p-1 hover:bg-neutral-800 rounded-lg text-blue-400 transition-colors"
+                                        title="Create Custom Persona"
+                                    >
+                                        <Plus size={14} />
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -124,11 +124,11 @@ export default function AgentSelector({ onSelect, currentAgentId }: AgentSelecto
 
                         <div className="p-2 border-t border-neutral-800 bg-neutral-950/30">
                             <button
-                                onClick={() => { setIsModalOpen(true); setIsOpen(false); }}
+                                onClick={() => { onViewChange?.('extensions'); setIsOpen(false); }}
                                 className="w-full flex items-center justify-center gap-2 py-2 text-[10px] text-neutral-500 hover:text-blue-400 transition-colors font-black uppercase tracking-widest"
                             >
                                 <Settings size={12} />
-                                Configure Personas
+                                Manage Extensions
                             </button>
                         </div>
                     </div>

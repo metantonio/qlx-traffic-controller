@@ -33,5 +33,16 @@
         },
         "transport": "stdio",
         "enabled": true
+    },
+    "fetch": {
+        "name": "Fetch",
+        "command": "npx",
+        "args": [
+            "-y",
+            "@modelcontextprotocol/server-fetch"
+        ],
+        "transport": "stdio",
+        "env": null,
+        "enabled": true
     }
 }

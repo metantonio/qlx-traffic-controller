@@ -135,6 +135,41 @@ async def remove_mcp_server(server_id: str):
     mcp_manager.remove_server(server_id)
     return {"status": "success"}
 
+# --- STORE ENDPOINTS ---
+
+@app.get("/api/store/mcp")
+async def list_mcp_store():
+    from backend.tools.mcp_manager import mcp_manager
+    return mcp_manager.load_store()
+
+@app.get("/api/store/skills")
+async def list_skills_store():
+    store_path = os.path.join(os.path.dirname(__file__), "data", "skills_store.json")
+    try:
+        if os.path.exists(store_path):
+            with open(store_path, 'r') as f:
+                return json.load(f)
+        return {}
+    except Exception as e:
+        logger.error(f"Failed to load skills store: {e}")
+        return {}
+
+@app.post("/api/store/install")
+async def install_from_store(data: dict):
+    from backend.tools.mcp_manager import mcp_manager
+    server_id = data.get("server_id")
+    overrides = data.get("overrides")
+    
+    if not server_id:
+        return {"error": "server_id is required"}
+        
+    try:
+        mcp_manager.install_from_store(server_id, overrides)
+        return {"status": "success"}
+    except Exception as e:
+        logger.error(f"Failed to install from store: {e}")
+        return {"error": str(e)}
+
 @app.get("/api/agents/custom")
 async def list_custom_agents():
     from backend.kernel.agent_manager import agent_manager

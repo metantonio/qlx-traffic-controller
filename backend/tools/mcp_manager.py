@@ -118,5 +118,45 @@ class MCPManager:
         config = self.load_config()
         return [{"id": k, **v} for k, v in config.items()]
 
+    def load_store(self) -> Dict[str, Any]:
+        store_path = os.path.join(os.path.dirname(self.config_path), "mcp_store.json")
+        try:
+            if os.path.exists(store_path):
+                with open(store_path, 'r') as f:
+                    return json.load(f)
+            return {}
+        except Exception as e:
+            logger.error(f"Failed to load MCP store: {e}")
+            return {}
+
+    def install_from_store(self, server_id: str, overrides: Optional[Dict] = None):
+        store = self.load_store()
+        if server_id not in store:
+            raise ValueError(f"Server {server_id} not found in store")
+        
+        server_data = store[server_id].copy() # Copy to avoid mutating store
+        
+        # Simple placeholder replacement logic for args
+        if overrides:
+            new_args = []
+            for arg in server_data.get("args", []):
+                new_arg = arg
+                for key, value in overrides.items():
+                    placeholder = f"YOUR_{key.upper()}_KEY"
+                    if placeholder in new_arg:
+                        new_arg = new_arg.replace(placeholder, value)
+                    # Also check for generic placeholder from common names
+                    elif key.upper() in new_arg and ("YOUR_" in new_arg or "TOKEN" in new_arg):
+                        new_arg = value
+                new_args.append(new_arg)
+            server_data["args"] = new_args
+
+        self.add_server(
+            id=server_id,
+            name=server_data["name"],
+            command=server_data["command"],
+            args=server_data["args"]
+        )
+
 # Singleton instance
 mcp_manager = MCPManager(os.path.join(os.path.dirname(__file__), "..", "data", "mcp_servers.json"))

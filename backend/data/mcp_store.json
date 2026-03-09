@@ -1,0 +1,75 @@
+{
+    "brave-search": {
+        "name": "Brave Search",
+        "description": "Search the web using Brave Search API",
+        "command": "npx",
+        "args": [
+            "-y",
+            "@modelcontextprotocol/server-brave-search",
+            "--api-key",
+            "YOUR_BRAVE_API_KEY"
+        ],
+        "icon": "Search",
+        "requires_api_key": true
+    },
+    "github": {
+        "name": "GitHub",
+        "description": "Interact with GitHub repositories and issues",
+        "command": "npx",
+        "args": [
+            "-y",
+            "@modelcontextprotocol/server-github",
+            "--personal-access-token",
+            "YOUR_GITHUB_TOKEN"
+        ],
+        "icon": "Github",
+        "requires_api_key": true
+    },
+    "wikipedia": {
+        "name": "Wikipedia",
+        "description": "Search and read Wikipedia articles",
+        "command": "npx",
+        "args": [
+            "-y",
+            "@modelcontextprotocol/server-wikipedia"
+        ],
+        "icon": "Book",
+        "requires_api_key": false
+    },
+    "fetch": {
+        "name": "Fetch",
+        "description": "Extract content from web pages efficiently",
+        "command": "npx",
+        "args": [
+            "-y",
+            "@modelcontextprotocol/server-fetch"
+        ],
+        "icon": "Globe",
+        "requires_api_key": false
+    },
+    "google-maps": {
+        "name": "Google Maps",
+        "description": "Access Google Maps location and search features",
+        "command": "npx",
+        "args": [
+            "-y",
+            "@modelcontextprotocol/server-google-maps",
+            "--api-key",
+            "YOUR_GOOGLE_MAPS_KEY"
+        ],
+        "icon": "MapPin",
+        "requires_api_key": true
+    },
+    "postgres": {
+        "name": "PostgreSQL",
+        "description": "Read and query PostgreSQL databases",
+        "command": "npx",
+        "args": [
+            "-y",
+            "@modelcontextprotocol/server-postgres",
+            "postgresql://user:pass@localhost:5432/db"
+        ],
+        "icon": "Database",
+        "requires_api_key": false
+    }
+}
