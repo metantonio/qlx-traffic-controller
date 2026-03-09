@@ -42,7 +42,7 @@ export default function ExtensionsView() {
 
             // Format installed
             const installed: Extension[] = [
-                ...agents.map((a: any) => ({
+                ...agents.map((a: { id: string; name: string; description: string }) => ({
                     id: a.id,
                     name: a.name,
                     description: a.description,
@@ -50,7 +50,7 @@ export default function ExtensionsView() {
                     status: 'installed' as const,
                     enabled: true // Agents are "enabled" by existing
                 })),
-                ...mcps.map((m: any) => ({
+                ...mcps.map((m: { id: string; name: string; command: string; args: string[]; enabled: boolean }) => ({
                     id: m.id,
                     name: m.name,
                     description: `${m.command} ${m.args.join(' ')}`,
@@ -96,13 +96,18 @@ export default function ExtensionsView() {
     const handleToggle = async (id: string, type: 'skill' | 'mcp', enabled: boolean) => {
         try {
             if (type === 'mcp') {
-                // MCP Servers in this backend don't have a direct toggle endpoint yet, 
-                // but we can update the config. For now we'll simulate or add the logic.
-                // In main.py we have DELETE to remove. Let's assume toggle updates the config.
-                console.log(`Toggling MCP ${id} to ${enabled}`);
+                const res = await fetch(`${apiUrl}/api/mcp/servers/${id}/toggle`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enabled })
+                });
+                if (!res.ok) throw new Error("Failed to toggle MCP");
+            } else {
+                // For Skills (Custom Agents), we don't have a toggle yet, 
+                // but we could implement it. For now, we'll just log or 
+                // update the config if we had an "enabled" field.
+                console.log(`Toggling Skill ${id} to ${enabled}`);
             }
-            // For now, let's just refresh to show state if the backend supported it.
-            // Since our backend is simple, we'll just update local state if needed.
             setInstalledExtensions(prev => prev.map(ext => ext.id === id ? { ...ext, enabled } : ext));
         } catch (err) {
             console.error("Toggle failed:", err);
@@ -130,7 +135,18 @@ export default function ExtensionsView() {
                 }
             } else {
                 // Skill installation
-                const skill = Object.entries(await (await fetch(`${apiUrl}/api/store/skills`)).json()).find(([sId]) => sId === id)?.[1] as any;
+                const skillsData = await (await fetch(`${apiUrl}/api/store/skills`)).json();
+                const skillEntry = Object.entries(skillsData).find(([sId]) => sId === id);
+                if (!skillEntry) return;
+
+                const skill = skillEntry[1] as {
+                    name: string;
+                    description: string;
+                    system_prompt?: string;
+                    mcp_servers?: string[];
+                    static_tools?: string[];
+                };
+
                 const res = await fetch(`${apiUrl}/api/agents/custom`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

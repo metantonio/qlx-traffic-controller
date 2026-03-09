@@ -133,7 +133,18 @@ async def add_mcp_server(data: dict):
 async def remove_mcp_server(server_id: str):
     from backend.tools.mcp_manager import mcp_manager
     mcp_manager.remove_server(server_id)
-    return {"status": "success"}
+    return {"status": "ok"}
+
+@app.post("/api/mcp/servers/{server_id}/toggle")
+async def toggle_mcp_server(server_id: str, data: dict):
+    from backend.tools.mcp_manager import mcp_manager
+    enabled = data.get("enabled", True)
+    config = mcp_manager.load_config()
+    if server_id in config:
+        config[server_id]["enabled"] = enabled
+        mcp_manager.save_config(config)
+        return {"status": "ok", "enabled": enabled}
+    return {"status": "error", "message": "Server not found"}, 404
 
 # --- STORE ENDPOINTS ---
 
