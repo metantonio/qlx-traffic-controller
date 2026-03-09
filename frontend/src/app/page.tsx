@@ -12,7 +12,7 @@ import WorkflowManagerModal from "@/components/Kernel/WorkflowManagerModal";
 import HistoryView from "@/components/Kernel/HistoryView";
 import BatchManagerModal from "@/components/Kernel/BatchManagerModal";
 import ExtensionsView from "@/components/Kernel/ExtensionsView";
-import { GitBranch, History, LayoutDashboard, Layers, Cpu, MessageSquare } from "lucide-react";
+import { GitBranch, History, LayoutDashboard, Layers, Cpu, MessageSquare, WifiOff, RefreshCw } from "lucide-react";
 
 export interface ProcessData {
   pid: string;
@@ -49,11 +49,13 @@ export default function Dashboard() {
   } | null>(null);
   const [activeView, setActiveView] = useState<'dashboard' | 'extensions' | 'history'>('dashboard');
   const [historyPid, setHistoryPid] = useState<string | null>(null);
+  const [wsStatus, setWsStatus] = useState<'connected' | 'disconnected' | 'connecting' | 'error'>('connecting');
+  const [reconnectAttempts, setReconnectAttempts] = useState(0);
   const wsRef = useRef<WebSocket | null>(null);
 
   const handleSpawnAgent = useCallback((manualTask?: string, parent_pid?: string, initial_history?: Message[]) => {
     const finalTask = manualTask || taskText;
-    if (!finalTask.trim() || !wsRef.current) return;
+    if (!finalTask.trim() || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
 
     const payload = {
       action: 'spawn',
@@ -66,10 +68,8 @@ export default function Dashboard() {
       model: llmModel
     };
 
-    if (wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify(payload));
-      if (!manualTask) setTaskText('');
-    }
+    wsRef.current.send(JSON.stringify(payload));
+    if (!manualTask) setTaskText('');
   }, [taskText, enabledTools, llmProvider, llmModel, selectedAgentId]);
 
   const handleContinue = useCallback((pid: string, followUp: string, history: Message[]) => {
@@ -78,8 +78,13 @@ export default function Dashboard() {
 
   useEffect(() => {
     const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://127.0.0.1:8000/ws";
+    Promise.resolve().then(() => setWsStatus('connecting'));
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
+
+    ws.onopen = () => {
+      setWsStatus('connected');
+    };
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
@@ -103,8 +108,23 @@ export default function Dashboard() {
       }
     };
 
-    return () => ws.close();
-  }, []);
+    ws.onclose = () => {
+      setWsStatus('disconnected');
+      // Auto-reconnect after 3 seconds
+      setTimeout(() => {
+        setReconnectAttempts(prev => prev + 1);
+      }, 3000);
+    };
+
+    ws.onerror = () => {
+      setWsStatus('error');
+    };
+
+    return () => {
+      ws.close();
+      wsRef.current = null;
+    };
+  }, [reconnectAttempts]);
 
   return (
     <div className="h-screen bg-[#0a0a0b] text-neutral-100 font-sans antialiased selection:bg-blue-500/30 overflow-hidden flex">
@@ -112,8 +132,18 @@ export default function Dashboard() {
       <aside className="w-64 border-r border-neutral-800/50 bg-neutral-900/20 backdrop-blur-xl flex flex-col shrink-0">
         <div className="p-6 border-b border-neutral-800/50">
           <div className="flex items-center gap-3 mb-1">
-            <div className="h-2.5 w-2.5 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.6)] animate-pulse"></div>
-            <span className="text-[10px] font-black text-blue-500 tracking-[0.2em] uppercase">Kernel v0.3.0</span>
+            <div className={`h-2.5 w-2.5 rounded-full ${wsStatus === 'connected' ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.6)]' :
+              wsStatus === 'connecting' ? 'bg-amber-500 animate-pulse' :
+                'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.6)]'
+              }`}></div>
+            <span className={`text-[10px] font-black tracking-[0.2em] uppercase ${wsStatus === 'connected' ? 'text-emerald-500' :
+              wsStatus === 'connecting' ? 'text-amber-500' :
+                'text-red-500'
+              }`}>
+              {wsStatus === 'connected' ? 'Kernel Online' :
+                wsStatus === 'connecting' ? 'Connecting...' :
+                  'Kernel Offline'}
+            </span>
           </div>
           <h1 className="text-xl font-black tracking-tighter text-white">QLX-Traffic-Controller</h1>
         </div>
@@ -285,11 +315,21 @@ export default function Dashboard() {
                     </div>
                     <button
                       onClick={() => handleSpawnAgent()}
-                      className="h-16 w-16 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold shadow-lg shadow-blue-600/30 transition-all transform active:scale-95 flex items-center justify-center group/btn shrink-0"
+                      disabled={wsStatus !== 'connected'}
+                      className={`h-16 w-16 rounded-2xl font-bold shadow-lg transition-all transform active:scale-95 flex items-center justify-center group/btn shrink-0 ${wsStatus === 'connected'
+                        ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/30'
+                        : 'bg-neutral-800 text-neutral-600 cursor-not-allowed'
+                        }`}
                     >
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform">
-                        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
-                      </svg>
+                      {wsStatus === 'connecting' ? (
+                        <RefreshCw size={24} className="animate-spin" />
+                      ) : wsStatus === 'connected' ? (
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform">
+                          <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+                        </svg>
+                      ) : (
+                        <WifiOff size={24} />
+                      )}
                     </button>
                   </div>
                   <div className="flex items-center gap-4 mt-4 px-6">
