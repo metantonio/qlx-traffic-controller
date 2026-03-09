@@ -139,12 +139,17 @@ async def remove_mcp_server(server_id: str):
 async def toggle_mcp_server(server_id: str, data: dict):
     from backend.tools.mcp_manager import mcp_manager
     enabled = data.get("enabled", True)
-    config = mcp_manager.load_config()
-    if server_id in config:
-        config[server_id]["enabled"] = enabled
-        mcp_manager.save_config(config)
-        return {"status": "ok", "enabled": enabled}
-    return {"status": "error", "message": "Server not found"}, 404
+    mcp_manager.toggle_server(server_id, enabled)
+    return {"status": "ok", "enabled": enabled}
+
+@app.post("/api/store/refresh")
+async def refresh_mcp_store(payload: dict = None):
+    from backend.tools.mcp_manager import mcp_manager
+    url = payload.get("url") if payload else None
+    success, message = mcp_manager.refresh_store(url) if url else mcp_manager.refresh_store()
+    if not success:
+        raise HTTPException(status_code=500, detail=message)
+    return {"status": "ok", "message": message}
 
 # --- STORE ENDPOINTS ---
 

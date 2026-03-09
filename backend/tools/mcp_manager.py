@@ -144,6 +144,12 @@ class MCPManager:
             del config[id]
             self.save_config(config)
 
+    def toggle_server(self, id: str, enabled: bool):
+        config = self.load_config()
+        if id in config:
+            config[id]["enabled"] = enabled
+            self.save_config(config)
+
     def list_servers(self) -> List[Dict[str, Any]]:
         config = self.load_config()
         return [{"id": k, **v} for k, v in config.items()]

@@ -140,7 +140,13 @@ export default function ExtensionsView() {
                 const skillEntry = Object.entries(skillsData).find(([sId]) => sId === id);
                 if (!skillEntry) return;
 
-                const skill = skillEntry[1] as any;
+                const skill = skillEntry[1] as {
+                    name: string;
+                    description: string;
+                    system_prompt?: string;
+                    mcp_servers?: string[];
+                    static_tools?: string[];
+                };
                 const res = await fetch(`${apiUrl}/api/agents/custom`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -200,6 +206,32 @@ export default function ExtensionsView() {
         setCurrentPage(1);
     }, [searchTerm, activeTab]);
 
+    const handleSyncRegistry = async () => {
+        const url = prompt("Enter External MCP Registry URL (JSON):", "https://raw.githubusercontent.com/modelcontextprotocol/servers/main/index.json");
+        if (!url) return;
+
+        try {
+            setRefreshing(true);
+            const res = await fetch(`${apiUrl}/api/store/refresh`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alert("Registry synchronized successfully!");
+                fetchData();
+            } else {
+                alert(`Sync failed: ${data.detail || data.message}`);
+            }
+        } catch (err) {
+            console.error("Registry sync failed:", err);
+            alert("Network error while syncing registry.");
+        } finally {
+            setRefreshing(false);
+        }
+    };
+
     return (
         <div className="flex-grow p-10 overflow-y-auto custom-scrollbar bg-[#0a0a0b]">
             <header className="mb-10 flex items-center justify-between">
@@ -218,6 +250,13 @@ export default function ExtensionsView() {
                             className="bg-neutral-900/50 border border-neutral-800 rounded-2xl pl-11 pr-6 py-3 text-sm text-white focus:border-blue-500/50 outline-none w-64 transition-all"
                         />
                     </div>
+                    <button
+                        onClick={handleSyncRegistry}
+                        title="Import Community Registry"
+                        className="p-3 bg-neutral-900 border border-neutral-800 rounded-2xl text-neutral-400 hover:text-orange-500 transition-all"
+                    >
+                        <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
+                    </button>
                     <button
                         onClick={fetchData}
                         className={`p-3 bg-neutral-900 border border-neutral-800 rounded-2xl text-neutral-400 hover:text-white transition-all ${refreshing ? 'animate-spin' : ''}`}
@@ -262,7 +301,7 @@ export default function ExtensionsView() {
                 ].map(tab => (
                     <button
                         key={tab.id}
-                        onClick={() => setActiveTab(tab.id as any)}
+                        onClick={() => setActiveTab(tab.id as 'installed' | 'skills-store' | 'mcp-store')}
                         className={`flex items-center gap-2 px-6 py-4 text-xs font-black uppercase tracking-[0.2em] transition-all relative ${activeTab === tab.id ? 'text-orange-500' : 'text-neutral-500 hover:text-neutral-300'}`}
                     >
                         {tab.icon}
