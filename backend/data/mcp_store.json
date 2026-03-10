@@ -6,7 +6,7 @@
             "command": "npx",
             "args": [
                 "-y",
-                "@modelcontextprotocol/server-brave-search",
+                "@brave/brave-search-mcp-server",
                 "--api-key",
                 "YOUR_BRAVE_API_KEY"
             ],
@@ -32,7 +32,7 @@
             "command": "npx",
             "args": [
                 "-y",
-                "@modelcontextprotocol/server-wikipedia"
+                "wikipedia-mcp"
             ],
             "icon": "Book",
             "requires_api_key": false
@@ -43,7 +43,7 @@
             "command": "npx",
             "args": [
                 "-y",
-                "@modelcontextprotocol/server-fetch"
+                "fetch-mcp"
             ],
             "icon": "Globe",
             "requires_api_key": false
@@ -79,7 +79,7 @@
             "command": "npx",
             "args": [
                 "-y",
-                "@modelcontextprotocol/server-playwright"
+                "@playwright/mcp"
             ],
             "icon": "Monitor",
             "requires_api_key": false

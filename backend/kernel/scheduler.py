@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 from enum import IntEnum
 from typing import Dict, List
 from backend.core.logger import get_kernel_logger
@@ -144,17 +145,25 @@ class TaskScheduler:
                     # But for now, get_all_tools uses a multi-client. 
                     # Let's see if we can filter by server in the client.
                     
+                    logger.info(f"Targeting MCP servers for agent: {target_mcp_servers}")
                     all_servers = mcp_manager.list_servers()
+                    logger.info(f"Available servers in DB: {[s['id'] for s in all_servers]}")
                     enabled_for_agent = {
                         s["id"]: s for s in all_servers 
                         if s["id"] in target_mcp_servers and s.get("enabled", True)
                     }
+                    logger.info(f"Matched enabled servers for agent: {list(enabled_for_agent.keys())}")
                     
                     if enabled_for_agent:
                         from langchain_mcp_adapters.client import MultiServerMCPClient
+                        def fix_command(cmd):
+                            if os.name == "nt" and cmd == "npx":
+                                return "npx.cmd"
+                            return cmd
+
                         client = MultiServerMCPClient({
                             k: {
-                                "command": v["command"],
+                                "command": fix_command(v["command"]),
                                 "args": v["args"],
                                 "transport": v.get("transport", "stdio"),
                                 "env": v.get("env")

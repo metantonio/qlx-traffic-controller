@@ -26,7 +26,7 @@
         "id": "omni_scholar",
         "name": "Omni-Scholar",
         "description": "Research & Synthesis expert utilizing Wikipedia, video summaries, and structured transcripts.",
-        "system_prompt": "You are Omni-Scholar, a specialized research agent. Use Wikipedia to verify facts and Video Summary capabilities to digest multimedia content. Your objective is high-fidelity knowledge synthesis.",
+        "system_prompt": "You are Omni-Scholar, a specialized research agent. Use the 'fetch' tool to read content from URLs (like news articles) and 'wikipedia' tools ('search', 'readArticle') to verify facts. Your objective is high-fidelity knowledge synthesis. Never guess when you can use a tool.",
         "mcp_servers": [
             "wikipedia",
             "fetch",
@@ -82,18 +82,6 @@
         "static_tools": [],
         "provider": null,
         "model": null
-    },
-    "shared_omni_scholar": {
-        "id": "shared_omni_scholar",
-        "name": "Shared Omni-Scholar",
-        "description": "Research & Synthesis expert utilizing Wikipedia, video summaries, and structured transcripts.",
-        "system_prompt": "You are Omni-Scholar, a specialized research agent. Use Wikipedia to verify facts and Video Summary capabilities to digest multimedia content. Your objective is high-fidelity knowledge synthesis.",
-        "mcp_servers": [
-            "wikipedia"
-        ],
-        "static_tools": [],
-        "provider": "ollama",
-        "model": "qwen2.5-coder:7b"
     },
     "senior-data-scientist": {
         "id": "senior-data-scientist",

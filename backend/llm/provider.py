@@ -152,50 +152,42 @@ class LLMProvider:
         return response.content
 
     def _parse_text_tool_calls(self, content: str, tool_names: set) -> list[tuple]:
-        """
-        Parse all tool calls from text. Handles multiple JSON blocks (objects or lists).
-        """
+        """Attempt to parse unstructured text output for JSON tool calls (used by fallback models)."""
         calls = []
         
-        # 1. Extract JSON blocks
-        # We look for both { (objects) and [ (lists)
-        for match in re.finditer(r'\{|\[', content):
-            start = match.start()
-            for end in range(len(content), start + 1, -1):
-                char = content[end-1]
-                if char not in ('}', ']'):
-                    continue
+        # 1. Strip markdown fences if present
+        content = re.sub(r'```json\n', '', content)
+        content = re.sub(r'```\n?', '', content)
+        
+        # 2. Find all starting braces
+        for start in range(len(content)):
+            if content[start] not in ('{', '['): continue
                 
+            # 3. Try to parse by finding matching closing brace
+            for end in range(len(content), start + 1, -1):
+                if content[end-1] not in ('}', ']'): continue
+                    
+                candidate = content[start:end]
                 try:
-                    candidate = content[start:end]
-                    # Clean comments
-                    candidate_clean = re.sub(r'//.*$', '', candidate, flags=re.MULTILINE)
+                    parsed = json.loads(candidate)
                     
-                    parsed = json.loads(candidate_clean)
-                    
-                    # Handle single object
                     if isinstance(parsed, dict):
                         call = self._extract_call_from_dict(parsed, tool_names)
                         if call:
                             calls.append(call)
-                            break # Found valid block starting here
-                            
-                    # Handle list of objects
+                            return calls
                     elif isinstance(parsed, list):
-                        found_in_list = False
                         for item in parsed:
                             if isinstance(item, dict):
                                 call = self._extract_call_from_dict(item, tool_names)
                                 if call:
                                     calls.append(call)
-                                    found_in_list = True
-                        if found_in_list:
-                            break
-                            
-                except (json.JSONDecodeError, ValueError):
-                    continue
+                        if calls:
+                            return calls
+                except json.JSONDecodeError:
+                    pass
         
-        # 2. Fallback for Python-style calls if no JSON found
+        # 4. Fallback for Python-style calls if no JSON found
         if not calls:
             for tool_name in tool_names:
                 for match in re.finditer(rf'{re.escape(tool_name)}\(["\'](.+?)["\']\)', content):
