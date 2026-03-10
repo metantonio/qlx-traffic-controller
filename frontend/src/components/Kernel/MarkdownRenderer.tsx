@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, memo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import mermaid from "mermaid";
@@ -15,14 +15,34 @@ if (typeof window !== "undefined") {
     });
 }
 
-const Mermaid = ({ chart }: { chart: string }) => {
+const Mermaid = memo(({ chart }: { chart: string }) => {
     const [svg, setSvg] = useState<string>("");
     const [error, setError] = useState<string | null>(null);
+    const [isVisible, setIsVisible] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        const renderChart = async () => {
-            if (!chart.trim()) return;
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setIsVisible(true);
+                    observer.disconnect();
+                }
+            },
+            { threshold: 0.1 }
+        );
 
+        if (containerRef.current) {
+            observer.observe(containerRef.current);
+        }
+
+        return () => observer.disconnect();
+    }, []);
+
+    useEffect(() => {
+        if (!isVisible || !chart.trim()) return;
+
+        const renderChart = async () => {
             try {
                 const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
                 const { svg } = await mermaid.render(id, chart);
@@ -35,7 +55,7 @@ const Mermaid = ({ chart }: { chart: string }) => {
         };
 
         renderChart();
-    }, [chart]);
+    }, [chart, isVisible]);
 
     if (error) {
         return (
@@ -48,17 +68,19 @@ const Mermaid = ({ chart }: { chart: string }) => {
 
     return (
         <div
-            className="mermaid-container my-4 overflow-x-auto flex justify-center bg-neutral-900/50 p-4 rounded-xl border border-neutral-800"
+            ref={containerRef}
+            className="mermaid-container my-4 min-h-[100px] overflow-x-auto flex justify-center bg-neutral-900/50 p-4 rounded-xl border border-neutral-800"
             dangerouslySetInnerHTML={{ __html: svg }}
         />
     );
-};
+});
+Mermaid.displayName = 'Mermaid';
 
 interface MarkdownRendererProps {
     content: string;
 }
 
-export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
+const MarkdownRenderer = memo(({ content }: MarkdownRendererProps) => {
     return (
         <div className="markdown-body prose prose-invert max-w-none text-sm leading-relaxed">
             <ReactMarkdown
@@ -116,4 +138,7 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
             </ReactMarkdown>
         </div>
     );
-}
+});
+MarkdownRenderer.displayName = 'MarkdownRenderer';
+
+export default MarkdownRenderer;

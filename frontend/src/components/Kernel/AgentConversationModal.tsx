@@ -29,6 +29,7 @@ export default function AgentConversationModal({ pid, onClose, onContinue, readO
     const [procDetails, setProcDetails] = useState<Process | null>(null);
     const [loading, setLoading] = useState(true);
     const [followUp, setFollowUp] = useState('');
+    const [visibleCount, setVisibleCount] = useState(30);
     const scrollRef = useRef<HTMLDivElement>(null);
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
@@ -118,8 +119,21 @@ export default function AgentConversationModal({ pid, onClose, onContinue, readO
 
                 {/* Conversation Body */}
                 <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-neutral-800">
-                    {procDetails?.history?.map((msg: Message, idx: number) => {
-                        if (msg.role === 'system' && idx === 0) return null; // Skip initial system prompt for cleaner UI
+                    {procDetails?.history && procDetails.history.length > visibleCount && (
+                        <div className="flex justify-center pb-4">
+                            <button
+                                onClick={() => setVisibleCount(prev => prev + 50)}
+                                className="px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-400 text-xs font-bold uppercase tracking-widest rounded-xl border border-neutral-700 transition-all"
+                            >
+                                Load older messages ({procDetails.history.length - visibleCount} hidden)
+                            </button>
+                        </div>
+                    )}
+
+                    {procDetails?.history?.slice(-visibleCount).map((msg: Message, idx: number) => {
+                        // Adjust index because we are slicing from the end
+                        const actualIdx = procDetails.history.length - visibleCount + idx;
+                        if (msg.role === 'system' && actualIdx === 0) return null; // Skip initial system prompt for cleaner UI
 
                         const isUser = msg.role === 'user';
                         const isTool = msg.role === 'tool';
