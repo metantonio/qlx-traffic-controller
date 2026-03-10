@@ -12,6 +12,7 @@ import WorkflowManagerModal from "@/components/Kernel/WorkflowManagerModal";
 import HistoryView from "@/components/Kernel/HistoryView";
 import BatchManagerModal from "@/components/Kernel/BatchManagerModal";
 import ExtensionsView from "@/components/Kernel/ExtensionsView";
+import CommandBar from "@/components/Kernel/CommandBar";
 import { GitBranch, History, LayoutDashboard, Layers, Cpu, MessageSquare, WifiOff, RefreshCw } from "lucide-react";
 
 export interface ProcessData {
@@ -155,7 +156,8 @@ export default function Dashboard() {
   }, [reconnectAttempts]);
 
   return (
-    <div className="h-screen bg-[#0a0a0b] text-neutral-100 font-sans antialiased selection:bg-blue-500/30 overflow-hidden flex">
+    <div className="h-screen bg-[#050506] text-neutral-100 font-sans antialiased selection:bg-blue-500/30 overflow-hidden flex relative">
+      <div className="absolute inset-0 bg-grid pointer-events-none opacity-50"></div>
       {/* Sidebar */}
       <aside className="w-64 border-r border-neutral-800/50 bg-neutral-900/20 backdrop-blur-xl flex flex-col shrink-0">
         <div className="p-6 border-b border-neutral-800/50">
@@ -246,10 +248,14 @@ export default function Dashboard() {
         {activeView === 'dashboard' ? (
           <div className="flex-grow flex flex-col overflow-hidden p-4 md:p-8">
             {/* Header - Fixed at top */}
-            <header className="flex items-end justify-between mb-8 border-b border-neutral-800/50 pb-8 shrink-0">
-              <div>
-                <h2 className="text-4xl font-black tracking-tighter text-white">Dashboard</h2>
-                <p className="text-neutral-500 text-sm mt-1 font-medium tracking-wide">Autonomous Neural-Process Orchestrator</p>
+            <header className="flex items-end justify-between mb-8 border-b border-neutral-800/30 pb-8 shrink-0 relative">
+              <div className="absolute -left-8 -top-8 w-64 h-64 bg-blue-600/5 blur-[100px] pointer-events-none" />
+              <div className="relative z-10">
+                <h2 className="text-5xl font-black tracking-tighter text-white text-glow-blue italic">SYSTEM_DECOE</h2>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="h-px w-8 bg-blue-500/50" />
+                  <p className="text-neutral-500 text-[10px] font-black uppercase tracking-[0.3em]">Autonomous Orchestration Engine</p>
+                </div>
               </div>
 
               <div className="flex items-center gap-4">
@@ -441,10 +447,14 @@ export default function Dashboard() {
       )}
       {isBatchModalOpen && (
         <BatchManagerModal
-          isOpen={isBatchModalOpen}
-          onClose={() => setIsBatchModalOpen(false)}
+            isOpen={isBatchModalOpen}
+            onClose={() => setIsBatchModalOpen(false)}
         />
       )}
+      <CommandBar 
+        onSpawnAgent={(task) => handleSpawnAgent(task)}
+        onViewChange={setActiveView}
+      />
     </div>
   );
 }

@@ -38,6 +38,7 @@ interface GraphData {
 export default function KnowledgeGraphExplorer() {
     const [data, setData] = useState<GraphData>({ entities: [], relations: [] });
     const [loading, setLoading] = useState(true);
+    const [selectedNode, setSelectedNode] = useState<GraphEntity | null>(null);
     const fgRef = useRef<any>(undefined);
 
     const fetchData = async () => {
@@ -140,7 +141,39 @@ export default function KnowledgeGraphExplorer() {
                         ctx.fillText(label, gNode.x || 0, (gNode.y || 0) + 8);
                     }}
                     backgroundColor="rgba(0,0,0,0)"
+                    onNodeClick={(node: any) => {
+                        const entity = data.entities.find(e => e.name === node.id);
+                        setSelectedNode(entity || null);
+                    }}
                 />
+            )}
+
+            {/* Detail Panel */}
+            {selectedNode && (
+                <div className="absolute inset-y-0 right-0 w-64 bg-neutral-900 shadow-2xl border-l border-neutral-800 animate-in slide-in-from-right duration-300 z-20 flex flex-col">
+                    <div className="p-4 border-b border-neutral-800 flex items-center justify-between">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Node Insight</span>
+                        <button onClick={() => setSelectedNode(null)} className="p-1 hover:bg-neutral-800 rounded">
+                            <RefreshCw className="w-3 h-3 text-neutral-600 rotate-45" />
+                        </button>
+                    </div>
+                    <div className="p-4 overflow-y-auto custom-scrollbar flex-1 space-y-4">
+                        <div>
+                            <h3 className="text-white font-bold text-lg">{selectedNode.name}</h3>
+                            <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded border border-blue-500/20">{selectedNode.entityType}</span>
+                        </div>
+                        <div className="space-y-2">
+                            <span className="text-[9px] font-black text-neutral-600 uppercase tracking-[0.2em] block">Observations</span>
+                            <div className="space-y-1.5">
+                                {selectedNode.observations.map((obs, i) => (
+                                    <div key={i} className="text-[11px] text-neutral-400 font-mono leading-tight bg-black/20 p-2 rounded border border-white/5">
+                                        {obs}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

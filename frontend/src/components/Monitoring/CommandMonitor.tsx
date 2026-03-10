@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export interface CommandEvent {
     type: string;
@@ -16,6 +16,13 @@ interface CommandMonitorProps {
 
 export default function CommandMonitor({ events, onClear }: CommandMonitorProps) {
     const [filter, setFilter] = useState("");
+    const scrollRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+    }, [events]);
 
     const commandEvents = events
         .filter((e) => e.type === "tool_requested" || e.type === "security_alert" || e.type === "agent_output")
@@ -55,7 +62,7 @@ export default function CommandMonitor({ events, onClear }: CommandMonitorProps)
             </div>
 
             {/* Logs Area */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 font-mono text-[11px] leading-relaxed custom-scrollbar">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden p-6 font-mono text-[11px] leading-relaxed custom-scrollbar bg-black/20">
                 {commandEvents.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-neutral-700 space-y-3 opacity-40">
                         <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">

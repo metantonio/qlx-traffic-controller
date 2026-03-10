@@ -50,14 +50,15 @@ export default function ProcessMonitor({ metrics, onProcessClick, onDismiss, onC
                         <tr
                             key={proc.pid}
                             onClick={() => onProcessClick?.(proc.pid)}
-                            className="hover:bg-neutral-800/30 transition-colors group cursor-pointer"
+                            className={`transition-all group cursor-pointer border-l-2 ${proc.state === 'running'
+                                ? 'bg-blue-500/5 border-blue-500 shadow-[inset_10px_0_20px_-10px_rgba(59,130,246,0.2)]'
+                                : 'hover:bg-neutral-800/30 border-transparent hover:border-neutral-700'
+                                }`}
                         >
                             <td className="py-3 px-3 text-neutral-400">#{proc.pid}</td>
                             <td className="py-3 px-3 text-neutral-200">
                                 <span className="flex items-center gap-2">
-                                    <svg className="w-4 h-4 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14M12 5l7 7-7 7" />
-                                    </svg>
+                                    <div className={`w-1 h-1 rounded-full ${proc.state === 'running' ? 'bg-blue-400 animate-breathing' : 'bg-neutral-600'}`} />
                                     {proc.agent}
                                 </span>
                             </td>
