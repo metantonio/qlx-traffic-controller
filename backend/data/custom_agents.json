@@ -36,18 +36,6 @@
         "provider": "ollama",
         "model": "qwen2.5-coder:7b"
     },
-    "finstrat_analyst": {
-        "id": "finstrat_analyst",
-        "name": "FinStrat Analyst",
-        "description": "Financial strategist tracking SEC 13F whale movements and crafting product strategies via Excel.",
-        "system_prompt": "You are FinStrat Analyst. You monitor SEC 13F filings to track institutional 'whale' movements and use Product Strategist frameworks to evaluate market positioning. All calculations and models should be stored or analyzed in Excel.",
-        "mcp_servers": [
-            "excel"
-        ],
-        "static_tools": [],
-        "provider": "ollama",
-        "model": "qwen2.5-coder:7b"
-    },
     "deepcode_debugger": {
         "id": "deepcode_debugger",
         "name": "DeepCode Debugger",

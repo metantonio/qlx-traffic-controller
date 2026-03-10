@@ -7,9 +7,10 @@ from backend.core.database import SessionLocal
 from backend.models.database_models import DbMCPServer
 
 class SharingManager:
-    def __init__(self, agents_path: str, workflows_path: str):
+    def __init__(self, agents_path: str, workflows_path: str, skills_path: str):
         self.agents_path = agents_path
         self.workflows_path = workflows_path
+        self.skills_path = skills_path
 
     def _load_json(self, path: str) -> Dict:
         if os.path.exists(path):
@@ -21,12 +22,13 @@ class SharingManager:
         with open(path, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=4)
 
-    def export_bundle(self, agent_ids: List[str] = None, workflow_ids: List[str] = None, mcp_ids: List[str] = None) -> Dict[str, Any]:
+    def export_bundle(self, agent_ids: List[str] = None, workflow_ids: List[str] = None, skill_ids: List[str] = None, mcp_ids: List[str] = None) -> Dict[str, Any]:
         bundle = {
             "version": "1.0",
             "timestamp": time.time(),
             "agents": [],
             "workflows": [],
+            "skills": [],
             "mcp_servers": []
         }
 
@@ -49,6 +51,19 @@ class SharingManager:
             for wid in workflow_ids:
                 if wid in all_workflows:
                     bundle["workflows"].append(all_workflows[wid])
+
+        # 3. Export Skills
+        if skill_ids:
+            all_skills = self._load_json(self.skills_path)
+            for sid in skill_ids:
+                if sid in all_skills:
+                    skill_data = all_skills[sid].copy()
+                    bundle["skills"].append(skill_data)
+                    # Automatically track required MCP servers from skills
+                    for mcp_id in skill_data.get("mcp_servers", []):
+                        if not mcp_ids: mcp_ids = []
+                        if mcp_id not in mcp_ids:
+                            mcp_ids.append(mcp_id)
 
         # 3. Export MCP Servers (Sanitized)
         if mcp_ids:
@@ -127,10 +142,23 @@ class SharingManager:
                 results["workflows"] += 1
             self._save_json(self.workflows_path, all_workflows)
 
+        # 4. Import Skills
+        if bundle.get("skills"):
+            all_skills = self._load_json(self.skills_path)
+            # Skills in skill_store.json are keyed by ID (unlike workflows/agents in some bundles)
+            for skill in bundle["skills"]:
+                # If the skill data doesn't have an 'id' field, we use its name or generate one
+                # But usually, it should have an id or name
+                skill_id = skill.get("id") or skill.get("name", "unknown").lower().replace(" ", "_")
+                all_skills[skill_id] = skill
+                results["skills"] = results.get("skills", 0) + 1
+            self._save_json(self.skills_path, all_skills)
+
         return results
 
 # Singleton
 sharing_manager = SharingManager(
     agents_path=os.path.join(os.path.dirname(__file__), "..", "data", "custom_agents.json"),
-    workflows_path=os.path.join(os.path.dirname(__file__), "..", "data", "workflows.json")
+    workflows_path=os.path.join(os.path.dirname(__file__), "..", "data", "workflows.json"),
+    skills_path=os.path.join(os.path.dirname(__file__), "..", "data", "skills_store.json")
 )

@@ -1,6 +1,6 @@
 {
     "version": "1.0",
-    "timestamp": 1773091210.8030024,
+    "timestamp": 1773144114.0969813,
     "agents": [
         {
             "id": "creator_txt_agent",
@@ -29,21 +29,11 @@
             "id": "omni_scholar",
             "name": "Omni-Scholar",
             "description": "Research & Synthesis expert utilizing Wikipedia, video summaries, and structured transcripts.",
-            "system_prompt": "You are Omni-Scholar, a specialized research agent. Use Wikipedia to verify facts and Video Summary capabilities to digest multimedia content. Your objective is high-fidelity knowledge synthesis.",
+            "system_prompt": "You are Omni-Scholar, a specialized research agent. Use the 'fetch' tool to read content from URLs (like news articles) and 'wikipedia' tools ('search', 'readArticle') to verify facts. Your objective is high-fidelity knowledge synthesis. Never guess when you can use a tool.",
             "mcp_servers": [
-                "wikipedia"
-            ],
-            "static_tools": [],
-            "provider": "ollama",
-            "model": "qwen2.5-coder:7b"
-        },
-        {
-            "id": "finstrat_analyst",
-            "name": "FinStrat Analyst",
-            "description": "Financial strategist tracking SEC 13F whale movements and crafting product strategies via Excel.",
-            "system_prompt": "You are FinStrat Analyst. You monitor SEC 13F filings to track institutional 'whale' movements and use Product Strategist frameworks to evaluate market positioning. All calculations and models should be stored or analyzed in Excel.",
-            "mcp_servers": [
-                "excel"
+                "wikipedia",
+                "fetch",
+                "playwright"
             ],
             "static_tools": [],
             "provider": "ollama",
@@ -75,26 +65,14 @@
             "model": "qwen2.5-coder:7b"
         },
         {
-            "id": "sec-13f-tracker",
-            "name": "SEC 13F Whale Tracker",
-            "description": "Track top fund managers' holdings via SEC 13F filings. Fetches quarterly filings from SEC EDGAR, compares quarter-over-quarter changes (new positions, increa...",
-            "system_prompt": "I am the SEC 13F Whale Tracker specialist.",
+            "id": "senior-data-scientist",
+            "name": "Senior Data Scientist",
+            "description": "World-class senior data scientist skill specialising in statistical modeling, experiment design, causal inference, and predictive analytics. Covers A/B testi...",
+            "system_prompt": "I am the Senior Data Scientist specialist.",
             "mcp_servers": [],
             "static_tools": [],
             "provider": null,
             "model": null
-        },
-        {
-            "id": "shared_omni_scholar",
-            "name": "Shared Omni-Scholar",
-            "description": "Research & Synthesis expert utilizing Wikipedia, video summaries, and structured transcripts.",
-            "system_prompt": "You are Omni-Scholar, a specialized research agent. Use Wikipedia to verify facts and Video Summary capabilities to digest multimedia content. Your objective is high-fidelity knowledge synthesis.",
-            "mcp_servers": [
-                "wikipedia"
-            ],
-            "static_tools": [],
-            "provider": "ollama",
-            "model": "qwen2.5-coder:7b"
         }
     ],
     "workflows": [
@@ -139,6 +117,48 @@
                 "file_path",
                 "filename"
             ]
+        }
+    ],
+    "skills": [
+        {
+            "name": "Researcher",
+            "description": "Specialized in deep web research and information synthesis",
+            "system_prompt": "You are a professional researcher. Use search tools to find facts, verify information, and provide comprehensive summaries with citations.",
+            "mcp_servers": [
+                "brave-search",
+                "wikipedia",
+                "fetch"
+            ],
+            "static_tools": [
+                "filesystem_read"
+            ],
+            "icon": "Search"
+        },
+        {
+            "name": "Coder",
+            "description": "Expert software engineer capable of writing and debugging code",
+            "system_prompt": "You are an expert software engineer. You write clean, efficient, and well-documented code. Use the shell and filesystem tools to implement features and run tests.",
+            "mcp_servers": [
+                "github"
+            ],
+            "static_tools": [
+                "shell_execute",
+                "filesystem_read",
+                "filesystem_write"
+            ],
+            "icon": "Code"
+        },
+        {
+            "name": "DB Analyst",
+            "description": "Analyzes and queries databases to provide insights",
+            "system_prompt": "You are a Senior Data Analyst. You write SQL queries to extract insights from databases and explain them clearly.",
+            "mcp_servers": [
+                "postgres"
+            ],
+            "static_tools": [
+                "filesystem_write"
+            ],
+            "icon": "BarChart"
         }
     ],
     "mcp_servers": [
@@ -186,7 +206,45 @@
             "command": "npx",
             "args": [
                 "-y",
-                "@modelcontextprotocol/server-wikipedia"
+                "wikipedia-mcp"
+            ],
+            "transport": "stdio",
+            "enabled": true,
+            "env_schema": {}
+        },
+        {
+            "id": "sqlite",
+            "name": "SQLite",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-sqlite",
+                "--db-path",
+                "local.db"
+            ],
+            "transport": "stdio",
+            "enabled": true,
+            "env_schema": {}
+        },
+        {
+            "id": "playwright",
+            "name": "Playwright",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@playwright/mcp"
+            ],
+            "transport": "stdio",
+            "enabled": true,
+            "env_schema": {}
+        },
+        {
+            "id": "fetch",
+            "name": "Fetch",
+            "command": "npx",
+            "args": [
+                "-y",
+                "fetch-mcp"
             ],
             "transport": "stdio",
             "enabled": true,
