@@ -210,10 +210,25 @@ async def list_mcp_store():
     return store.get("mcp", {})
 
 @app.get("/api/store/skills")
-async def list_skills_store():
+async def list_skills_store(page: int = 1, page_size: int = 15):
     from backend.tools.mcp_manager import mcp_manager
+    # If page > 1, always fetch from live ClawHub
+    if page > 1:
+        return mcp_manager.fetch_clawhub_page(page, page_size)
+    
+    # For page 1, try to return cached data but also check if we need to refresh
     store = mcp_manager.load_store()
-    return store.get("skills", {})
+    cached_skills = store.get("skills", {})
+    
+    if not cached_skills:
+        return mcp_manager.fetch_clawhub_page(page, page_size)
+    
+    return {
+        "items": cached_skills,
+        "total": len(cached_skills),
+        "pages": 1,
+        "current_page": 1
+    }
 
 @app.get("/api/store/search")
 async def search_skills_store(q: str):

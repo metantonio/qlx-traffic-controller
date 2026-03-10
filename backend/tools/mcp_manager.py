@@ -163,6 +163,37 @@ class MCPManager:
         except Exception as e:
             return False, str(e)
 
+    def fetch_clawhub_page(self, page: int = 1, page_size: int = 15):
+        """Fetches a specific page of skills from ClawHub."""
+        try:
+            import requests
+            url = f"https://clawhub.ai/api/v1/skills?page={page}&limit={page_size}"
+            response = requests.get(url, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                items = data.get("items", [])
+                
+                results = {}
+                for skill in items:
+                    slug = skill.get("slug")
+                    results[slug] = {
+                        "name": skill.get("displayName", slug),
+                        "description": skill.get("summary", ""),
+                        "type": "skill",
+                        "source": "clawhub",
+                        "metadata": skill
+                    }
+                return {
+                    "items": results,
+                    "total": data.get("total", len(items)),
+                    "pages": data.get("pages", 1),
+                    "current_page": page
+                }
+            return {"items": {}, "error": f"ClawHub returned {response.status_code}"}
+        except Exception as e:
+            logger.error(f"Failed to fetch ClawHub page {page}: {e}")
+            return {"items": {}, "error": str(e)}
+
     def _fix_mcp_paths(self):
         """Fixes MCP server paths in the database."""
         project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))

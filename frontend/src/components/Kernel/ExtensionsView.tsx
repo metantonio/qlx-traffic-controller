@@ -29,9 +29,40 @@ export default function ExtensionsView() {
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
+    const [installedAgentsPage, setInstalledAgentsPage] = useState(1);
+    const [installedMcpPage, setInstalledMcpPage] = useState(1);
+    const itemsPerPage = 16;
+
+    // Separate pagination for Skill Store (Server-side)
+    const [skillStorePage, setSkillStorePage] = useState(1);
+    const [skillStoreTotalPages, setSkillStoreTotalPages] = useState(1);
+    const [loadingStore, setLoadingStore] = useState(false);
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
+    const fetchSkillStore = useCallback(async (page: number) => {
+        setLoadingStore(true);
+        try {
+            const res = await fetch(`${apiUrl}/api/store/skills?page=${page}&page_size=${itemsPerPage}`);
+            if (res.ok) {
+                const data = await res.json();
+                const fetchedSkills: Extension[] = Object.entries(data.items || {}).map(([id, s]: [string, any]) => ({
+                    id,
+                    name: s.name,
+                    description: s.description,
+                    type: 'skill' as const,
+                    status: 'available' as const
+                }));
+                setSkillStore(fetchedSkills);
+                setSkillStoreTotalPages(data.pages || 1);
+                setSkillStorePage(data.current_page || page);
+            }
+        } catch (err) {
+            console.error("Failed to fetch skill store page:", err);
+        } finally {
+            setLoadingStore(false);
+        }
+    }, [apiUrl, itemsPerPage]);
 
     const fetchData = useCallback(async () => {
         setRefreshing(true);
@@ -39,13 +70,13 @@ export default function ExtensionsView() {
             const [agentsRes, mcpRes, skillStoreRes, mcpStoreRes] = await Promise.all([
                 fetch(`${apiUrl}/api/agents/custom`),
                 fetch(`${apiUrl}/api/mcp/servers`),
-                fetch(`${apiUrl}/api/store/skills`),
+                fetch(`${apiUrl}/api/store/skills?page=1&page_size=${itemsPerPage}`),
                 fetch(`${apiUrl}/api/store/mcp`)
             ]);
 
             const agents = await agentsRes.json();
             const mcps = await mcpRes.json();
-            const skillsS = await skillStoreRes.json();
+            const skillsData = await skillStoreRes.json();
             const mcpsS = await mcpStoreRes.json();
 
             // Format installed
@@ -69,13 +100,15 @@ export default function ExtensionsView() {
             ];
 
             // Format stores
-            const sStore: Extension[] = (Object.entries(skillsS) as [string, { name: string; description: string }][]).map(([id, s]) => ({
+            const skillsS = skillsData.items || {};
+            const sStore: Extension[] = Object.entries(skillsS).map(([id, s]: [string, any]) => ({
                 id,
                 name: s.name,
                 description: s.description,
                 type: 'skill' as const,
                 status: 'available' as const
             }));
+            setSkillStoreTotalPages(skillsData.pages || 1);
 
             const mStore: Extension[] = (Object.entries(mcpsS) as [string, { name: string; description: string; requires_api_key?: boolean }][]).map(([id, m]) => ({
                 id,
@@ -95,7 +128,7 @@ export default function ExtensionsView() {
             setLoading(false);
             setRefreshing(false);
         }
-    }, [apiUrl]);
+    }, [apiUrl, itemsPerPage]);
 
     useEffect(() => {
         fetchData();
@@ -170,8 +203,8 @@ export default function ExtensionsView() {
                 let skill: { name: string; description: string; system_prompt?: string; mcp_servers?: string[]; static_tools?: string[] } | null = null;
                 const skillsData = await (await fetch(`${apiUrl}/api/store/skills`)).json();
 
-                if (skillsData[id]) {
-                    skill = skillsData[id];
+                if (skillsData.items && skillsData.items[id]) {
+                    skill = skillsData.items[id];
                 } else {
                     // Try fetching details from ClawHub via backend proxy if available, or directly (with CORS risk)
                     // Better to use search/details via backend
@@ -308,16 +341,22 @@ export default function ExtensionsView() {
         );
     };
 
-    const currentList = activeTab === 'installed' ? filterExtensions(installedExtensions) :
-        activeTab === 'skills-store' ? (searchTerm ? skillStore : filterExtensions(skillStore)) :
-            filterExtensions(mcpStore);
+    // Filtered lists for Installed tab
+    const filteredAgents = filterExtensions(installedExtensions.filter(e => e.type === 'skill'));
+    const filteredMcps = filterExtensions(installedExtensions.filter(e => e.type === 'mcp'));
 
-    const totalPages = Math.ceil(currentList.length / itemsPerPage);
-    const paginatedList = currentList.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    // Pagination for Store (External)
+    const isStoreTab = activeTab === 'skills-store' && !searchTerm;
+    const isMcpStoreTab = activeTab === 'mcp-store';
 
     useEffect(() => {
-        setCurrentPage(1);
-    }, [searchTerm, activeTab]);
+        if (activeTab === 'skills-store') {
+            setSkillStorePage(1);
+            fetchSkillStore(1);
+        }
+        setInstalledAgentsPage(1);
+        setInstalledMcpPage(1);
+    }, [searchTerm, activeTab, fetchSkillStore]);
 
     const handleSyncRegistry = async () => {
         const url = prompt("Enter External MCP Registry URL (JSON):", "https://raw.githubusercontent.com/modelcontextprotocol/servers/main/index.json");
@@ -345,6 +384,48 @@ export default function ExtensionsView() {
         }
     };
 
+    const renderPagination = (page: number, total: number, onChange: (p: number) => void) => {
+        if (total <= 1) return null;
+        return (
+            <div className="flex items-center justify-center gap-4 py-8 border-t border-neutral-800/30">
+                <button
+                    onClick={() => onChange(Math.max(1, page - 1))}
+                    disabled={page === 1}
+                    className="flex items-center gap-2 px-4 py-2 bg-neutral-900 border border-neutral-800 rounded-xl text-neutral-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-[10px] uppercase tracking-widest"
+                >
+                    <ChevronLeft size={14} /> Prev
+                </button>
+                <div className="flex items-center gap-2">
+                    {Array.from({ length: Math.min(5, total) }, (_, i) => {
+                        let pageNum = i + 1;
+                        if (total > 5 && page > 3) {
+                            pageNum = page - 2 + i;
+                            if (pageNum > total) pageNum = total - 4 + i;
+                        }
+                        if (pageNum < 1) pageNum = i + 1;
+
+                        return (
+                            <button
+                                key={pageNum}
+                                onClick={() => onChange(pageNum)}
+                                className={`w-10 h-10 rounded-xl border font-mono text-xs transition-all ${page === pageNum ? 'bg-orange-600 border-orange-500 text-white' : 'bg-neutral-900 border-neutral-800 text-neutral-500 hover:border-neutral-700'}`}
+                            >
+                                {pageNum}
+                            </button>
+                        );
+                    })}
+                </div>
+                <button
+                    onClick={() => onChange(Math.min(total, page + 1))}
+                    disabled={page === total}
+                    className="flex items-center gap-2 px-4 py-2 bg-neutral-900 border border-neutral-800 rounded-xl text-neutral-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-[10px] uppercase tracking-widest"
+                >
+                    Next <ChevronRight size={14} />
+                </button>
+            </div>
+        );
+    };
+
     return (
         <div className="flex-grow p-10 overflow-y-auto custom-scrollbar bg-[#0a0a0b]">
             <header className="mb-10 flex items-center justify-between">
@@ -362,7 +443,7 @@ export default function ExtensionsView() {
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="bg-neutral-900/50 border border-neutral-800 rounded-2xl pl-11 pr-12 py-3 text-sm text-white focus:border-blue-500/50 outline-none w-64 transition-all"
                         />
-                        {searching && (
+                        {(searching || loadingStore) && (
                             <div className="absolute right-4 top-1/2 -translate-y-1/2">
                                 <RefreshCw className="w-3 h-3 text-blue-400 animate-spin" />
                             </div>
@@ -449,12 +530,6 @@ export default function ExtensionsView() {
                     </div>
                     <p className="text-neutral-600 font-mono text-xs uppercase tracking-widest">Accessing Extension Registry...</p>
                 </div>
-            ) : currentList.length === 0 ? (
-                <div className="py-20 text-center border-2 border-dashed border-neutral-800/50 rounded-[3rem] bg-neutral-900/10">
-                    <Search className="w-12 h-12 text-neutral-800 mx-auto mb-4" />
-                    <h4 className="text-neutral-400 font-bold">No extensions found</h4>
-                    <p className="text-xs text-neutral-600 mt-1">Try searching for something else or browse the store.</p>
-                </div>
             ) : (
                 <>
                     {activeTab === 'installed' ? (
@@ -466,17 +541,11 @@ export default function ExtensionsView() {
                                     <h3 className="text-xl font-bold text-white tracking-tight">Active Agents & Skills</h3>
                                     <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 text-[10px] font-mono rounded-lg border border-blue-500/20">SPECIALISTS</span>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
-                                    {paginatedList.filter(ext => ext.type === 'skill').map(ext => (
+                                <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6 mb-6">
+                                    {filteredAgents.slice((installedAgentsPage - 1) * itemsPerPage, installedAgentsPage * itemsPerPage).map(ext => (
                                         <ExtensionCard
                                             key={ext.id}
-                                            id={ext.id}
-                                            name={ext.name}
-                                            description={ext.description}
-                                            type={ext.type}
-                                            status={ext.status}
-                                            enabled={ext.enabled}
-                                            requiresKey={ext.requiresKey}
+                                            {...ext}
                                             onToggle={(val) => handleToggle(ext.id, ext.type, val)}
                                             onInstall={() => handleInstall(ext.id, ext.type, ext.requiresKey)}
                                             onUninstall={() => handleUninstall(ext.id, ext.type)}
@@ -484,12 +553,13 @@ export default function ExtensionsView() {
                                             onShare={() => handleShare(ext.id, ext.type)}
                                         />
                                     ))}
-                                    {paginatedList.filter(ext => ext.type === 'skill').length === 0 && (
+                                    {filteredAgents.length === 0 && (
                                         <div className="col-span-full py-8 px-8 border border-neutral-800/50 rounded-3xl bg-neutral-900/20">
-                                            <p className="text-neutral-600 text-xs italic">No custom agents or skills active in this page.</p>
+                                            <p className="text-neutral-600 text-xs italic">No custom agents or skills installed.</p>
                                         </div>
                                     )}
                                 </div>
+                                {renderPagination(installedAgentsPage, Math.ceil(filteredAgents.length / itemsPerPage), setInstalledAgentsPage)}
                             </section>
 
                             {/* Active Bridges Section */}
@@ -497,19 +567,13 @@ export default function ExtensionsView() {
                                 <div className="flex items-center gap-3 mb-6">
                                     <div className="w-1.5 h-6 bg-orange-500 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.5)]" />
                                     <h3 className="text-xl font-bold text-white tracking-tight">Active Bridges (MCP)</h3>
-                                    <span className="px-2 py-0.5 bg-orange-500/10 text-orange-400 text-[10px] font-mono rounded-lg border border-orange-500/20">INFRASTRUCTURE</span>
+                                    <span className="px-2 py-0.5 bg-orange-500/10 text-orange-400 text-[10px] font-mono rounded-lg border border-blue-500/20">INFRASTRUCTURE</span>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
-                                    {paginatedList.filter(ext => ext.type === 'mcp').map(ext => (
+                                <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6 mb-6">
+                                    {filteredMcps.slice((installedMcpPage - 1) * itemsPerPage, installedMcpPage * itemsPerPage).map(ext => (
                                         <ExtensionCard
                                             key={ext.id}
-                                            id={ext.id}
-                                            name={ext.name}
-                                            description={ext.description}
-                                            type={ext.type}
-                                            status={ext.status}
-                                            enabled={ext.enabled}
-                                            requiresKey={ext.requiresKey}
+                                            {...ext}
                                             onToggle={(val) => handleToggle(ext.id, ext.type, val)}
                                             onInstall={() => handleInstall(ext.id, ext.type, ext.requiresKey)}
                                             onUninstall={() => handleUninstall(ext.id, ext.type)}
@@ -517,74 +581,51 @@ export default function ExtensionsView() {
                                             onShare={() => handleShare(ext.id, ext.type)}
                                         />
                                     ))}
-                                    {paginatedList.filter(ext => ext.type === 'mcp').length === 0 && (
+                                    {filteredMcps.length === 0 && (
                                         <div className="col-span-full py-8 px-8 border border-neutral-800/50 rounded-3xl bg-neutral-900/20">
-                                            <p className="text-neutral-600 text-xs italic">No MCP bridges active in this page.</p>
+                                            <p className="text-neutral-600 text-xs italic">No MCP bridges installed.</p>
                                         </div>
                                     )}
                                 </div>
+                                {renderPagination(installedMcpPage, Math.ceil(filteredMcps.length / itemsPerPage), setInstalledMcpPage)}
                             </section>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 mb-10">
-                            {paginatedList.map(ext => (
-                                <ExtensionCard
-                                    key={ext.id}
-                                    id={ext.id}
-                                    name={ext.name}
-                                    description={ext.description}
-                                    type={ext.type}
-                                    status={ext.status}
-                                    enabled={ext.enabled}
-                                    requiresKey={ext.requiresKey}
-                                    onToggle={(val) => handleToggle(ext.id, ext.type, val)}
-                                    onInstall={() => handleInstall(ext.id, ext.type, ext.requiresKey)}
-                                    onUninstall={() => handleUninstall(ext.id, ext.type)}
-                                    onConfigure={() => handleConfigure(ext.id, ext.type)}
-                                    onShare={() => handleShare(ext.id, ext.type)}
-                                />
-                            ))}
+                        <div className="flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500 mb-10 min-h-[400px]">
+                            <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6 mb-6">
+                                {loadingStore ? (
+                                    <div className="col-span-full flex flex-col items-center justify-center py-20">
+                                        <RefreshCw className="w-8 h-8 text-orange-500 animate-spin mb-4" />
+                                        <p className="text-neutral-500 font-mono text-[10px] uppercase tracking-widest">Paging ClawHub Registry...</p>
+                                    </div>
+                                ) : (
+                                    (activeTab === 'skills-store' ? skillStore : filterExtensions(mcpStore)).slice(
+                                        isMcpStoreTab ? (currentPage - 1) * itemsPerPage : 0,
+                                        isMcpStoreTab ? currentPage * itemsPerPage : undefined
+                                    ).map(ext => (
+                                        <ExtensionCard
+                                            key={ext.id}
+                                            {...ext}
+                                            onToggle={(val) => handleToggle(ext.id, ext.type, val)}
+                                            onInstall={() => handleInstall(ext.id, ext.type, ext.requiresKey)}
+                                            onUninstall={() => handleUninstall(ext.id, ext.type)}
+                                            onConfigure={() => handleConfigure(ext.id, ext.type)}
+                                            onShare={() => handleShare(ext.id, ext.type)}
+                                        />
+                                    ))
+                                )}
+                            </div>
+                            {isStoreTab ? 
+                                renderPagination(skillStorePage, skillStoreTotalPages, (p) => {
+                                    setSkillStorePage(p);
+                                    fetchSkillStore(p);
+                                }) : 
+                                isMcpStoreTab && renderPagination(currentPage, Math.ceil(mcpStore.length / itemsPerPage), setCurrentPage)
+                            }
                         </div>
                     )}
 
-                    {/* Pagination Controls */}
-                    {totalPages > 1 && (
-                        <div className="flex items-center justify-center gap-4 py-8 border-t border-neutral-800/30">
-                            <button
-                                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                                disabled={currentPage === 1}
-                                className="flex items-center gap-2 px-4 py-2 bg-neutral-900 border border-neutral-800 rounded-xl text-neutral-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-[10px] uppercase tracking-widest"
-                            >
-                                <ChevronLeft size={14} /> Prev
-                            </button>
-                            <div className="flex items-center gap-2">
-                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                    // Show pages around current
-                                    let pageNum = i + 1;
-                                    if (totalPages > 5 && currentPage > 3) {
-                                        pageNum = currentPage - 2 + i;
-                                        if (pageNum > totalPages) pageNum = totalPages - 4 + i;
-                                    }
-                                    return (
-                                        <button
-                                            key={pageNum}
-                                            onClick={() => setCurrentPage(pageNum)}
-                                            className={`w-10 h-10 rounded-xl border font-mono text-xs transition-all ${currentPage === pageNum ? 'bg-orange-600 border-orange-500 text-white' : 'bg-neutral-900 border-neutral-800 text-neutral-500 hover:border-neutral-700'}`}
-                                        >
-                                            {pageNum}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                            <button
-                                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                                disabled={currentPage === totalPages}
-                                className="flex items-center gap-2 px-4 py-2 bg-neutral-900 border border-neutral-800 rounded-xl text-neutral-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-[10px] uppercase tracking-widest"
-                            >
-                                Next <ChevronRight size={14} />
-                            </button>
-                        </div>
-                    )}
+
                 </>
             )}
 

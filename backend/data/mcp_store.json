@@ -233,37 +233,6 @@
         }
     },
     "skills": {
-        "sales-engineer": {
-            "name": "Sales Engineer",
-            "description": "Analyzes RFP/RFI responses for coverage gaps, builds competitive feature comparison matrices, and plans proof-of-concept (POC) engagements for pre-sales engi...",
-            "type": "skill",
-            "source": "clawhub",
-            "metadata": {
-                "slug": "sales-engineer",
-                "displayName": "Sales Engineer",
-                "summary": "Analyzes RFP/RFI responses for coverage gaps, builds competitive feature comparison matrices, and plans proof-of-concept (POC) engagements for pre-sales engi...",
-                "tags": {
-                    "latest": "1.0.0"
-                },
-                "stats": {
-                    "comments": 0,
-                    "downloads": 81,
-                    "installsAllTime": 0,
-                    "installsCurrent": 0,
-                    "stars": 0,
-                    "versions": 2
-                },
-                "createdAt": 1772590327126,
-                "updatedAt": 1773072108669,
-                "latestVersion": {
-                    "version": "1.0.0",
-                    "createdAt": 1773070460883,
-                    "changelog": "v2.1.1 release",
-                    "license": null
-                },
-                "metadata": null
-            }
-        },
         "remote-viewing-protocol": {
             "name": "Remote Viewing Protocol",
             "description": "Standardized remote viewing protocol for AI agents. Test whether your agent can identify hidden targets from coordinate-style prompts using controlled, doubl...",
@@ -2039,6 +2008,561 @@
                     "os": null,
                     "systems": null
                 }
+            }
+        },
+        "alibaba-shopping": {
+            "name": "Alibaba Shopping",
+            "description": "Shop Taobao/Tmall with smart search strategies, seller vetting, price negotiation, and deal finding guidance.",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "alibaba-shopping",
+                "displayName": "Alibaba Shopping",
+                "summary": "Shop Taobao/Tmall with smart search strategies, seller vetting, price negotiation, and deal finding guidance.",
+                "tags": {
+                    "china": "1.1.0",
+                    "ecommerce": "1.1.0",
+                    "latest": "1.1.0",
+                    "shopping": "1.1.0",
+                    "taobao": "1.1.0"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 9,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 0,
+                    "versions": 2
+                },
+                "createdAt": 1773162630299,
+                "updatedAt": 1773184608608,
+                "latestVersion": {
+                    "version": "1.1.0",
+                    "createdAt": 1773183603987,
+                    "changelog": "Major update: Migrated from code-based Taobao CLI to a documentation-driven guidance skill.\n\n- Fully rewrote the skill as a knowledge base and shopping guide, replacing all code.\n- Streamlined SKILL.md with expanded tips: search, seller vetting, negotiation, and security on Taobao/Tmall.\n- All implementation, dependency, and security-related files removed.\n- Platform, product authenticity, and communication best practices now presented as quick-reference tables.\n- Related skills and install instructions included for broader e-commerce help.",
+                    "license": null
+                },
+                "metadata": {
+                    "os": [
+                        "linux",
+                        "darwin",
+                        "win32"
+                    ],
+                    "systems": null
+                }
+            }
+        },
+        "gravity-forms": {
+            "name": "Gravity Forms",
+            "description": "Gravity Forms integration. Manage Forms. Use when the user wants to interact with Gravity Forms data.",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "gravity-forms",
+                "displayName": "Gravity Forms",
+                "summary": "Gravity Forms integration. Manage Forms. Use when the user wants to interact with Gravity Forms data.",
+                "tags": {
+                    "latest": "1.0.0"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 0,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 0,
+                    "versions": 1
+                },
+                "createdAt": 1773180158405,
+                "updatedAt": 1773184607733,
+                "latestVersion": {
+                    "version": "1.0.0",
+                    "createdAt": 1773180158405,
+                    "changelog": "Auto sync from membranedev/application-skills",
+                    "license": null
+                },
+                "metadata": {
+                    "os": null,
+                    "systems": null
+                }
+            }
+        },
+        "focus-timer": {
+            "name": "FocusTimer Pomodoro Timer via Agent",
+            "description": "Pomodoro-style focus blocks managed by your agent. Start, pause, track sessions. Daily focus time reports. No app needed, just chat.",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "focus-timer",
+                "displayName": "FocusTimer Pomodoro Timer via Agent",
+                "summary": "Pomodoro-style focus blocks managed by your agent. Start, pause, track sessions. Daily focus time reports. No app needed, just chat.",
+                "tags": {
+                    "focus-timer": "1.0.0",
+                    "latest": "1.0.0"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 0,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 0,
+                    "versions": 1
+                },
+                "createdAt": 1773183607393,
+                "updatedAt": 1773184606940,
+                "latestVersion": {
+                    "version": "1.0.0",
+                    "createdAt": 1773183607393,
+                    "changelog": "Initial upload",
+                    "license": null
+                },
+                "metadata": {
+                    "os": null,
+                    "systems": null
+                }
+            }
+        },
+        "engramclaw": {
+            "name": "EngramClaw",
+            "description": "Sistema de memoria persistente para agentes IA. Usa mem_save despu\u00e9s de bugfixes, decisiones, descubrimientos, cambios de config. Usa mem_search cuando el us...",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "engramclaw",
+                "displayName": "EngramClaw",
+                "summary": "Sistema de memoria persistente para agentes IA. Usa mem_save despu\u00e9s de bugfixes, decisiones, descubrimientos, cambios de config. Usa mem_search cuando el us...",
+                "tags": {
+                    "latest": "1.0.0"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 0,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 0,
+                    "versions": 2
+                },
+                "createdAt": 1773183657080,
+                "updatedAt": 1773184528369,
+                "latestVersion": {
+                    "version": "1.0.0",
+                    "createdAt": 1773184504874,
+                    "changelog": "engramclaw 1.0.0 Changelog\n\n- Added MCPorter as a required dependency alongside Engram; skill now requires both binaries installed.\n- Installation and setup instructions updated: now includes step-by-step guides for installing both MCPorter and Engram on all supported platforms.\n- Metadata updated to document required binaries (mcporter, engram) and new installation methods via npm and brew for MCPorter.\n- Skill setup section clarified: details on MCPorter/Engram registration, improved verification instructions, and expected output shown.\n- No changes to functionality or APIs; all updates are documentation and setup improvements.",
+                    "license": null
+                },
+                "metadata": {
+                    "os": null,
+                    "systems": null
+                }
+            }
+        },
+        "x-cmd": {
+            "name": "x-cmd",
+            "description": "Load x-cmd first: `. ~/.x-cmd.root/X`, then explore with `x nihao --llmstxt` or discover skills via `x skill`. x-cmd provides 600+ portable software and deve...",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "x-cmd",
+                "displayName": "x-cmd",
+                "summary": "Load x-cmd first: `. ~/.x-cmd.root/X`, then explore with `x nihao --llmstxt` or discover skills via `x skill`. x-cmd provides 600+ portable software and deve...",
+                "tags": {
+                    "latest": "1.0.0"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 56,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 1,
+                    "versions": 11
+                },
+                "createdAt": 1773096699814,
+                "updatedAt": 1773184465468,
+                "latestVersion": {
+                    "version": "1.0.0",
+                    "createdAt": 1773184440496,
+                    "changelog": "x-cmd 1.0.0 is a new stable release.\n\n- Version updated to 1.0.0 in metadata.\n- No other changes detected.",
+                    "license": null
+                },
+                "metadata": null
+            }
+        },
+        "maestro-skill": {
+            "name": "Maestro Bitcoin",
+            "description": "Query Maestro Bitcoin APIs over HTTP using the SIWX + JWT + x402 credit purchase flow, and resolve the exact endpoint URL from docs.gomaestro.org instead of...",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "maestro-skill",
+                "displayName": "Maestro Bitcoin",
+                "summary": "Query Maestro Bitcoin APIs over HTTP using the SIWX + JWT + x402 credit purchase flow, and resolve the exact endpoint URL from docs.gomaestro.org instead of...",
+                "tags": {
+                    "0.1.3": "0.1.3",
+                    "0.1.5": "0.1.5",
+                    "0.1.6": "0.1.6",
+                    "0.1.7": "0.1.7",
+                    "latest": "0.2.3",
+                    "v0.2.1": "0.2.1",
+                    "v0.2.2": "0.2.2",
+                    "v0.2.3": "0.2.3"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 1335,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 4,
+                    "versions": 12
+                },
+                "createdAt": 1769898506990,
+                "updatedAt": 1773184311340,
+                "latestVersion": {
+                    "version": "0.2.3",
+                    "createdAt": 1773184198332,
+                    "changelog": "- API endpoint URL logic improved: now resolve the correct Maestro REST base URL from https://docs.gomaestro.org instead of assuming api.gomaestro.org for API requests.\n- Clarified distinction between authentication domains (used in SIWX messages) and actual API endpoint hosts\u2014never guess the request URL from SIWX challenge fields.\n- Added tables of live-supported blockchains and documented their specific REST base URLs for Bitcoin, Cardano, and Dogecoin.\n- Updated documentation references and quickstart links for easier integration.\n- No logic or protocol changes to SIWX + JWT + x402 flow; all payment and authentication steps remain unchanged.",
+                    "license": null
+                },
+                "metadata": null
+            }
+        },
+        "harmonic": {
+            "name": "Harmonic",
+            "description": "Harmonic integration. Manage Organizations, Pipelines, Users, Goals, Filters. Use when the user wants to interact with Harmonic data.",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "harmonic",
+                "displayName": "Harmonic",
+                "summary": "Harmonic integration. Manage Organizations, Pipelines, Users, Goals, Filters. Use when the user wants to interact with Harmonic data.",
+                "tags": {
+                    "latest": "1.0.0"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 0,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 0,
+                    "versions": 1
+                },
+                "createdAt": 1773183747931,
+                "updatedAt": 1773184310422,
+                "latestVersion": {
+                    "version": "1.0.0",
+                    "createdAt": 1773183747931,
+                    "changelog": "Auto sync from membranedev/application-skills",
+                    "license": null
+                },
+                "metadata": {
+                    "os": null,
+                    "systems": null
+                }
+            }
+        },
+        "claude-code-switchboard": {
+            "name": "Claude Code Switchboard",
+            "description": "Manage how OpenClaw routes Telegram messages to different Claude model backends. Switch between CLI and API providers with simple config changes.",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "claude-code-switchboard",
+                "displayName": "Claude Code Switchboard",
+                "summary": "Manage how OpenClaw routes Telegram messages to different Claude model backends. Switch between CLI and API providers with simple config changes.",
+                "tags": {
+                    "latest": "1.2.0"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 37,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 0,
+                    "versions": 4
+                },
+                "createdAt": 1773044213199,
+                "updatedAt": 1773184309624,
+                "latestVersion": {
+                    "version": "1.2.0",
+                    "createdAt": 1773183966994,
+                    "changelog": "Added fallback/restore commands, cleaner docs, better architecture description",
+                    "license": null
+                },
+                "metadata": null
+            }
+        },
+        "konektor": {
+            "name": "Konektor - CAPI & Lead Management",
+            "description": "Access and manage marketing leads, update lead details, and retrieve analytics for lead performance and conversion tracking via Konektor API.",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "konektor",
+                "displayName": "Konektor - CAPI & Lead Management",
+                "summary": "Access and manage marketing leads, update lead details, and retrieve analytics for lead performance and conversion tracking via Konektor API.",
+                "tags": {
+                    "latest": "2.1.1"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 25,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 0,
+                    "versions": 3
+                },
+                "createdAt": 1773108783014,
+                "updatedAt": 1773184308881,
+                "latestVersion": {
+                    "version": "2.1.1",
+                    "createdAt": 1773180652906,
+                    "changelog": "- Added a new Requirements section outlining environment variable setup and minimum scopes.\n- Specified that the KONEKTOR_API_KEY environment variable must be set to use the API.\n- Clarified key creation and assignment instructions.\n- Included details about required transport (HTTPS) and content type (`application/json`).",
+                    "license": null
+                },
+                "metadata": null
+            }
+        },
+        "1claw": {
+            "name": "1claw",
+            "description": "HSM-backed secret management for AI agents \u2014 store, retrieve, rotate, and share secrets via the 1Claw vault without exposing them in context.",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "1claw",
+                "displayName": "1claw",
+                "summary": "HSM-backed secret management for AI agents \u2014 store, retrieve, rotate, and share secrets via the 1Claw vault without exposing them in context.",
+                "tags": {
+                    "latest": "1.1.1"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 437,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 0,
+                    "versions": 11
+                },
+                "createdAt": 1771537660447,
+                "updatedAt": 1773184308069,
+                "latestVersion": {
+                    "version": "1.1.1",
+                    "createdAt": 1773180301239,
+                    "changelog": "No changes detected in this version.\n\n- Version 1.0.0 released.\n- No file changes since the previous release.",
+                    "license": null
+                },
+                "metadata": {
+                    "os": null,
+                    "systems": null
+                }
+            }
+        },
+        "beanstalk": {
+            "name": "Beanstalk",
+            "description": "Beanstalk integration. Manage Persons, Organizations, Deals, Leads, Activities, Notes and more. Use when the user wants to interact with Beanstalk data.",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "beanstalk",
+                "displayName": "Beanstalk",
+                "summary": "Beanstalk integration. Manage Persons, Organizations, Deals, Leads, Activities, Notes and more. Use when the user wants to interact with Beanstalk data.",
+                "tags": {
+                    "latest": "1.0.0"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 0,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 0,
+                    "versions": 1
+                },
+                "createdAt": 1773180192530,
+                "updatedAt": 1773184307119,
+                "latestVersion": {
+                    "version": "1.0.0",
+                    "createdAt": 1773180192530,
+                    "changelog": "Auto sync from membranedev/application-skills",
+                    "license": null
+                },
+                "metadata": {
+                    "os": null,
+                    "systems": null
+                }
+            }
+        },
+        "meyhem-search": {
+            "name": "Meyhem Search",
+            "description": "Web search across multiple engines, across multiple engines. No API key, no signup.",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "meyhem-search",
+                "displayName": "Meyhem Search",
+                "summary": "Web search across multiple engines, across multiple engines. No API key, no signup.",
+                "tags": {
+                    "latest": "0.2.3"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 252,
+                    "installsAllTime": 2,
+                    "installsCurrent": 2,
+                    "stars": 0,
+                    "versions": 15
+                },
+                "createdAt": 1772419886439,
+                "updatedAt": 1773184261469,
+                "latestVersion": {
+                    "version": "0.2.3",
+                    "createdAt": 1773184235362,
+                    "changelog": "Honest data transparency section",
+                    "license": null
+                },
+                "metadata": {
+                    "os": null,
+                    "systems": null
+                }
+            }
+        },
+        "youtube-analytics-integration": {
+            "name": "Youtube Analytics",
+            "description": "YouTube Analytics integration. Manage Channels, Comments, AnalyticsReports. Use when the user wants to interact with YouTube Analytics data.",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "youtube-analytics-integration",
+                "displayName": "Youtube Analytics",
+                "summary": "YouTube Analytics integration. Manage Channels, Comments, AnalyticsReports. Use when the user wants to interact with YouTube Analytics data.",
+                "tags": {
+                    "latest": "1.0.0"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 0,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 0,
+                    "versions": 1
+                },
+                "createdAt": 1773183742849,
+                "updatedAt": 1773184120967,
+                "latestVersion": {
+                    "version": "1.0.0",
+                    "createdAt": 1773183742849,
+                    "changelog": "Auto sync from membranedev/application-skills",
+                    "license": null
+                },
+                "metadata": {
+                    "os": null,
+                    "systems": null
+                }
+            }
+        },
+        "lawmatics": {
+            "name": "Lawmatics",
+            "description": "Lawmatics integration. Manage Matters, Contacts, Automations, Forms, Reports, Users. Use when the user wants to interact with Lawmatics data.",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "lawmatics",
+                "displayName": "Lawmatics",
+                "summary": "Lawmatics integration. Manage Matters, Contacts, Automations, Forms, Reports, Users. Use when the user wants to interact with Lawmatics data.",
+                "tags": {
+                    "latest": "1.0.0"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 0,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 0,
+                    "versions": 1
+                },
+                "createdAt": 1773183733528,
+                "updatedAt": 1773184106201,
+                "latestVersion": {
+                    "version": "1.0.0",
+                    "createdAt": 1773183733528,
+                    "changelog": "Auto sync from membranedev/application-skills",
+                    "license": null
+                },
+                "metadata": {
+                    "os": null,
+                    "systems": null
+                }
+            }
+        },
+        "wesley-dashboard-builder": {
+            "name": "wesley dashboard builder",
+            "description": "Skill de cr\u00e9ation de dashboards live, sites web complets, et pages de preuve sociale pour Wesley-Agent. D\u00e9clencher d\u00e8s que Georges mentionne : dashboard, sit...",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "wesley-dashboard-builder",
+                "displayName": "wesley dashboard builder",
+                "summary": "Skill de cr\u00e9ation de dashboards live, sites web complets, et pages de preuve sociale pour Wesley-Agent. D\u00e9clencher d\u00e8s que Georges mentionne : dashboard, sit...",
+                "tags": {
+                    "latest": "1.0.0"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 0,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 0,
+                    "versions": 1
+                },
+                "createdAt": 1773181280102,
+                "updatedAt": 1773184011731,
+                "latestVersion": {
+                    "version": "1.0.0",
+                    "createdAt": 1773181280102,
+                    "changelog": "wesley-dashboard-builder 1.0.0 \u2013 Initial release with full web dashboard generation and deployment workflow.\n\n- Creates live dashboards, full websites, and social proof pages for Wesley-Agent, with mobile-first, multi-screen HTML/CSS/JS output.\n- Integrates real-time API data and optional Telegram bot uploads for photo galleries.\n- Produces self-contained files (all inline, no local dependencies) ready for instant VPS deployment via Cloudflare tunnel.\n- Outlines standard project structure, screen types, and design/coding rules (dark theme, fallback data, navigation).\n- Step-by-step instructions provided for dashboard creation, API integration, media usage, and deployment.\n- Includes detailed checklists to ensure quality and functionality before delivery.",
+                    "license": null
+                },
+                "metadata": {
+                    "os": null,
+                    "systems": null
+                }
+            }
+        },
+        "pre-install-security-check": {
+            "name": "Security Check",
+            "description": "\ud83d\udd12 Pre-installation security verification for external code and dependencies. Automated risk analysis for GitHub repos, npm packages, PyPI libraries, and she...",
+            "type": "skill",
+            "source": "clawhub",
+            "metadata": {
+                "slug": "pre-install-security-check",
+                "displayName": "Security Check",
+                "summary": "\ud83d\udd12 Pre-installation security verification for external code and dependencies. Automated risk analysis for GitHub repos, npm packages, PyPI libraries, and she...",
+                "tags": {
+                    "audit": "1.0.1",
+                    "cve": "1.0.1",
+                    "dependencies": "1.0.1",
+                    "github": "1.0.1",
+                    "latest": "1.0.1",
+                    "npm": "1.0.1",
+                    "pypi": "1.0.1",
+                    "safety": "1.0.1",
+                    "security": "1.0.1",
+                    "snyk": "1.0.1",
+                    "vulnerability": "1.0.1"
+                },
+                "stats": {
+                    "comments": 0,
+                    "downloads": 0,
+                    "installsAllTime": 0,
+                    "installsCurrent": 0,
+                    "stars": 0,
+                    "versions": 2
+                },
+                "createdAt": 1773179369530,
+                "updatedAt": 1773184007120,
+                "latestVersion": {
+                    "version": "1.0.1",
+                    "createdAt": 1773181325845,
+                    "changelog": "- Improved SKILL.md metadata with tags and a clearer description highlighting key features and integrations.\n- Added a new README.md file.\n- Updated main description to emphasize first-class OpenClaw integration and CVE database support.\n- No changes to risk analysis logic or security procedures.",
+                    "license": null
+                },
+                "metadata": null
             }
         }
     }
