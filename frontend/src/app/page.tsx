@@ -8,12 +8,12 @@ import AgentConversationModal, { Message } from '@/components/Kernel/AgentConver
 import KnowledgeGraphExplorer from "@/components/Kernel/KnowledgeGraphExplorer";
 import ModelSelector from "@/components/Kernel/ModelSelector";
 import AgentSelector from "@/components/Kernel/AgentSelector";
-import WorkflowManagerModal from "@/components/Kernel/WorkflowManagerModal";
 import HistoryView from "@/components/Kernel/HistoryView";
-import BatchManagerModal from "@/components/Kernel/BatchManagerModal";
 import ExtensionsView from "@/components/Kernel/ExtensionsView";
+import WorkflowView from "@/components/Kernel/WorkflowView";
+import BatchView from "@/components/Kernel/BatchView";
 import CommandBar from "@/components/Kernel/CommandBar";
-import { GitBranch, History, LayoutDashboard, Layers, Cpu, MessageSquare, WifiOff, RefreshCw } from "lucide-react";
+import { GitBranch, History, LayoutDashboard, Layers, Cpu, MessageSquare, WifiOff, RefreshCw, Activity } from "lucide-react";
 
 export interface ProcessData {
   pid: string;
@@ -29,6 +29,23 @@ export interface KernelMetrics {
   active_count: number;
 }
 
+interface NavItemProps {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+}
+
+const NavItem: React.FC<NavItemProps> = ({ active, onClick, icon, label }) => (
+  <button
+    onClick={onClick}
+    className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all group ${active ? 'bg-blue-600 border border-blue-500 text-white shadow-lg shadow-blue-500/20' : 'text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800/50'}`}
+  >
+    {icon}
+    <span className="text-xs font-bold uppercase tracking-widest">{label}</span>
+  </button>
+);
+
 export default function Dashboard() {
   const [events, setEvents] = useState<CommandEvent[]>([]);
   const [kernelMetrics, setKernelMetrics] = useState<KernelMetrics | null>(null);
@@ -38,8 +55,7 @@ export default function Dashboard() {
   const [llmProvider, setLlmProvider] = useState<string>("");
   const [llmModel, setLlmModel] = useState<string>("");
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
-  const [isWorkflowModalOpen, setIsWorkflowModalOpen] = useState(false);
-  const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
+
   const [activeWorkflow, setActiveWorkflow] = useState<{
     id: string;
     name: string;
@@ -48,7 +64,8 @@ export default function Dashboard() {
     status: string;
     currentPid?: string;
   } | null>(null);
-  const [activeView, setActiveView] = useState<'dashboard' | 'extensions' | 'history'>('dashboard');
+
+  const [activeView, setActiveView] = useState<'dashboard' | 'extensions' | 'history' | 'workflows' | 'batches'>('dashboard');
   const [historyPid, setHistoryPid] = useState<string | null>(null);
   const [wsStatus, setWsStatus] = useState<'connected' | 'disconnected' | 'connecting' | 'error'>('connecting');
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
@@ -107,7 +124,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://127.0.0.1:8000/ws";
-    Promise.resolve().then(() => setWsStatus('connecting'));
+    setWsStatus('connecting');
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
@@ -139,7 +156,6 @@ export default function Dashboard() {
 
     ws.onclose = () => {
       setWsStatus('disconnected');
-      // Auto-reconnect after 3 seconds
       setTimeout(() => {
         setReconnectAttempts(prev => prev + 1);
       }, 3000);
@@ -179,49 +195,39 @@ export default function Dashboard() {
         </div>
 
         <nav className="flex-grow p-4 space-y-2">
-          <button
+          <NavItem
+            active={activeView === 'dashboard'}
             onClick={() => setActiveView('dashboard')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all group ${activeView === 'dashboard' ? 'bg-blue-600 border border-blue-500 text-white shadow-lg shadow-blue-500/20' : 'text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800/50'}`}
-          >
-            <LayoutDashboard size={18} />
-            <span className="text-xs font-bold uppercase tracking-widest">Analytics</span>
-          </button>
-
-          <button
+            icon={<LayoutDashboard size={18} />}
+            label="Analytics"
+          />
+          <NavItem
+            active={activeView === 'workflows'}
+            onClick={() => setActiveView('workflows')}
+            icon={<GitBranch size={18} />}
+            label="Neural Pipelines"
+          />
+          <NavItem
+            active={activeView === 'batches'}
+            onClick={() => setActiveView('batches')}
+            icon={<Layers size={18} />}
+            label="Batch Terminal"
+          />
+          <NavItem
+            active={activeView === 'history'}
             onClick={() => setActiveView('history')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all group ${activeView === 'history' ? 'bg-blue-600 border border-blue-500 text-white shadow-lg shadow-blue-500/20' : 'text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800/50'}`}
-          >
-            <History size={18} />
-            <span className="text-xs font-bold uppercase tracking-widest">Logs</span>
-          </button>
+            icon={<History size={18} />}
+            label="System History"
+          />
 
-          <div className="py-4 px-4 text-[10px] font-black text-neutral-600 uppercase tracking-[0.2em]">Automation</div>
+          <div className="py-4 px-4 text-[10px] font-black text-neutral-600 uppercase tracking-[0.2em]">Discovery</div>
 
-          <button
-            onClick={() => setIsWorkflowModalOpen(true)}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800/50"
-          >
-            <GitBranch size={18} />
-            <span className="text-xs font-bold uppercase tracking-widest">Workflows</span>
-          </button>
-
-          <button
-            onClick={() => setIsBatchModalOpen(true)}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800/50"
-          >
-            <Layers size={18} />
-            <span className="text-xs font-bold uppercase tracking-widest">Batches</span>
-          </button>
-
-          <div className="py-4 px-4 text-[10px] font-black text-neutral-600 uppercase tracking-[0.2em]">Extensions</div>
-
-          <button
+          <NavItem
+            active={activeView === 'extensions'}
             onClick={() => setActiveView('extensions')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all group ${activeView === 'extensions' ? 'bg-orange-600 border border-orange-500 text-white shadow-lg shadow-orange-500/20' : 'text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800/50'}`}
-          >
-            <Layers size={18} className={activeView === 'extensions' ? 'text-white' : 'group-hover:text-orange-400'} />
-            <span className="text-xs font-bold uppercase tracking-widest">Skills</span>
-          </button>
+            icon={<Cpu size={18} />}
+            label="Skills & MCPs"
+          />
         </nav>
 
         <div className="p-6 border-t border-neutral-800/50">
@@ -262,7 +268,11 @@ export default function Dashboard() {
                 <AgentSelector
                   onSelect={(agent) => setSelectedAgentId(agent?.id || null)}
                   currentAgentId={selectedAgentId}
-                  onViewChange={setActiveView}
+                  onViewChange={(v: any) => {
+                    if (v === 'extensions') setActiveView('extensions');
+                    else if (v === 'dashboard') setActiveView('dashboard');
+                    else if (v === 'history') setActiveView('history');
+                  }}
                 />
                 <div className="h-10 w-px bg-neutral-800" />
                 <ModelSelector
@@ -382,6 +392,10 @@ export default function Dashboard() {
           </div>
         ) : activeView === 'extensions' ? (
           <ExtensionsView />
+        ) : activeView === 'workflows' ? (
+          <WorkflowView />
+        ) : activeView === 'batches' ? (
+          <BatchView />
         ) : (
           <div className="flex-grow overflow-hidden flex flex-col">
             <HistoryView onSelectPid={setHistoryPid} onBack={() => setActiveView('dashboard')} />
@@ -439,21 +453,16 @@ export default function Dashboard() {
           readOnly={true}
         />
       )}
-      {isWorkflowModalOpen && (
-        <WorkflowManagerModal
-          isOpen={isWorkflowModalOpen}
-          onClose={() => setIsWorkflowModalOpen(false)}
-        />
-      )}
-      {isBatchModalOpen && (
-        <BatchManagerModal
-          isOpen={isBatchModalOpen}
-          onClose={() => setIsBatchModalOpen(false)}
-        />
-      )}
+
       <CommandBar
         onSpawnAgent={(task) => handleSpawnAgent(task)}
-        onViewChange={setActiveView}
+        onViewChange={(v: any) => {
+          if (v === 'extensions') setActiveView('extensions');
+          else if (v === 'dashboard') setActiveView('dashboard');
+          else if (v === 'history') setActiveView('history');
+          else if (v === 'workflows') setActiveView('workflows');
+          else if (v === 'batches') setActiveView('batches');
+        }}
       />
     </div>
   );
