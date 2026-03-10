@@ -101,7 +101,7 @@ export default function ExtensionsView() {
 
             // Format stores
             const skillsS = skillsData.items || {};
-            const sStore: Extension[] = Object.entries(skillsS).map(([id, s]: [string, any]) => ({
+            const sStore: Extension[] = Object.entries(skillsS as Record<string, { name: string; description: string }>).map(([id, s]) => ({
                 id,
                 name: s.name,
                 description: s.description,
@@ -350,7 +350,7 @@ export default function ExtensionsView() {
     const isMcpStoreTab = activeTab === 'mcp-store';
 
     useEffect(() => {
-        if (activeTab === 'skills-store') {
+        if (activeTab === 'skills-store' && !searchTerm.trim()) {
             setSkillStorePage(1);
             fetchSkillStore(1);
         }
@@ -443,6 +443,13 @@ export default function ExtensionsView() {
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="bg-neutral-900/50 border border-neutral-800 rounded-2xl pl-11 pr-12 py-3 text-sm text-white focus:border-blue-500/50 outline-none w-64 transition-all"
                         />
+                        {searchTerm && (
+                            <div className="absolute right-12 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-2 py-0.5 bg-blue-500/10 rounded-md border border-blue-500/20">
+                                <span className="text-[10px] font-mono font-bold text-blue-400">
+                                    {activeTab === 'installed' ? (filteredAgents.length + filteredMcps.length) : (activeTab === 'skills-store' ? skillStore.length : mcpStore.length)}
+                                </span>
+                            </div>
+                        )}
                         {(searching || loadingStore) && (
                             <div className="absolute right-4 top-1/2 -translate-y-1/2">
                                 <RefreshCw className="w-3 h-3 text-blue-400 animate-spin" />
