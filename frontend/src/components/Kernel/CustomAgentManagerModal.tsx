@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { X, Plus, Trash2, Zap, Sparkles, Terminal, Database, MessageSquare, ChevronRight, Cpu, Info, Edit2 } from "lucide-react";
 
 interface MCPServer {
@@ -50,7 +50,6 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged, in
     const [loading, setLoading] = useState(true);
     const [view, setView] = useState<'list' | 'create'>('list');
     const [isEditing, setIsEditing] = useState(false);
-    const hasHandledInitialRef = useRef(false);
 
     const [formData, setFormData] = useState({
         id: '',
@@ -132,23 +131,24 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged, in
         }
     }, [loading, llmProviders, formData.model]);
 
-    // Second effect to handle the actual edit trigger once agents are loaded
     useEffect(() => {
-        if (isOpen && initialAgentId && agents.length > 0 && !hasHandledInitialRef.current && !isEditing) {
-            const agent = agents.find(a => a.id === initialAgentId);
-            if (agent) {
-                hasHandledInitialRef.current = true;
-                handleEdit(agent);
-            }
-        }
-    }, [isOpen, initialAgentId, agents, isEditing]);
+        if (!isOpen) return;
 
-    // Reset ref when modal closes or initialAgentId changes
-    useEffect(() => {
-        if (!isOpen) {
-            hasHandledInitialRef.current = false;
+        if (initialAgentId && agents.length > 0) {
+            // Check if we already have this agent loaded in the form
+            if (formData.id !== initialAgentId) {
+                const agent = agents.find(a => a.id === initialAgentId);
+                if (agent) {
+                    handleEdit(agent);
+                }
+            }
+        } else if (initialView && !initialAgentId && !isEditing) {
+            // Only set initial view if we aren't already editing something
+            setView(initialView);
         }
-    }, [isOpen]);
+    }, [isOpen, initialAgentId, agents, initialView, formData.id, isEditing]);
+
+    // No longer using tricky refs for initial handling
 
     const handleAdd = async () => {
         if (!formData.id || !formData.name) return;

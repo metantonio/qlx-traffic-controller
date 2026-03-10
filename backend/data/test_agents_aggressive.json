@@ -1,0 +1,52 @@
+{
+    "agent_0": {
+        "id": "agent_0",
+        "name": "Agent 0",
+        "description": "Description for agent 0",
+        "system_prompt": null,
+        "mcp_servers": [],
+        "static_tools": [],
+        "provider": null,
+        "model": null
+    },
+    "agent_1": {
+        "id": "agent_1",
+        "name": "Agent 1",
+        "description": "Description for agent 1",
+        "system_prompt": null,
+        "mcp_servers": [],
+        "static_tools": [],
+        "provider": null,
+        "model": null
+    },
+    "agent_2": {
+        "id": "agent_2",
+        "name": "Agent 2",
+        "description": "MODIFIED DESCRIPTION",
+        "system_prompt": null,
+        "mcp_servers": [],
+        "static_tools": [],
+        "provider": null,
+        "model": null
+    },
+    "agent_3": {
+        "id": "agent_3",
+        "name": "Agent 3",
+        "description": "Description for agent 3",
+        "system_prompt": null,
+        "mcp_servers": [],
+        "static_tools": [],
+        "provider": null,
+        "model": null
+    },
+    "agent_4": {
+        "id": "agent_4",
+        "name": "Agent 4",
+        "description": "Description for agent 4",
+        "system_prompt": null,
+        "mcp_servers": [],
+        "static_tools": [],
+        "provider": null,
+        "model": null
+    }
+}
