@@ -2,7 +2,7 @@
     "creator_txt_agent": {
         "id": "creator_txt_agent",
         "name": "TXT Document Creator",
-        "description": "Creates or appends text summaries to files. Excellent at formatting summaries.",
+        "description": "Updated at 0.0",
         "system_prompt": null,
         "mcp_servers": [],
         "static_tools": [
@@ -34,7 +34,7 @@
         ],
         "static_tools": [],
         "provider": "ollama",
-        "model": "qwen2.5-coder:7b"
+        "model": "tomng/nanbeige4.1:3b"
     },
     "deepcode_debugger": {
         "id": "deepcode_debugger",
@@ -76,6 +76,16 @@
         "name": "Senior Data Scientist",
         "description": "World-class senior data scientist skill specialising in statistical modeling, experiment design, causal inference, and predictive analytics. Covers A/B testi...",
         "system_prompt": "I am the Senior Data Scientist specialist.",
+        "mcp_servers": [],
+        "static_tools": [],
+        "provider": null,
+        "model": null
+    },
+    "persistence-test-agent": {
+        "id": "persistence-test-agent",
+        "name": "Persistence Test",
+        "description": "Persistent since 1773145222.8798172",
+        "system_prompt": "Test",
         "mcp_servers": [],
         "static_tools": [],
         "provider": null,

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { X, Plus, Trash2, Zap, Sparkles, Terminal, Database, MessageSquare, ChevronRight, Cpu, Info, Edit2 } from "lucide-react";
 
 interface MCPServer {
@@ -50,6 +50,7 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged, in
     const [loading, setLoading] = useState(true);
     const [view, setView] = useState<'list' | 'create'>('list');
     const [isEditing, setIsEditing] = useState(false);
+    const hasHandledInitialRef = useRef(false);
 
     const [formData, setFormData] = useState({
         id: '',
@@ -101,20 +102,12 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged, in
                 id,
                 ...(s as { name: string, description: string, system_prompt?: string, mcp_servers?: string[], static_tools?: string[] })
             })));
-
-            // Set a default model if not set
-            if (modelsData.length > 0 && !formData.model) {
-                const ollamaP = modelsData.find((p: LLMProvider) => p.provider === 'ollama');
-                if (ollamaP && ollamaP.models.length > 0) {
-                    setFormData(prev => ({ ...prev, model: ollamaP.models[0] }));
-                }
-            }
         } catch (err) {
             console.error("Neural Registry Sync Failure:", err);
         } finally {
             setLoading(false);
         }
-    }, [apiUrl, formData.model]);
+    }, [apiUrl]);
 
     useEffect(() => {
         if (isOpen) {
@@ -129,15 +122,33 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged, in
         }
     }, [isOpen, fetchAllData, initialAgentId, initialView]);
 
+    // Separate effect for default model to avoid loops
+    useEffect(() => {
+        if (!loading && llmProviders.length > 0 && !formData.model) {
+            const ollamaP = llmProviders.find((p: LLMProvider) => p.provider === 'ollama');
+            if (ollamaP && ollamaP.models.length > 0) {
+                setFormData(prev => ({ ...prev, model: ollamaP.models[0] }));
+            }
+        }
+    }, [loading, llmProviders, formData.model]);
+
     // Second effect to handle the actual edit trigger once agents are loaded
     useEffect(() => {
-        if (isOpen && initialAgentId && agents.length > 0) {
+        if (isOpen && initialAgentId && agents.length > 0 && !hasHandledInitialRef.current && !isEditing) {
             const agent = agents.find(a => a.id === initialAgentId);
             if (agent) {
+                hasHandledInitialRef.current = true;
                 handleEdit(agent);
             }
         }
-    }, [isOpen, initialAgentId, agents]);
+    }, [isOpen, initialAgentId, agents, isEditing]);
+
+    // Reset ref when modal closes or initialAgentId changes
+    useEffect(() => {
+        if (!isOpen) {
+            hasHandledInitialRef.current = false;
+        }
+    }, [isOpen]);
 
     const handleAdd = async () => {
         if (!formData.id || !formData.name) return;

@@ -28,20 +28,31 @@ class AgentManager:
                 json.dump({}, f)
 
     def load_agents(self) -> Dict[str, CustomAgent]:
+        if not os.path.exists(self.config_path):
+            return {}
         try:
             with open(self.config_path, 'r') as f:
-                data = json.load(f)
+                content = f.read()
+                if not content.strip():
+                    return {}
+                data = json.loads(content)
                 return {k: CustomAgent(**v) for k, v in data.items()}
         except Exception as e:
-            logger.error(f"Failed to load custom agents: {e}")
+            logger.error(f"Failed to load custom agents from {self.config_path}: {e}")
+            # If it's a JSON error, maybe the file is corrupted. 
+            # We don't want to return an empty dict that might cause an overwrite 
+            # on the next save if we aren't careful, but AgentManager methods 
+            # usually do load -> modify -> save.
             return {}
 
     def save_agents(self, agents: Dict[str, CustomAgent]):
         try:
+            logger.info(f"Saving {len(agents)} custom agents to {self.config_path}")
             with open(self.config_path, 'w') as f:
                 json.dump({k: v.model_dump() for k, v in agents.items()}, f, indent=4)
+            logger.info("Successfully persisted custom agents.")
         except Exception as e:
-            logger.error(f"Failed to save custom agents: {e}")
+            logger.error(f"Failed to save custom agents to {self.config_path}: {e}")
 
     def get_agent(self, agent_id: str) -> Optional[CustomAgent]:
         agents = self.load_agents()
