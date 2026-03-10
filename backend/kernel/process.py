@@ -182,5 +182,17 @@ class ProcessTable:
                 return proc
         return None
 
+    def remove(self, pid: str):
+        """Removes a process from the in-memory lookup."""
+        if pid in self.processes:
+            del self.processes[pid]
+
+    def clear_all_finished(self):
+        """Clears all completed/failed/terminated processes from memory."""
+        finished_states = [ProcessState.COMPLETED, ProcessState.FAILED, ProcessState.TERMINATED]
+        to_remove = [pid for pid, p in self.processes.items() if p.state in finished_states]
+        for pid in to_remove:
+            del self.processes[pid]
+
 # Global process table mapping
 system_process_table = ProcessTable()

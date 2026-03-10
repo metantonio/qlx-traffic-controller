@@ -11,9 +11,10 @@ export interface CommandEvent {
 
 interface CommandMonitorProps {
     events: CommandEvent[];
+    onClear?: () => void;
 }
 
-export default function CommandMonitor({ events }: CommandMonitorProps) {
+export default function CommandMonitor({ events, onClear }: CommandMonitorProps) {
     const [filter, setFilter] = useState("");
 
     const commandEvents = events
@@ -43,6 +44,14 @@ export default function CommandMonitor({ events }: CommandMonitorProps) {
                         className="w-full bg-neutral-950 border border-neutral-800 rounded-lg py-1.5 pl-9 pr-3 text-xs placeholder:text-neutral-700 focus:outline-none focus:border-blue-500/30 font-mono text-neutral-300 transition-all"
                     />
                 </div>
+                {onClear && (
+                    <button
+                        onClick={onClear}
+                        className="px-3 py-1.5 bg-neutral-950 border border-neutral-800 rounded-lg text-[10px] font-bold text-neutral-500 hover:text-red-400 hover:border-red-500/30 transition-all uppercase tracking-tighter"
+                    >
+                        Clear
+                    </button>
+                )}
             </div>
 
             {/* Logs Area */}

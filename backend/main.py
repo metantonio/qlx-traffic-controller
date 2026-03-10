@@ -473,6 +473,53 @@ async def get_process_history(page: int = 1, page_size: int = 10):
             "items": history
         }
 
+@app.delete("/api/history/{pid}")
+async def delete_process_history(pid: str):
+    """Deletes a process and its messages from the database."""
+    with SessionLocal() as db:
+        db_proc = db.query(DbProcess).filter(DbProcess.pid == pid).first()
+        if not db_proc:
+            return {"error": "Process not found in history"}
+        
+        db.delete(db_proc)
+        db.commit()
+    
+    # Also remove from memory if present
+    system_process_table.remove(pid)
+    return {"status": "success"}
+
+@app.delete("/api/history")
+async def clear_all_history():
+    """Wipes the entire process and message history from the database."""
+    with SessionLocal() as db:
+        # Cascade delete is configured, so deleting processes will delete messages
+        db.query(DbProcess).delete()
+        db.commit()
+    
+    # Clear memory lookup
+    system_process_table.processes.clear()
+    return {"status": "success"}
+
+@app.delete("/api/processes/{pid}")
+async def dismiss_process(pid: str):
+    """Removes a finished process from the active threads list (memory only)."""
+    proc = system_process_table.get(pid)
+    if not proc:
+        return {"error": "Process not found"}
+    
+    from backend.kernel.process import ProcessState
+    if proc.state == ProcessState.RUNNING:
+        return {"error": "Cannot dismiss a running process. Stop it first."}
+    
+    system_process_table.remove(pid)
+    return {"status": "success"}
+
+@app.delete("/api/processes")
+async def clear_finished_processes():
+    """Removes all completed/failed processes from the active memory list."""
+    system_process_table.clear_all_finished()
+    return {"status": "success"}
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)

@@ -1,13 +1,16 @@
 "use client";
 
 import { KernelMetrics } from "@/app/page";
+import { X, Trash2 } from "lucide-react";
 
 interface ProcessMonitorProps {
     metrics: KernelMetrics | null;
     onProcessClick?: (pid: string) => void;
+    onDismiss?: (pid: string) => void;
+    onClearFinished?: () => void;
 }
 
-export default function ProcessMonitor({ metrics, onProcessClick }: ProcessMonitorProps) {
+export default function ProcessMonitor({ metrics, onProcessClick, onDismiss, onClearFinished }: ProcessMonitorProps) {
     const activeProcesses = metrics?.processes || [];
 
     const getStatusColor = (state: string) => {
@@ -29,6 +32,17 @@ export default function ProcessMonitor({ metrics, onProcessClick }: ProcessMonit
                         <th className="py-2 px-3">STATE</th>
                         <th className="py-2 px-3">MEM</th>
                         <th className="py-2 px-3">CPU</th>
+                        <th className="py-2 px-3 text-right">
+                            {onClearFinished && (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onClearFinished(); }}
+                                    className="p-1 hover:bg-red-500/10 rounded text-neutral-600 hover:text-red-400 transition-colors"
+                                    title="Clear all finished"
+                                >
+                                    <Trash2 size={12} />
+                                </button>
+                            )}
+                        </th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-800/50">
@@ -54,6 +68,17 @@ export default function ProcessMonitor({ metrics, onProcessClick }: ProcessMonit
                             </td>
                             <td className="py-3 px-3 text-neutral-400">{proc.mem}</td>
                             <td className="py-3 px-3 text-neutral-400">{proc.cpu}</td>
+                            <td className="py-3 px-3 text-right">
+                                {(proc.state === "completed" || proc.state === "failed") && onDismiss && (
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); onDismiss(proc.pid); }}
+                                        className="p-1.5 hover:bg-neutral-700/50 rounded-lg text-neutral-500 hover:text-white transition-all opacity-0 group-hover:opacity-100"
+                                        title="Dismiss Process"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                )}
+                            </td>
                         </tr>
                     ))}
                 </tbody>

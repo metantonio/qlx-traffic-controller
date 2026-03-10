@@ -76,6 +76,34 @@ export default function Dashboard() {
     handleSpawnAgent(followUp, pid, history);
   }, [handleSpawnAgent]);
 
+  const handleClearEvents = useCallback(() => {
+    setEvents([]);
+  }, []);
+
+  const handleDismissProcess = useCallback(async (pid: string) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/processes/${pid}`, {
+        method: 'DELETE'
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        console.error("Failed to dismiss process:", err.error);
+      }
+    } catch (error) {
+      console.error("Error dismissing process:", error);
+    }
+  }, []);
+
+  const handleClearFinished = useCallback(async () => {
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/processes`, {
+        method: 'DELETE'
+      });
+    } catch (error) {
+      console.error("Error clearing finished processes:", error);
+    }
+  }, []);
+
   useEffect(() => {
     const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://127.0.0.1:8000/ws";
     Promise.resolve().then(() => setWsStatus('connecting'));
@@ -259,7 +287,12 @@ export default function Dashboard() {
                       <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.4)]" />
                       <h2 className="text-xs font-black text-neutral-400 uppercase tracking-[0.2em]">Active Threads</h2>
                     </div>
-                    <ProcessMonitor metrics={kernelMetrics} onProcessClick={setSelectedPid} />
+                    <ProcessMonitor
+                      metrics={kernelMetrics}
+                      onProcessClick={setSelectedPid}
+                      onDismiss={handleDismissProcess}
+                      onClearFinished={handleClearFinished}
+                    />
                   </div>
 
                   <div className="bg-neutral-900/40 border border-neutral-800/50 rounded-3xl p-6 backdrop-blur-md">
@@ -287,7 +320,7 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <div className="h-[400px]">
-                      <CommandMonitor events={events} />
+                      <CommandMonitor events={events} onClear={handleClearEvents} />
                     </div>
                   </div>
                 </div>

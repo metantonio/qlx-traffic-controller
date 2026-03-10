@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { ChevronLeft, ChevronRight, MessageSquare, Clock, ArrowLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight, MessageSquare, Clock, ArrowLeft, Trash2 } from "lucide-react";
 
 interface HistoryItem {
     pid: string;
@@ -51,6 +51,35 @@ export default function HistoryView({ onSelectPid, onBack }: HistoryViewProps) {
         fetchHistory(page);
     }, [page, fetchHistory]);
 
+    const handleDelete = async (pid: string) => {
+        if (!confirm(`Are you sure you want to delete conversation #${pid}?`)) return;
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/history/${pid}`, {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                fetchHistory(page);
+            }
+        } catch (error) {
+            console.error("Failed to delete history item:", error);
+        }
+    };
+
+    const handleClearAll = async () => {
+        if (!confirm("Are you sure you want to clear ALL conversation history? This cannot be undone.")) return;
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/history`, {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                setPage(1);
+                fetchHistory(1);
+            }
+        } catch (error) {
+            console.error("Failed to clear history:", error);
+        }
+    };
+
     const totalPages = data ? Math.ceil(data.total / data.page_size) : 0;
 
     const formatDate = (dateStr: string) => {
@@ -78,9 +107,18 @@ export default function HistoryView({ onSelectPid, onBack }: HistoryViewProps) {
                     <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
                     <span className="text-sm font-bold uppercase tracking-widest">Back to Control Tower</span>
                 </button>
-                <div className="flex items-center gap-2">
-                    <Clock size={16} className="text-blue-500" />
-                    <h2 className="text-sm font-bold text-neutral-400 uppercase tracking-widest">Worker History</h2>
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={handleClearAll}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 hover:bg-red-500/20 transition-all text-[10px] font-bold uppercase tracking-widest"
+                    >
+                        <Trash2 size={14} />
+                        Clear All
+                    </button>
+                    <div className="flex items-center gap-2 border-l border-neutral-800 pl-4">
+                        <Clock size={16} className="text-blue-500" />
+                        <h2 className="text-sm font-bold text-neutral-400 uppercase tracking-widest">Worker History</h2>
+                    </div>
                 </div>
             </div>
 
@@ -122,13 +160,22 @@ export default function HistoryView({ onSelectPid, onBack }: HistoryViewProps) {
                                         {item.created_at ? formatDate(item.created_at) : 'N/A'}
                                     </td>
                                     <td className="py-4 px-3 text-right">
-                                        <button
-                                            onClick={() => onSelectPid(item.pid)}
-                                            className="p-2 hover:bg-blue-500/20 rounded-xl text-blue-400 transition-all border border-transparent hover:border-blue-500/30 group/btn"
-                                            title="View Conversation"
-                                        >
-                                            <MessageSquare size={16} className="group-hover/btn:scale-110 transition-transform" />
-                                        </button>
+                                        <div className="flex items-center justify-end gap-2">
+                                            <button
+                                                onClick={() => onSelectPid(item.pid)}
+                                                className="p-2 hover:bg-blue-500/20 rounded-xl text-blue-400 transition-all border border-transparent hover:border-blue-500/30 group/btn"
+                                                title="View Conversation"
+                                            >
+                                                <MessageSquare size={16} className="group-hover/btn:scale-110 transition-transform" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(item.pid)}
+                                                className="p-2 hover:bg-red-500/20 rounded-xl text-red-400 transition-all border border-transparent hover:border-red-500/30 group/btn"
+                                                title="Delete Conversation"
+                                            >
+                                                <Trash2 size={16} className="group-hover/btn:scale-110 transition-transform" />
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -165,8 +212,8 @@ export default function HistoryView({ onSelectPid, onBack }: HistoryViewProps) {
                                         key={pageNum}
                                         onClick={() => setPage(pageNum)}
                                         className={`w-8 h-8 rounded-xl text-xs font-bold transition-all ${page === pageNum
-                                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
-                                                : 'text-neutral-500 hover:text-white hover:bg-neutral-800'
+                                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                                            : 'text-neutral-500 hover:text-white hover:bg-neutral-800'
                                             }`}
                                     >
                                         {pageNum}
