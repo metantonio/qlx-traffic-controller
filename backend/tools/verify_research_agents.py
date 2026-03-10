@@ -14,7 +14,8 @@ async def verify_research():
     # We explicitly give it ONLY fetch and require it to output a json tool call
     proc = AIProcess(
         agent_name="omni_scholar",
-        task_description="Summarize https://example.com . You MUST use the fetch tool. Output EXACTLY this JSON block and nothing else:\n{\"name\": \"fetch\", \"arguments\": {\"url\": \"https://example.com\"}}",
+        task_description="Summarize https://example.com . First, you MUST use the fetch tool by outputting EXACTLY this JSON block:\n{\"name\": \"fetch_url\", \"arguments\": {\"url\": \"https://example.com\"}}\n\nAfter you receive the tool output, output 'SUMMARY:' followed by the summary of the page to finish the task.",
+
         limits=ResourceLimits(allowed_tools=["mcp:fetch"])
     )
     
@@ -27,15 +28,15 @@ async def verify_research():
         for msg in proc.history:
             print(f"MSG ROLE: {msg.get('role')} CONTENT: {msg.get('content')[:50] if msg.get('content') else 'None'}")
             if msg.get("role") == "tool":
-                print(f"✅ Executed tool successfully! Result snippet: {msg['content'][:150]}...")
+                print(f"[SUCCESS] Executed tool successfully! Result snippet: {msg['content'][:150]}...")
                 found_tool = True
         if not found_tool:
-            print("❌ No tool was executed! Checking assistant messages...")
+            print("[FAIL] No tool was executed! Checking assistant messages...")
             for msg in proc.history:
                 if msg.get("role") == "assistant":
                     print(f"Assistant wrote: {msg['content'][:200]}")
     except Exception as e:
-        print(f"❌ Verification failed: {e}")
+        print(f"[FAIL] Verification failed: {e}")
 
 if __name__ == "__main__":
     asyncio.run(verify_research())

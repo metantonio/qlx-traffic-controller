@@ -154,6 +154,10 @@ class LLMProvider:
     def _parse_text_tool_calls(self, content: str, tool_names: set) -> list[tuple]:
         """Attempt to parse unstructured text output for JSON tool calls (used by fallback models)."""
         calls = []
+        import sys
+        
+        print(f"\n[DEBUG PARSER] Input content: '{content}'")
+        print(f"[DEBUG PARSER] Tool names: {tool_names}")
         
         # 1. Strip markdown fences if present
         content = re.sub(r'```json\n', '', content)
@@ -166,6 +170,7 @@ class LLMProvider:
             # 3. Try to parse by finding matching closing brace
             for end in range(len(content), start + 1, -1):
                 if content[end-1] not in ('}', ']'): continue
+
                     
                 candidate = content[start:end]
                 try:
@@ -313,7 +318,9 @@ class LLMProvider:
                 continue
             
             # Text based fallback for Ollama
+            print(f"[DEBUG MAIN LOOP] self.provider = '{self.provider}'")
             if self.provider == "ollama":
+                print(f"[DEBUG MAIN LOOP] Enter ollama parse...")
                 parsed_calls = self._parse_text_tool_calls(content, tool_names)
                 if parsed_calls:
                     for tool_name, tool_args in parsed_calls:
