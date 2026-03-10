@@ -122,4 +122,4 @@ By default, the system is designed to act as a **local** kernel boundary that co
 
 # 5. Default Agents
 
-The default agents are: [default_bundle.json](./backend/data/seed/default_bundle.json)
+Import the default agents: [default_bundle.json](./backend/data/seed/default_bundle.json)
