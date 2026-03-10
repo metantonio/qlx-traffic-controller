@@ -251,7 +251,7 @@ export default function Dashboard() {
             <header className="flex items-end justify-between mb-8 border-b border-neutral-800/30 pb-8 shrink-0 relative">
               <div className="absolute -left-8 -top-8 w-64 h-64 bg-blue-600/5 blur-[100px] pointer-events-none" />
               <div className="relative z-10">
-                <h2 className="text-5xl font-black tracking-tighter text-white text-glow-blue italic">SYSTEM_DECOE</h2>
+                <h2 className="text-5xl font-black tracking-tighter text-white text-glow-blue italic">SYSTEM</h2>
                 <div className="flex items-center gap-2 mt-1">
                   <div className="h-px w-8 bg-blue-500/50" />
                   <p className="text-neutral-500 text-[10px] font-black uppercase tracking-[0.3em]">Autonomous Orchestration Engine</p>
@@ -447,11 +447,11 @@ export default function Dashboard() {
       )}
       {isBatchModalOpen && (
         <BatchManagerModal
-            isOpen={isBatchModalOpen}
-            onClose={() => setIsBatchModalOpen(false)}
+          isOpen={isBatchModalOpen}
+          onClose={() => setIsBatchModalOpen(false)}
         />
       )}
-      <CommandBar 
+      <CommandBar
         onSpawnAgent={(task) => handleSpawnAgent(task)}
         onViewChange={setActiveView}
       />
