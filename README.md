@@ -119,3 +119,7 @@ By default, the system is designed to act as a **local** kernel boundary that co
 - **Dashboard Next.js Server:** Starts locally rejecting remote connections unless explicitly modified.
 
 *If you intend to expose the Control Tower externally (e.g., to integrate the Telegram webhook securely rather than polling), you must explicitly run the services on `0.0.0.0` or deploy behind a secure reverse proxy/tunnel while auditing your Agent Capabilities heavily.*
+
+# 5. Default Agents
+
+The default agents are: [default_bundle.json](./backend/data/seed/default_bundle.json)
