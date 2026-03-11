@@ -18,9 +18,21 @@ const IconMap: Record<string, React.ElementType> = {
     Sparkles
 };
 
+interface Skill {
+    id?: string;
+    name: string;
+    description: string;
+    author?: string;
+    category?: string;
+    icon?: string;
+    system_prompt?: string;
+    mcp_servers?: string[];
+    static_tools?: string[];
+}
+
 export default function SkillsStoreModal({ isOpen, onClose, onChanged }: SkillsStoreModalProps) {
-    const [skills, setSkills] = useState<Record<string, any>>({});
-    const [existingAgents, setExistingAgents] = useState<any[]>([]);
+    const [skills, setSkills] = useState<Record<string, Skill>>({});
+    const [existingAgents, setExistingAgents] = useState<{ id: string, name: string }[]>([]);
     const [loading, setLoading] = useState(true);
     const [isFetchingMore, setIsFetchingMore] = useState(false);
     const [installingId, setInstallingId] = useState<string | null>(null);
@@ -76,7 +88,7 @@ export default function SkillsStoreModal({ isOpen, onClose, onChanged }: SkillsS
         fetchData(nextPage);
     };
 
-    const handleInstall = async (id: string, skill: any) => {
+    const handleInstall = async (id: string, skill: Skill) => {
         setInstallingId(id);
         try {
             // For ClawHub skills, we might need to derive fields from metadata if missing
@@ -138,7 +150,7 @@ export default function SkillsStoreModal({ isOpen, onClose, onChanged }: SkillsS
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {Object.entries(skills).map(([id, skill]) => {
                                     const isInstalled = existingAgents.some(a => a.id === id);
-                                    const Icon = IconMap[skill.icon] || Sparkles;
+                                    const Icon = (skill.icon && IconMap[skill.icon]) || Sparkles;
 
                                     return (
                                         <div key={id} className="group p-5 bg-neutral-800/20 border border-neutral-800/50 rounded-2xl flex flex-col gap-4 hover:border-purple-500/30 transition-all hover:bg-neutral-800/40">

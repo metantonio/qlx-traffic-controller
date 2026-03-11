@@ -148,7 +148,9 @@ async def list_tools():
         results.append({
             "name": tool["name"],
             "description": tool["description"],
-            "schema": tool.get("parameters", {})
+            "schema": tool.get("parameters", {}),
+            "source": "static",
+            "restricted": tool.get("restricted", False)
         })
         
     # Add dynamic tools
@@ -165,7 +167,9 @@ async def list_tools():
         results.append({
             "name": tool.name,
             "description": tool.description,
-            "schema": schema
+            "schema": schema,
+            "source": "mcp",
+            "restricted": False # MCP tools are not restricted by this specific mechanism yet
         })
         
     return results

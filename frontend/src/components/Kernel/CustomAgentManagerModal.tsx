@@ -11,7 +11,9 @@ interface MCPServer {
 interface Tool {
     name: string;
     description: string;
-    mcp_server?: string; // We'll infer this in main.py or here
+    mcp_server?: string;
+    source?: 'static' | 'mcp';
+    restricted?: boolean;
 }
 
 interface CustomAgent {
@@ -242,12 +244,8 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged, in
         alert(`Skill capabilities attached to ${formData.name || 'agent'}`);
     };
 
-    // Heuristic: tools that are NOT in the static registry list often come from MCP servers.
-    // In our case, the backend /api/tools returns all.
-    // Let's identify static tools as those that aren't mapped to known MCP servers in the scheduler.
-    // For simplicity, we'll let the user choose from "Standard" vs "MCP Bridges".
-    const standardTools = ["shell_execute", "filesystem_read", "memory_access"];
-    const availableStaticTools = allTools.filter(t => standardTools.includes(t.name));
+    // Identify static tools by the metadata provided by the backend
+    const availableStaticTools = allTools.filter(t => t.source === 'static');
 
     const getToolsPerServer = (serverId: string) => {
         // This is a rough estimate since we don't have server-to-tool mapping in the /api/tools response yet

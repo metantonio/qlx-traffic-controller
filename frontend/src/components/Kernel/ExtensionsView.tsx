@@ -46,7 +46,8 @@ export default function ExtensionsView() {
             const res = await fetch(`${apiUrl}/api/store/skills?page=${page}&page_size=${itemsPerPage}`);
             if (res.ok) {
                 const data = await res.json();
-                const fetchedSkills: Extension[] = Object.entries(data.items || {}).map(([id, s]: [string, any]) => ({
+                const items = (data.items || {}) as Record<string, { name: string, description: string }>;
+                const fetchedSkills: Extension[] = Object.entries(items).map(([id, s]) => ({
                     id,
                     name: s.name,
                     description: s.description,
