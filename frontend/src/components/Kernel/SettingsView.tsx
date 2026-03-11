@@ -22,11 +22,17 @@ interface LLMProviderInfo {
 }
 
 const GPU_PROFILES = [
+  { name: "NVIDIA H100 (80GB)", vram: 80, bw: 3350, tier: "datacenter" },
+  { name: "NVIDIA RTX 5090 (32GB)", vram: 32, bw: 1800, tier: "enthusiast" },
+  { name: "NVIDIA RTX A6000 (48GB)", vram: 48, bw: 960, tier: "workstation" },
   { name: "NVIDIA RTX 4090", vram: 24, bw: 1008, tier: "enthusiast" },
   { name: "NVIDIA RTX 4080 (16GB)", vram: 16, bw: 717, tier: "high" },
   { name: "NVIDIA RTX 4080 Laptop (12GB) / 4070 (Desktop)", vram: 12, bw: 504, tier: "mid-high" },
   { name: "NVIDIA RTX 4070 Laptop (8GB) / 4060 (Desktop)", vram: 8, bw: 272, tier: "mid" },
   { name: "NVIDIA RTX 4060 Laptop / 3060", vram: 6, bw: 190, tier: "entry" },
+  { name: "Apple M4 Ultra (Shared)", vram: 192, bw: 800, tier: "unified-extreme" },
+  { name: "Apple M4 Pro", vram: 64, bw: 273, tier: "unified-high" },
+  { name: "Apple M4", vram: 32, bw: 120, tier: "unified" },
   { name: "Apple M3 Max (Shared)", vram: 48, bw: 400, tier: "unified" },
   { name: "Apple M3 Pro (Shared)", vram: 18, bw: 150, tier: "unified" },
   { name: "Custom / Integrated", vram: 4, bw: 50, tier: "low" },
