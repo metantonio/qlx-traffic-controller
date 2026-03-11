@@ -31,7 +31,10 @@ class MCPTool:
         fields = {}
         for param_name, param_info in self.parameters.items():
             description = param_info.get("description", param_name)
-            fields[param_name] = (str, Field(..., description=description))
+            default_val = param_info.get("default", ...)
+            
+            # Using Any for maximum flexibility since we don't have robust type mapping yet
+            fields[param_name] = (Any, Field(default_val, description=description))
         return create_model(f"{self.name}_schema", **fields)
         
     def to_langchain_tool(self) -> StructuredTool:

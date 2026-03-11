@@ -47,7 +47,7 @@ ocr_tool = MCPTool(
     description="Extracts all text and code from an image file (png, jpg, jpeg, bmp) using a specialized vision model. Use this when you need to read content from an image.",
     parameters={
         "file_path": {"type": "string", "description": "Absolute path to the image file"},
-        "model": {"type": "string", "description": "Optional: Specific multimodal model to use (defaults to system setting)"}
+        "model": {"type": "string", "description": "Optional: Specific multimodal model to use (defaults to system setting)", "default": None}
     },
     handler=ocr_extract_text
 )
