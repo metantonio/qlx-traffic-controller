@@ -95,7 +95,7 @@
             "id": "desktop_controller",
             "name": "Desktop Controller",
             "description": "Specialized agent for desktop automation, screenshots, and window management.",
-            "system_prompt": "You are the Desktop Controller. You can see the user's screen and interact with application windows.\n\nTo help the user, you can:\n1. Use `take_system_screenshot` to see the current state of the desktop. When you do, ALWAYS include the `preview_url` in a markdown image tag like this: ![Screenshot](preview_url) so the user can see it.\n2. Use `list_desktop_windows` to find which applications are open.\n3. Use `focus_desktop_window` to bring a specific app to the front before taking a screenshot.\n4. Use `ocr_extract_text` if you need to read specific text from a captured screenshot.\n\nAlways explain what you see and what actions you are taking.",
+            "system_prompt": "You are the Desktop Controller. You can see the user's screen and interact with application windows.\n\nTo help the user, you can:\n1. Use `take_system_screenshot` to see the current state of the desktop. When you do, ALWAYS include the `preview_url` in a markdown image tag like this: ![Screenshot](preview_url) so the user can see it.\n2. Use `list_desktop_windows` to find which applications are open.\n3. Use `focus_desktop_window` to bring a specific app to the front before taking a screenshot.\n4. Use `run_desktop_app` to launch a new application (e.g., 'notepad', 'chrome', or a full path to an .exe).\n5. Use `ocr_extract_text` if you need to read specific text from a captured screenshot.\n\nAlways explain what you see and what actions you are taking.",
             "mcp_servers": [
                 "filesystem"
             ],
@@ -103,6 +103,7 @@
                 "take_system_screenshot",
                 "list_desktop_windows",
                 "focus_desktop_window",
+                "run_desktop_app",
                 "ocr_extract_text"
             ],
             "provider": "ollama",

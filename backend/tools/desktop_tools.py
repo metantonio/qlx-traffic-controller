@@ -135,6 +135,42 @@ focus_window_tool = MCPTool(
 )
 
 # Registration
+
+async def run_desktop_app(app_path: str) -> dict:
+    """Launches a desktop application or opens a file/folder."""
+    try:
+        # On Windows, os.startfile is the safest way to launch GUI apps as if they were double-clicked
+        if hasattr(os, 'startfile'):
+            os.startfile(app_path)
+        else:
+            # Fallback for other systems (though we focus on Windows here)
+            import subprocess
+            subprocess.Popen([app_path], shell=True if os.name == 'nt' else False)
+            
+        return {
+            "status": "success",
+            "message": f"Successfully requested to start: {app_path}"
+        }
+    except Exception as e:
+        logger.error(f"Error starting application {app_path}: {str(e)}")
+        return {
+            "status": "error",
+            "message": f"Failed to start {app_path}: {str(e)}"
+        }
+
+run_app_tool = MCPTool(
+    name="run_desktop_app",
+    description="Launches a desktop application, opens a file, or opens a folder using the system association.",
+    parameters={
+        "app_path": {
+            "type": "string",
+            "description": "The full path to the executable, a common name like 'notepad', or a file/folder path."
+        }
+    },
+    handler=run_desktop_app
+)
+
 system_registry.register(screenshot_tool)
 system_registry.register(list_windows_tool)
 system_registry.register(focus_window_tool)
+system_registry.register(run_app_tool)
