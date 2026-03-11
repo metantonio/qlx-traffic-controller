@@ -167,7 +167,7 @@ export default function SettingsView() {
 
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
           {/* AI Engines Section */}
-          <section className="bg-neutral-900/60 border border-neutral-800/80 rounded-3xl p-8 shadow-xl backdrop-blur-xl border-t-neutral-700/50">
+          <section className="relative z-20 bg-neutral-900/60 border border-neutral-800/80 rounded-3xl p-8 shadow-xl backdrop-blur-xl border-t-neutral-700/50">
             <div className="flex items-center gap-3 mb-8">
               <div className="p-3 bg-blue-500/10 rounded-2xl">
                 <Zap size={20} className="text-blue-400" />
