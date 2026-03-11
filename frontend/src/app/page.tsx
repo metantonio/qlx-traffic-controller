@@ -245,10 +245,10 @@ export default function Dashboard() {
             <div className="w-8 h-8 rounded-xl bg-neutral-800 flex items-center justify-center text-xs font-bold text-neutral-400">
               <Cpu size={14} />
             </div>
-            <div className="min-w-0">
+            {/* <div className="min-w-0">
               <div className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest leading-none mb-1">Runtime</div>
               <div className="text-xs font-mono text-emerald-400 truncate tracking-tighter">stable_node_22</div>
-            </div>
+            </div> */}
           </div>
         </div>
       </aside>

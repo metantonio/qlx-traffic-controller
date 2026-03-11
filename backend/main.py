@@ -666,14 +666,21 @@ async def websocket_endpoint(websocket: WebSocket):
                     session_model = llm_model
                     
                     # Custom Agent resolution
-                    custom_agent = agent_manager.get_agent(agent_name)
-                    
                     resolved_tools = allowed_tools
                     system_prompt_override = None
-
-                    if custom_agent:
+                    working_directory = None
+                    initial_history = None
+                    
+                    # Resolve Tool Limitations based on Agent Profile
+                    if agent_name.lower() != "kernel" and agent_name.lower() != "kernel_agent":
+                        custom_agent = agent_manager.get_agent(agent_name)
+                        if not custom_agent:
+                            await websocket.send_json({"type": "error", "message": f"Agent {agent_name} not found"})
+                            continue
+                        
                         resolved_tools = custom_agent.static_tools + [f"mcp:{s}" for s in custom_agent.mcp_servers]
                         system_prompt_override = custom_agent.system_prompt
+                        working_directory = custom_agent.working_directory
                         
                         # Priority: 1. Agent definition, 2. Global session selection
                         if custom_agent.provider:
@@ -706,7 +713,8 @@ async def websocket_endpoint(websocket: WebSocket):
                     proc = AIProcess(
                         agent_name=agent_name,
                         task_description=task_text,
-                        limits=ResourceLimits(allowed_tools=resolved_tools)
+                        limits=ResourceLimits(allowed_tools=resolved_tools),
+                        working_directory=working_directory
                     )
                     
                     if system_prompt_override:

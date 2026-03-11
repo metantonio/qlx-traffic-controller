@@ -7,9 +7,41 @@ from backend.models.database_models import DbAllowedDirectory
 
 _file_locks = {}
 
+def _resolve_path(filepath: str) -> str:
+    """Resolves relative paths against the current process's working_directory if set."""
+    if os.path.isabs(filepath):
+        return filepath
+        
+    try:
+        from backend.llm.provider import current_pid
+        from backend.kernel.process import system_process_table
+        pid = current_pid.get()
+        if pid:
+            proc = system_process_table.processes.get(pid)
+            if proc and proc.working_directory:
+                return os.path.join(proc.working_directory, filepath)
+    except Exception:
+        pass
+        
+    return filepath
+
 def is_path_allowed(filepath: str) -> bool:
-    """Verifies if the path is within the project root OR a user-allowed directory."""
+    """Verifies if the path is within the project root OR a user-allowed directory OR the process working directory."""
     abs_path = os.path.abspath(filepath)
+    
+    # 0. Check current process working directory
+    try:
+        from backend.llm.provider import current_pid
+        from backend.kernel.process import system_process_table
+        pid = current_pid.get()
+        if pid:
+            proc = system_process_table.processes.get(pid)
+            if proc and proc.working_directory:
+                norm_wd = os.path.abspath(proc.working_directory)
+                if abs_path.startswith(norm_wd):
+                    return True
+    except Exception:
+        pass
     
     # 1. Base directory (project root: where backend/ is)
     # filesystem.py is in backend/tools/
@@ -39,6 +71,7 @@ def get_file_lock(filepath: str) -> asyncio.Lock:
 
 async def read_file(filepath: str) -> str:
     """Basic file reader, ensuring it exists and is allowed."""
+    filepath = _resolve_path(filepath)
     if not is_path_allowed(filepath):
         raise PermissionError(f"Access Denied: path '{filepath}' is outside of permitted boundaries.")
 
@@ -60,6 +93,7 @@ filesystem_read_tool = MCPTool(
 
 async def list_directory(path: str) -> list[str]:
     """Lists files in a directory if allowed."""
+    path = _resolve_path(path)
     if not is_path_allowed(path):
         raise PermissionError(f"Access Denied: directory '{path}' is outside of permitted boundaries.")
 
@@ -81,6 +115,7 @@ system_registry.register(filesystem_list_tool)
 
 async def append_to_file(filepath: str, content: str) -> str:
     """Appends text to a file safely. Creates the file if it doesn't exist."""
+    filepath = _resolve_path(filepath)
     print(f"Appending to {filepath}")
     
     if not is_path_allowed(filepath):
@@ -98,6 +133,7 @@ async def append_to_file(filepath: str, content: str) -> str:
 
 async def write_file_safe(filepath: str, content: str) -> str:
     """Writes/Overwrites text content to a specified file safely. Creates parent directories if needed."""
+    filepath = _resolve_path(filepath)
     print(f"Writing to {filepath}")
     
     if not is_path_allowed(filepath):

@@ -12,10 +12,23 @@ async def execute_shell_command(command: str) -> dict:
     if not is_safe:
         return {"error": "SECURITY BLOCK", "reason": message}
         
+    cwd = None
+    try:
+        from backend.llm.provider import current_pid
+        from backend.kernel.process import system_process_table
+        pid = current_pid.get()
+        if pid:
+            proc = system_process_table.processes.get(pid)
+            if proc and proc.working_directory:
+                cwd = proc.working_directory
+    except Exception as e:
+        pass # Fallback to no specific cwd
+        
     process = await asyncio.create_subprocess_shell(
         command,
         stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE
+        stderr=asyncio.subprocess.PIPE,
+        cwd=cwd
     )
     
     stdout, stderr = await process.communicate()

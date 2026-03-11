@@ -20,11 +20,12 @@ class ResourceLimits(BaseModel):
 class AIProcess:
     """Represents an isolated AI agent execution context."""
     
-    def __init__(self, agent_name: str, task_description: str, limits: ResourceLimits):
+    def __init__(self, agent_name: str, task_description: str, limits: ResourceLimits, working_directory: Optional[str] = None):
         self.pid = str(uuid.uuid4())[:8]  # Short PID for readability
         self.agent_name = agent_name
         self.task_description = task_description
         self.state = ProcessState.QUEUED
+        self.working_directory = working_directory
         
         self.resource_limits = limits
         self.capabilities: List[str] = []
@@ -83,6 +84,7 @@ class ProcessTable:
                 state=process.state.value,
                 workflow_id=process.workflow_id,
                 workflow_step=process.workflow_step,
+                working_directory=process.working_directory,
                 resource_limits=process.resource_limits.model_dump(),
                 tokens_used=process.metrics["tokens_used"],
                 tools_called=process.metrics["tools_called"],

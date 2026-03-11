@@ -10,7 +10,8 @@
             "filesystem_append"
         ],
         "provider": "ollama",
-        "model": "qwen2.5-coder:7b"
+        "model": "qwen2.5-coder:7b",
+        "working_directory": null
     },
     "senior-devops": {
         "id": "senior-devops",
@@ -20,7 +21,8 @@
         "mcp_servers": [],
         "static_tools": [],
         "provider": null,
-        "model": null
+        "model": null,
+        "working_directory": null
     },
     "omni_scholar": {
         "id": "omni_scholar",
@@ -34,7 +36,8 @@
         ],
         "static_tools": [],
         "provider": "ollama",
-        "model": "tomng/nanbeige4.1:3b"
+        "model": "tomng/nanbeige4.1:3b",
+        "working_directory": null
     },
     "deepcode_debugger": {
         "id": "deepcode_debugger",
@@ -47,7 +50,8 @@
         ],
         "static_tools": [],
         "provider": "ollama",
-        "model": "qwen2.5-coder:7b"
+        "model": "qwen2.5-coder:7b",
+        "working_directory": null
     },
     "ops_architect": {
         "id": "ops_architect",
@@ -59,7 +63,8 @@
         ],
         "static_tools": [],
         "provider": "ollama",
-        "model": "qwen2.5-coder:7b"
+        "model": "qwen2.5-coder:7b",
+        "working_directory": null
     },
     "senior-data-scientist": {
         "id": "senior-data-scientist",
@@ -69,7 +74,8 @@
         "mcp_servers": [],
         "static_tools": [],
         "provider": null,
-        "model": null
+        "model": null,
+        "working_directory": null
     },
     "persistence-test-agent": {
         "id": "persistence-test-agent",
@@ -79,7 +85,8 @@
         "mcp_servers": [],
         "static_tools": [],
         "provider": null,
-        "model": null
+        "model": null,
+        "working_directory": null
     },
     "self-improving": {
         "id": "self-improving",
@@ -89,7 +96,8 @@
         "mcp_servers": [],
         "static_tools": [],
         "provider": null,
-        "model": null
+        "model": null,
+        "working_directory": null
     },
     "OCR_Agent": {
         "id": "OCR_Agent",
@@ -106,7 +114,8 @@
             "filesystem_write"
         ],
         "provider": "ollama",
-        "model": "qwen2.5-coder:7b"
+        "model": "qwen2.5-coder:7b",
+        "working_directory": null
     },
     "desktop_controller": {
         "id": "desktop_controller",
@@ -124,6 +133,22 @@
             "ocr_extract_text"
         ],
         "provider": "ollama",
-        "model": "qwen2.5-coder:7b"
+        "model": "qwen2.5-coder:7b",
+        "working_directory": null
+    },
+    "workspace_tester": {
+        "id": "workspace_tester",
+        "name": "Workspace Tester",
+        "description": "Tests workspace isolation",
+        "system_prompt": "Execute exactly the shell commands requested.",
+        "mcp_servers": [],
+        "static_tools": [
+            "shell_execute",
+            "filesystem_write",
+            "filesystem_read"
+        ],
+        "provider": null,
+        "model": null,
+        "working_directory": "C:\\Repositorios\\qlx-traffic-controller\\workspace\\test_dir"
     }
 }

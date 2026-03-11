@@ -26,17 +26,20 @@ async def delegate_to_agent(agent_id: str, task: str) -> str:
     system_prompt = None
     provider = None
     model = None
+    working_directory = None
     
     if agent:
         resolved_tools = agent.static_tools + [f"mcp:{s}" for s in agent.mcp_servers]
         system_prompt = agent.system_prompt
         provider = agent.provider
         model = agent.model
+        working_directory = agent.working_directory
     
     new_proc = AIProcess(
         agent_name=agent_id,
         task_description=task,
-        limits=ResourceLimits(allowed_tools=resolved_tools)
+        limits=ResourceLimits(allowed_tools=resolved_tools),
+        working_directory=working_directory
     )
     
     if system_prompt:
@@ -51,10 +54,10 @@ async def delegate_to_agent(agent_id: str, task: str) -> str:
     
     await system_scheduler.submit(new_proc, Priority.MEDIUM)
     
-    # Wait for completion (Timeout 60s)
+    # Wait for completion (Timeout 300s to allow LLM loading)
     start_wait = time.time()
     while new_proc.state in [ProcessState.QUEUED, ProcessState.RUNNING]:
-        if time.time() - start_wait > 60:
+        if time.time() - start_wait > 300:
             return f"Delegation Timeout: Agent {agent_id} is taking too long. Ongoing PID: {new_proc.pid}."
         await asyncio.sleep(1)
     

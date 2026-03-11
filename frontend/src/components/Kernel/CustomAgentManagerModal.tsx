@@ -25,6 +25,7 @@ interface CustomAgent {
     static_tools: string[];
     provider?: string;
     model?: string;
+    working_directory?: string;
 }
 
 interface LLMProvider {
@@ -61,7 +62,8 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged, in
         mcp_servers: [] as string[],
         static_tools: ['shell_execute'] as string[],
         provider: 'ollama',
-        model: ''
+        model: '',
+        working_directory: ''
     });
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -171,7 +173,8 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged, in
                 mcp_servers: [],
                 static_tools: ['shell_execute'],
                 provider: 'ollama',
-                model: ''
+                model: '',
+                working_directory: ''
             });
             setIsEditing(false);
             setView('list');
@@ -191,7 +194,8 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged, in
             mcp_servers: agent.mcp_servers || [],
             static_tools: agent.static_tools || [],
             provider: agent.provider || 'ollama',
-            model: agent.model || ''
+            model: agent.model || '',
+            working_directory: agent.working_directory || ''
         });
         setIsEditing(true);
         setView('create');
@@ -283,7 +287,7 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged, in
                             <div className="flex items-center justify-between">
                                 <h3 className="text-xs font-bold text-neutral-500 uppercase tracking-widest ml-1">Active Neural Patterns</h3>
                                 <button
-                                    onClick={() => { setView('create'); setIsEditing(false); setFormData({ id: '', name: '', description: '', system_prompt: '', mcp_servers: [], static_tools: ['shell_execute'], provider: 'ollama', model: '' }); }}
+                                    onClick={() => { setView('create'); setIsEditing(false); setFormData({ id: '', name: '', description: '', system_prompt: '', mcp_servers: [], static_tools: ['shell_execute'], provider: 'ollama', model: '', working_directory: '' }); }}
                                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-blue-500/10"
                                 >
                                     <Plus size={14} /> New Persona
@@ -369,6 +373,16 @@ export default function CustomAgentManagerModal({ isOpen, onClose, onChanged, in
                                     placeholder="Handles deployment scripts and system maintenance..."
                                     value={formData.description}
                                     onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] text-neutral-500 uppercase font-black ml-1">Working Directory (Optional)</label>
+                                <input
+                                    className="w-full bg-neutral-950 border border-neutral-800 rounded-2xl px-5 py-3 text-sm text-white focus:border-blue-500/50 outline-none transition-all placeholder:text-neutral-800"
+                                    placeholder="e.g. workspace/self-improving-agent-3.0.1"
+                                    value={formData.working_directory}
+                                    onChange={e => setFormData({ ...formData, working_directory: e.target.value })}
                                 />
                             </div>
 

@@ -11,6 +11,7 @@ class DbProcess(Base):
     agent_name = Column(String)
     task_description = Column(String)
     state = Column(String)
+    working_directory = Column(String, nullable=True)
     workflow_id = Column(String, index=True, nullable=True)
     workflow_step = Column(Integer, nullable=True)
     
