@@ -1,125 +1,92 @@
-# QLX Traffic Controller
+<div align="center">
 
-This repository contains the AI Command Kernel (Backend) and the Observability Dashboard (Frontend) for managing isolated, autonomous AI processes.
+# 🌌 QLX Traffic Controller
+### The Premier Neural Command Center for Autonomous Multi-Agent Orchestration
 
-## Prerequisites
-
-- **Node.js** (for the Next.js frontend)
-- **Python 3.10+** (for the FastAPI backend)
-- **Ollama** installed and running locally. (Make sure you have pulled models like `qwen2.5-coder:7b` or `llama3`)
+[![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](./LICENSE)
+[![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=flat&logo=fastapi)](https://fastapi.tiangolo.com/)
+[![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat&logo=next.js)](https://nextjs.org/)
+[![Ollama](https://img.shields.io/badge/Ollama-Local_LLM-blue.svg)](https://ollama.com/)
 
 ---
 
-## 1. Backend Setup (AI Command Kernel)
+**QLX Traffic Controller** is a high-performance, OS-inspired kernel and dashboard designed to manage, monitor, and scale autonomous AI agents. Built for the era of local-first multimodal intelligence, but cloud LLM providers can be used as well.
 
-The backend is a robust Python architecture that manages agents as OS-like processes with capability-based security, isolated sandboxes, and an async task scheduler.
+[**Explore Features**](#-key-pillars) • [**Quick Start**](#-deployment-sequence) • [**Architecture**](#-neural-architecture)
 
-### Creating a Virtual Environment
+</div>
 
-It is highly recommended to run the backend inside a Python virtual environment to manage dependencies securely.
+---
 
-#### **On Windows:**
-Open your terminal and run:
+## ✨ The Premium Neural interface
+Experience an interface that feels alive. QLX features a high-fidelity **Dark Mode** dashboard with:
+- 🚀 **Real-time Process Monitoring**: `htop`-inspired live telemetry of agent execution.
+- ⚡ **Glassmorphism & Scanlines**: A sleek, futuristic aesthetic with smooth micro-animations.
+
+---
+
+## 🏗️ Key Pillars
+
+### 🤖 Recursive Batch Terminal
+Process entire directories of data with a single click. Launch **Neural Pipelines** that recursively iterate through files in isolated, capability-secured agent environments.
+- **Repeat & Retry**: Intelligent state persistence allows you to re-run complex batches with one click.
+- **Isolation Mode**: Prevent context drift by spawning fresh agent instances for every node.
+
+### 👁️ Multimodal OCR Pipeline
+Transform pixel-perfect images into production-ready code.
+- **Image-to-TSX**: Automatically transcribe screenshots into React/TypeScript components.
+- **Configurable Vision**: Hot-swap multimodal LLMs (Ollama/Google/Anthropic) from the settings UI.
+- **Auto-Scrubbing**: Automated logic to remove lines numbers and noise from OCR results.
+
+### 🔌 MCP & Skills Ecosystem
+Infinite extensibility through the **Model Context Protocol (MCP)**.
+- **Clawhub Integration**: Browse and install agent skills directly from the integrated **Skills Store**.
+- **Unified Bridges**: Connect agents to Wikipedia, Playwright, Filesystem, and more with zero boilerplate.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Kernel**: FastAPI (Python 3.10+) with Asyncio orchestration.
+- **Observability**: Next.js 14, Tailwind CSS, Lucide Icons.
+- **Intelligence**: Native Ollama Support, LangChain Core, Multimodal Vision Models.
+- **Real-time**: High-throughput WebSocket Memory Bus.
+
+---
+
+## 🚀 Deployment Sequence
+
+### 1. The Kernel (Backend)
 ```bash
-cd ./backend  # Assuming you are in the frontend folder, navigate to backend
+cd backend
 python -m venv venv
-venv\Scripts\activate
-```
-
-#### **On macOS / Linux:**
-Open your terminal and run:
-```bash
-cd ./backend
-python3 -m venv venv
-source venv/bin/activate
-```
-
-### Installing Dependencies
-With the virtual environment **activated**, install the required Python packages:
-```bash
+# Windows: venv\Scripts\activate | Unix: source venv/bin/activate
 pip install -r requirements.txt
-```
-
-### Environment Configuration
-Copy the template environment file to create your local config:
-```bash
 cp .env.example .env
-```
-*(Optionally edit the `.env` file to customize your LLM model or Telegram Token).*
 
-### Starting the Server
-Because the code uses `backend.` absolute imports, you must run the server **from the root repository directory** (one level above `backend`).
-
-#### **On Windows (PowerShell):**
-```powershell
-cd ..  # Make sure you are in the root directory qlx-traffic-controller
-$env:PYTHONPATH=(Get-Location).Path
+# From ROOT directory:
+$env:PYTHONPATH=(Get-Location).Path # Windows
 python backend\main.py
 ```
 
-#### **On macOS / Linux (Bash):**
-```bash
-cd ..  # Make sure you are in the root directory qlx-traffic-controller
-export PYTHONPATH=$(pwd)
-python backend/main.py
-```
-
-The backend API and WebSocket server will now be listening on `http://127.0.0.1:8000`.
-
----
-
-## 2. Frontend Setup (Observability Dashboard)
-
-The frontend is a Next.js application styled with Tailwind CSS, offering live WebSocket-based `htop`-style process monitoring.
-
-### Installation
-
-Open a **new terminal window** (leave the backend running) and navigate to the frontend directory:
-
+### 2. The Dashboard (Frontend)
 ```bash
 cd frontend
-npm install
-```
-
-### Environment Configuration
-Copy the template matching the backend's WebSocket location:
-```bash
-cp .env.example .env
-```
-
-### Starting the Application
-Start the Next.js development server:
-```bash
+npm install --legacy-peer-deps
 npm run dev
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to view the AI Control Tower dashboard.
-
----
-
-## 3. Usage & Examples
-
-Once both servers are running:
-1. The frontend Dashboard connects automatically to `ws://127.0.0.1:8000/ws`.
-2. You can use the backend mockup to trigger a test simulation of processes and tool usage capabilities:
-   ```powershell
-   # From the root directory with venv activated:
-   $env:PYTHONPATH=(Get-Location).Path
-   python backend\example_workflow.py
-   ```
-3. Watch the Next.js Dashboard live-update as agent `PID`s spawn, shift priorities, and handle tool quotas securely!
+Navigate to `http://localhost:3000` to assume command.
 
 ---
 
-## 4. Security Configuration (Localhost Only)
+## 🛡️ Capability-Based Security
+Safety is baked into the kernel. Agents are restricted to a **local loopback architecture** by default:
+- **Locked Scopes**: Agents only see the tools and directories you explicitly permit.
+- **Local-First**: Your data stays on your machine via local LLM execution (Ollama).
+- **Quota Management**: Real-time monitoring of tool usage and token budgets.
 
-By default, the system is designed to act as a **local** kernel boundary that connects to your local machine exclusively. For safety, the AI agents are restricted to your local loopback architecture and are NOT exposed to the internet:
-- **FastAPI / Uvicorn Server:** The backend binds strictly to `127.0.0.1`.
-- **CORS Policies:** The backend API's Cross-Origin configurations (`CORS_ORIGINS` in `.env`) strictly reject connections from external domains, only permitting traffic from `http://localhost:3000` and `http://127.0.0.1:3000`.
-- **Dashboard Next.js Server:** Starts locally rejecting remote connections unless explicitly modified.
+---
 
-*If you intend to expose the Control Tower externally (e.g., to integrate the Telegram webhook securely rather than polling), you must explicitly run the services on `0.0.0.0` or deploy behind a secure reverse proxy/tunnel while auditing your Agent Capabilities heavily.*
-
-# 5. Default Agents
-
-Import the default agents: [default_bundle.json](./backend/data/seed/default_bundle.json)
+<div align="center">
+  <sub>Built with ❤️ at Qualex Consulting Services, INC.</sub>
+</div>
