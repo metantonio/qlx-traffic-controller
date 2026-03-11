@@ -29,7 +29,7 @@ export default function SettingsView() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  
+
   // Directory management
   const [directories, setDirectories] = useState<AllowedDirectory[]>([]);
   const [newDirPath, setNewDirPath] = useState("");
@@ -183,7 +183,7 @@ export default function SettingsView() {
                 <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] mb-3 ml-1 group-focus-within:text-blue-400 transition-colors">
                   Vision / OCR Model
                 </label>
-                
+
                 <div className="relative">
                   <button
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -250,7 +250,7 @@ export default function SettingsView() {
                 <div className="grid grid-cols-1 gap-3">
                   {directories.length === 0 ? (
                     <div className="p-6 border-2 border-dashed border-neutral-800 rounded-2xl text-center">
-                      <p className="text-xs text-neutral-600 font-mono italic">No exclusive boundaries defined. System currently utilizes global defaults.</p>
+                      <p className="text-xs text-neutral-600 font-mono italic">No exclusive boundaries defined. System currently utilizes global defaults (this project folder).</p>
                     </div>
                   ) : (
                     directories.map((dir) => (
@@ -259,7 +259,7 @@ export default function SettingsView() {
                           <p className="text-sm font-mono text-white truncate">{dir.path}</p>
                           {dir.description && <p className="text-[10px] text-neutral-500 mt-0.5">{dir.description}</p>}
                         </div>
-                        <button 
+                        <button
                           onClick={() => handleRemoveDirectory(dir.id)}
                           className="p-2 text-neutral-600 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all"
                         >
@@ -276,7 +276,7 @@ export default function SettingsView() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-[9px] text-neutral-600 font-black uppercase tracking-widest ml-1">Absolute Path</label>
-                    <input 
+                    <input
                       className="w-full bg-neutral-950/50 border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white focus:border-purple-500/50 outline-none transition-all"
                       placeholder="e.g. C:/Data/Projects"
                       value={newDirPath}
@@ -285,7 +285,7 @@ export default function SettingsView() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-[9px] text-neutral-600 font-black uppercase tracking-widest ml-1">Description (Optional)</label>
-                    <input 
+                    <input
                       className="w-full bg-neutral-950/50 border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white focus:border-purple-500/50 outline-none transition-all"
                       placeholder="e.g. Workspace for R&D"
                       value={newDirDesc}
@@ -293,7 +293,7 @@ export default function SettingsView() {
                     />
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={handleAddDirectory}
                   disabled={!newDirPath}
                   className="w-full py-3 bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 border border-purple-500/20 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
@@ -324,11 +324,10 @@ export default function SettingsView() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all transform active:scale-95 shadow-lg ${
-                saving 
-                ? 'bg-neutral-800 text-neutral-600 cursor-not-allowed' 
-                : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/20 hover:shadow-blue-600/40 border border-blue-400/30'
-              }`}
+              className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all transform active:scale-95 shadow-lg ${saving
+                  ? 'bg-neutral-800 text-neutral-600 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/20 hover:shadow-blue-600/40 border border-blue-400/30'
+                }`}
             >
               {saving ? <RefreshCw size={16} className="animate-spin" /> : <Save size={16} />}
               {saving ? 'Persisting...' : 'Save Configuration'}
