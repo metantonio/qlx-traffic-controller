@@ -13,7 +13,8 @@ import ExtensionsView from "@/components/Kernel/ExtensionsView";
 import WorkflowView from "@/components/Kernel/WorkflowView";
 import BatchView from "@/components/Kernel/BatchView";
 import CommandBar from "@/components/Kernel/CommandBar";
-import { GitBranch, History, LayoutDashboard, Layers, Cpu, MessageSquare, WifiOff, RefreshCw, Activity } from "lucide-react";
+import SettingsView from "@/components/Kernel/SettingsView";
+import { GitBranch, History, LayoutDashboard, Layers, Cpu, MessageSquare, WifiOff, RefreshCw, Activity, Settings } from "lucide-react";
 
 export interface ProcessData {
   pid: string;
@@ -65,7 +66,7 @@ export default function Dashboard() {
     currentPid?: string;
   } | null>(null);
 
-  const [activeView, setActiveView] = useState<'dashboard' | 'extensions' | 'history' | 'workflows' | 'batches'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'extensions' | 'history' | 'workflows' | 'batches' | 'settings'>('dashboard');
   const [historyPid, setHistoryPid] = useState<string | null>(null);
   const [wsStatus, setWsStatus] = useState<'connected' | 'disconnected' | 'connecting' | 'error'>('connecting');
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
@@ -227,6 +228,12 @@ export default function Dashboard() {
             onClick={() => setActiveView('extensions')}
             icon={<Cpu size={18} />}
             label="Skills & MCPs"
+          />
+          <NavItem
+            active={activeView === 'settings'}
+            onClick={() => setActiveView('settings')}
+            icon={<Settings size={18} />}
+            label="Settings"
           />
         </nav>
 
@@ -396,6 +403,8 @@ export default function Dashboard() {
           <WorkflowView />
         ) : activeView === 'batches' ? (
           <BatchView />
+        ) : activeView === 'settings' ? (
+          <SettingsView />
         ) : (
           <div className="flex-grow overflow-hidden flex flex-col">
             <HistoryView onSelectPid={setHistoryPid} onBack={() => setActiveView('dashboard')} />

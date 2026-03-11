@@ -426,6 +426,18 @@ async def list_llm_models():
         }
     ]
 
+@app.get("/api/settings")
+async def get_system_settings():
+    from backend.kernel.settings_manager import settings_manager
+    return settings_manager.get_all()
+
+@app.put("/api/settings")
+async def update_system_settings(data: dict):
+    from backend.kernel.settings_manager import settings_manager
+    for key, value in data.items():
+        settings_manager.update(key, value)
+    return {"status": "success"}
+
 @app.get("/api/processes/{pid}")
 async def get_process_details(pid: str):
     proc = system_process_table.get(pid)

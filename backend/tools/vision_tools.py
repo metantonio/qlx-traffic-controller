@@ -7,18 +7,20 @@ from backend.tools.mcp_registry import MCPTool, system_registry
 
 logger = logging.getLogger("QLX-TC.Tools.Vision")
 
-async def ocr_extract_text(file_path: str) -> str:
-    """Uses a specialized OCR model (maternion/LightOnOCR-2:1b) to extract text from an image."""
+async def ocr_extract_text(file_path: str, model: str = None) -> str:
+    """Uses a specialized OCR model to extract text from an image."""
+    from backend.kernel.settings_manager import settings_manager
     if not os.path.exists(file_path):
         return f"Error: File {file_path} not found."
     
     try:
-        logger.info(f"Performing OCR on {file_path} using maternion/LightOnOCR-2:1b")
+        model = model or settings_manager.get("VISION_MODEL")
+        logger.info(f"Performing OCR on {file_path} using {model}")
         with open(file_path, "rb") as image_file:
             encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
             
         payload = {
-            "model": "maternion/LightOnOCR-2:1b",
+            "model": model,
             "prompt": "Extract all text from this image exactly as it is, maintaining formatting and code structure if present.",
             "images": [encoded_string],
             "stream": False
@@ -44,7 +46,8 @@ ocr_tool = MCPTool(
     name="ocr_extract_text",
     description="Extracts all text and code from an image file (png, jpg, jpeg, bmp) using a specialized vision model. Use this when you need to read content from an image.",
     parameters={
-        "file_path": {"type": "string", "description": "Absolute path to the image file"}
+        "file_path": {"type": "string", "description": "Absolute path to the image file"},
+        "model": {"type": "string", "description": "Optional: Specific multimodal model to use (defaults to system setting)"}
     },
     handler=ocr_extract_text
 )

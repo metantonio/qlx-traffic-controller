@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     # LLM Settings
     DEFAULT_PROVIDER: str = "ollama"
     DEFAULT_MODEL: str = "qwen2.5-coder:7b"
+    VISION_MODEL: str = "maternion/LightOnOCR-2:1b"
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     ANTHROPIC_API_KEY: str = ""
     GOOGLE_API_KEY: str = ""
