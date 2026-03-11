@@ -132,6 +132,36 @@ const MarkdownRenderer = memo(({ content }: MarkdownRendererProps) => {
                             {children}
                         </blockquote>
                     ),
+                    img: ({ src, alt, ...props }) => {
+                        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+                        const srcStr = typeof src === 'string' ? src : '';
+                        const fullSrc = srcStr.startsWith('/') && !srcStr.startsWith('http') 
+                            ? `${apiUrl}${srcStr}` 
+                            : srcStr;
+                        
+                        return (
+                            <div className="my-6 rounded-2xl overflow-hidden border border-neutral-800 shadow-2xl group relative" key={srcStr}>
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img 
+                                    src={fullSrc} 
+                                    alt={alt || "Screenshot"} 
+                                    className="w-full h-auto cursor-zoom-in group-hover:scale-[1.02] transition-transform duration-500"
+                                    onClick={() => window.open(fullSrc, '_blank')}
+                                />
+                                <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button 
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            window.open(fullSrc, '_blank');
+                                        }}
+                                        className="bg-black/60 backdrop-blur-md text-white px-3 py-1.5 rounded-lg text-xs font-bold border border-white/10 hover:bg-black/80 transition-colors flex items-center gap-2"
+                                    >
+                                        Open Full Size
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    }
                 }}
             >
                 {content}
