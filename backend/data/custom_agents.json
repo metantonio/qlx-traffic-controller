@@ -61,16 +61,6 @@
         "provider": "ollama",
         "model": "qwen2.5-coder:7b"
     },
-    "sec-13f-tracker": {
-        "id": "sec-13f-tracker",
-        "name": "SEC 13F Whale Tracker",
-        "description": "Track top fund managers' holdings via SEC 13F filings. Fetches quarterly filings from SEC EDGAR, compares quarter-over-quarter changes (new positions, increa...",
-        "system_prompt": "I am the SEC 13F Whale Tracker specialist.",
-        "mcp_servers": [],
-        "static_tools": [],
-        "provider": null,
-        "model": null
-    },
     "senior-data-scientist": {
         "id": "senior-data-scientist",
         "name": "Senior Data Scientist",
@@ -100,5 +90,21 @@
         "static_tools": [],
         "provider": null,
         "model": null
+    },
+    "OCR_Agent": {
+        "id": "OCR_Agent",
+        "name": "OCR Agent",
+        "description": "Expert at converting images to code/text using specialized OCR tools.",
+        "system_prompt": "You are a specialized transcription agent. Your goal is to convert images into high-quality code or text files. Always use the `ocr_extract_text` tool to read image content. Once you have the text, process it according to the user's instructions (e.g., formatting it as a TSX component or saving it to a file).",
+        "mcp_servers": [
+            "filesystem"
+        ],
+        "static_tools": [
+            "shell_execute",
+            "filesystem_read",
+            "ocr_extract_text"
+        ],
+        "provider": "ollama",
+        "model": "qwen2.5-coder:7b"
     }
 }

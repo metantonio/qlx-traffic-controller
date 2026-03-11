@@ -40,5 +40,35 @@
             "file_path",
             "filename"
         ]
+    },
+    "OCR_Test": {
+        "id": "OCR_Test",
+        "name": "OCR Testing",
+        "description": "Read the image, and create a new file with the text on it. Testing language is typescript, so file should have .tsx extension.",
+        "steps": [
+            {
+                "agent_id": "OCR_Agent",
+                "task_template": "Review the code in {{folder}} and pass it exactly to a new file",
+                "condition": null
+            }
+        ],
+        "variables": [
+            "folder"
+        ]
+    },
+    "ocr_to_tsx_batch": {
+        "id": "ocr_to_tsx_batch",
+        "name": "OCR to TSX Transcription",
+        "description": "Transcription of image files into .tsx components using OCR.",
+        "steps": [
+            {
+                "agent_id": "OCR_Agent",
+                "task_template": "1. Use the `ocr_extract_text` tool on the image at: {{file_path}}\n2. Take the resulting text and format it as a clean, valid React/TypeScript (.tsx) component logic if it looks like code.\n3. Save this result into a NEW file named: {{file_path}}.tsx using the `filesystem_append` tool or similar.",
+                "condition": null
+            }
+        ],
+        "variables": [
+            "file_path"
+        ]
     }
 }

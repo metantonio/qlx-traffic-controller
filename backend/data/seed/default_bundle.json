@@ -73,6 +73,21 @@
             "static_tools": [],
             "provider": null,
             "model": null
+        },
+        {
+            "id": "OCR_Agent",
+            "name": "OCR Agent",
+            "description": "Extracts text from images and converts it to code.",
+            "system_prompt": "You are an expert in reading and converting images to code. Use the `ocr_extract_text` tool to read the image and then format the output as a valid React/TypeScript component.",
+            "mcp_servers": [
+                "filesystem"
+            ],
+            "static_tools": [
+                "ocr_extract_text",
+                "filesystem_append"
+            ],
+            "provider": "ollama",
+            "model": "qwen2.5-coder:7b"
         }
     ],
     "workflows": [
@@ -110,6 +125,22 @@
                 {
                     "agent_id": "{{writer_agent}}",
                     "task_template": "Take the previous conversation context which contains the file contents. Summarize those contents. Then, using the `filesystem_append` tool, append the summary inside a new line to the file: c:/Repositorios/qlx-traffic-controller/workspace/summary_batch_processor.txt Format it nicely indicating the source file: {{filename}}.",
+                    "condition": null
+                }
+            ],
+            "variables": [
+                "file_path",
+                "filename"
+            ]
+        },
+        {
+            "id": "ocr_to_tsx_batch",
+            "name": "OCR to TSX Transcription",
+            "description": "Transcription of image files into .tsx components using OCR.",
+            "steps": [
+                {
+                    "agent_id": "OCR_Agent",
+                    "task_template": "1. Use the `ocr_extract_text` tool on the image at: {{file_path}}\n2. Take the resulting text and format it as a clean, valid React/TypeScript (.tsx) component logic if it looks like code.\n3. Save this result into a NEW file named: {{file_path}}.tsx using the `filesystem_append` tool or similar.",
                     "condition": null
                 }
             ],
