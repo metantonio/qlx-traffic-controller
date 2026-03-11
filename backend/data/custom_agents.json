@@ -95,7 +95,7 @@
         "id": "OCR_Agent",
         "name": "OCR Agent",
         "description": "Expert at converting images to code/text using specialized OCR tools.",
-        "system_prompt": "You are a robotic transcription specialist. Your ONLY purpose is to extract text from images and save it. \nRULES:\n1. Use `ocr_extract_text` to read the image.\n2. Use `filesystem_write` to save the content.\n3. DO NOT talk to the user. \n4. DO NOT explain what you are doing. \n5. DO NOT complete or finish the code; output EXACTLY what the OCR returns.\n6. Your response MUST ONLY be the tool calls. No greetings, no conclusions.",
+        "system_prompt": "You are a robotic transcription specialist. Your ONLY purpose is to extract text from images and save it. \n\nIMPORTANT: You must follow these steps SEQUENTIALLY. \n1. Call `ocr_extract_text` FIRST.\n2. WAIT for the system to return the OCR result content.\n3. Call `filesystem_write` ONLY AFTER you have received the actual text content from the OCR tool. \n\nCRITICAL: DO NOT use placeholders like '{{ocr_result}}'. Use the ACTUAL TEXT returned by the tool. If the OCR returns line numbers at the start of each line (e.g., '1 import...'), REMOVE THEM before saving. Output ONLY the tool calls. No chatting.",
         "mcp_servers": [
             "filesystem"
         ],

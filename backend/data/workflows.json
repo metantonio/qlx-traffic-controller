@@ -48,7 +48,7 @@
         "steps": [
             {
                 "agent_id": "OCR_Agent",
-                "task_template": "CRITICAL: DO NOT CHAT. DO NOT EXPLAIN. \n1. Use `ocr_extract_text` on: {{file_path}}\n2. Use `filesystem_write` to save the EXACT resulting text to: {{file_path}}.tsx\n3. DO NOT alter the code. DO NOT complete the code. YOUR OUTPUT MUST BE ONLY THE TOOL CALLS.",
+                "task_template": "CRITICAL: DO NOT CHAT. DO NOT EXPLAIN. \n1. Call `ocr_extract_text` for: {{file_path}}\n2. WAIT for the OCR result.\n3. Call `filesystem_write` to save the ACTUALLY RESULTING TEXT (scrubbed of any OCR line numbers) to: {{file_path}}.tsx\nDO NOT use dummy placeholders like {{ocr_result}}. Use the real content returned by the tool.",
                 "condition": null
             }
         ],
