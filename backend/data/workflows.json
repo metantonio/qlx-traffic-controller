@@ -41,21 +41,6 @@
             "filename"
         ]
     },
-    "OCR_Test": {
-        "id": "OCR_Test",
-        "name": "OCR Testing",
-        "description": "Read the image, and create a new file with the text on it. Testing language is typescript, so file should have .tsx extension.",
-        "steps": [
-            {
-                "agent_id": "OCR_Agent",
-                "task_template": "Review the code in {{folder}} and pass it exactly to a new file",
-                "condition": null
-            }
-        ],
-        "variables": [
-            "folder"
-        ]
-    },
     "ocr_to_tsx_batch": {
         "id": "ocr_to_tsx_batch",
         "name": "OCR to TSX Transcription",
