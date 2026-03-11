@@ -668,16 +668,25 @@ async def websocket_endpoint(websocket: WebSocket):
                             
                         logger.info(f"Using Custom Agent: {custom_agent.name} with tools {resolved_tools}")
                     elif agent_name.lower() in ["kernel", "kernel_agent"]:
-                        # Kernel stays as Orchestrator: Base system tools + delegation
-                        resolved_tools = [
-                            "shell_execute", 
-                            "filesystem_read", 
-                            "filesystem_append", 
-                            "delegate_to_agent",
-                            "list_available_agents"
-                        ]
+                        # Kernel Orchestrator: Dynamically inherit all system tools + delegation
+                        from backend.tools.mcp_registry import system_registry
+                        from backend.tools.mcp_manager import mcp_manager
+                        
+                        # 1. All static tools from the registry
+                        static_names = [t["name"] for t in system_registry.list_tools()]
+                        
+                        # 2. All enabled MCP servers
+                        mcp_names = [f"mcp:{s['id']}" for s in mcp_manager.list_servers() if s.get("enabled", True)]
+                        
+                        resolved_tools = static_names + mcp_names
+                        
+                        # Ensure delegation tools are included if not already (safety)
+                        for essential in ["delegate_to_agent", "list_available_agents"]:
+                            if essential not in resolved_tools:
+                                resolved_tools.append(essential)
+                                
                         system_prompt_override = KERNEL_SYSTEM_PROMPT
-                        logger.info(f"Using Orchestrator Kernel: restricted to {resolved_tools}")
+                        logger.info(f"Using Orchestrator Kernel: dynamically resolved {len(resolved_tools)} tools")
                     
                     proc = AIProcess(
                         agent_name=agent_name,
