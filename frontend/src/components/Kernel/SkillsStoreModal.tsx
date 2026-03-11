@@ -88,20 +88,14 @@ export default function SkillsStoreModal({ isOpen, onClose, onChanged }: SkillsS
         fetchData(nextPage);
     };
 
-    const handleInstall = async (id: string, skill: Skill) => {
+    const handleInstall = async (id: string) => {
         setInstallingId(id);
         try {
-            // For ClawHub skills, we might need to derive fields from metadata if missing
             const payload = {
-                id: id,
-                name: skill.name,
-                description: skill.description,
-                system_prompt: skill.system_prompt || `You are ${skill.name}. ${skill.description}`,
-                mcp_servers: skill.mcp_servers || [],
-                static_tools: skill.static_tools || []
+                slug: id
             };
 
-            const res = await fetch(`${apiUrl}/api/agents/custom`, {
+            const res = await fetch(`${apiUrl}/api/store/install-skill`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -111,6 +105,10 @@ export default function SkillsStoreModal({ isOpen, onClose, onChanged }: SkillsS
                 const agentsRes = await fetch(`${apiUrl}/api/agents/custom`);
                 setExistingAgents(await agentsRes.json());
                 onChanged();
+            } else {
+                const errorData = await res.json();
+                console.error("Install failed:", errorData.error);
+                // Optionally could add a toast here
             }
         } catch (err) {
             console.error("Failed to install skill:", err);
@@ -164,7 +162,7 @@ export default function SkillsStoreModal({ isOpen, onClose, onChanged }: SkillsS
                                                     </div>
                                                 ) : (
                                                     <button
-                                                        onClick={() => handleInstall(id, skill)}
+                                                        onClick={() => handleInstall(id)}
                                                         disabled={installingId === id}
                                                         className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-purple-500/10 disabled:opacity-50"
                                                     >

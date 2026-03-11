@@ -88,17 +88,6 @@
         "model": null,
         "working_directory": null
     },
-    "self-improving": {
-        "id": "self-improving",
-        "name": "Self-Improving Agent (Proactive Self-Reflection)",
-        "description": "Self-reflection + Self-criticism + Self-learning + Self-organizing memory. Agent evaluates its own work, catches mistakes, and improves permanently. Use befo...",
-        "system_prompt": "I am the specialized agent for Self-Improving Agent (Proactive Self-Reflection). My purpose is to Self-reflection + Self-criticism + Self-learning + Self-organizing memory. Agent evaluates its own work, catches mistakes, and improves permanently. Use befo....",
-        "mcp_servers": [],
-        "static_tools": [],
-        "provider": null,
-        "model": null,
-        "working_directory": null
-    },
     "OCR_Agent": {
         "id": "OCR_Agent",
         "name": "OCR Agent",
@@ -150,5 +139,16 @@
         "provider": null,
         "model": null,
         "working_directory": "C:\\Repositorios\\qlx-traffic-controller\\workspace\\test_dir"
+    },
+    "self-improving": {
+        "id": "self-improving",
+        "name": "Self-Improving Agent (Proactive + Self-Reflection)",
+        "description": "Self-reflection + Self-criticism + Self-learning + Self-organizing memory. Agent evaluates its own work, catches mistakes, and improves permanently. Use when...",
+        "system_prompt": "I am the specialized agent for Self-Improving Agent (Proactive + Self-Reflection). My purpose is to Self-reflection + Self-criticism + Self-learning + Self-organizing memory. Agent evaluates its own work, catches mistakes, and improves permanently. Use when....",
+        "mcp_servers": [],
+        "static_tools": [],
+        "provider": null,
+        "model": null,
+        "working_directory": null
     }
 }

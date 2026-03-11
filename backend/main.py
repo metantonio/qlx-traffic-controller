@@ -287,6 +287,25 @@ async def install_from_store(data: dict):
         logger.error(f"Failed to install from store: {e}")
         return {"error": str(e)}
 
+@app.post("/api/store/install-skill")
+async def install_skill_from_store(data: dict):
+    from backend.kernel.skill_installer import download_and_install_skill, SkillInstallationError
+    slug = data.get("slug")
+    version = data.get("version")
+    
+    if not slug:
+        return {"error": "slug is required"}
+        
+    try:
+        agent = download_and_install_skill(slug, version)
+        return {"status": "success", "agent_id": agent.id}
+    except SkillInstallationError as e:
+        logger.error(f"Failed to install skill: {e}")
+        return {"error": str(e)}
+    except Exception as e:
+        logger.error(f"Unexpected error installing skill: {e}")
+        return {"error": f"An unexpected error occurred: {str(e)}"}
+
 @app.get("/api/agents/custom")
 async def list_custom_agents():
     from backend.kernel.agent_manager import agent_manager
