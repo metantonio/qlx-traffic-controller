@@ -115,14 +115,16 @@ screenshot_tool = MCPTool(
     parameters={
         "monitor_index": {"type": "integer", "description": "Optional: Index of the monitor to capture (default: 1)", "default": 1}
     },
-    handler=take_system_screenshot
+    handler=take_system_screenshot,
+    restricted=True
 )
 
 list_windows_tool = MCPTool(
     name="list_desktop_windows",
     description="Lists all open and visible application windows on the desktop.",
     parameters={},
-    handler=list_desktop_windows
+    handler=list_desktop_windows,
+    restricted=True
 )
 
 focus_window_tool = MCPTool(
@@ -131,7 +133,8 @@ focus_window_tool = MCPTool(
     parameters={
         "window_title": {"type": "string", "description": "Title (or part of it) of the window to focus"}
     },
-    handler=focus_desktop_window
+    handler=focus_desktop_window,
+    restricted=True
 )
 
 # Registration
@@ -167,7 +170,8 @@ run_app_tool = MCPTool(
             "description": "The full path to the executable, a common name like 'notepad', or a file/folder path."
         }
     },
-    handler=run_desktop_app
+    handler=run_desktop_app,
+    restricted=True
 )
 
 system_registry.register(screenshot_tool)

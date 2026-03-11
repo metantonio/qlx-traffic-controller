@@ -7,11 +7,12 @@ import asyncio
 class MCPTool:
     """Represents a capability accessible by an Agent via the Model Context Protocol."""
     
-    def __init__(self, name: str, description: str, parameters: Dict[str, Any], handler: Callable):
+    def __init__(self, name: str, description: str, parameters: Dict[str, Any], handler: Callable, restricted: bool = False):
         self.name = name
         self.description = description
         self.parameters = parameters
         self._handler = handler
+        self.restricted = restricted
         
     async def execute(self, **kwargs) -> Any:
         print(f"DEBUG: Executing tool {self.name} with handler {self._handler}")
@@ -67,7 +68,8 @@ class ToolRegistry:
             {
                 "name": tool.name, 
                 "description": tool.description, 
-                "parameters": tool.parameters
+                "parameters": tool.parameters,
+                "restricted": tool.restricted
             } for tool in self._tools.values()
         ]
 

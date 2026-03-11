@@ -678,8 +678,8 @@ async def websocket_endpoint(websocket: WebSocket):
                         from backend.tools.mcp_registry import system_registry
                         from backend.tools.mcp_manager import mcp_manager
                         
-                        # 1. All static tools from the registry
-                        static_names = [t["name"] for t in system_registry.list_tools()]
+                        # 1. All static tools from the registry (excluding restricted ones)
+                        static_names = [t["name"] for t in system_registry.list_tools() if not t.get("restricted")]
                         
                         # 2. All enabled MCP servers
                         mcp_names = [f"mcp:{s['id']}" for s in mcp_manager.list_servers() if s.get("enabled", True)]
