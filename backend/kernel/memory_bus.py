@@ -32,7 +32,7 @@ class MemoryBus:
         message.timestamp = time.time()
         self._message_history.append(message)
         
-        logger.debug(f"BUS-PUB: [{message.event_type}] from {message.source_pid} -> {message.target_pid}")
+        #logger.debug(f"BUS-PUB: [{message.event_type}] from {message.source_pid} -> {message.target_pid}")
         
         # Route to subscribers of this event type
         if message.event_type in self._subscribers:
