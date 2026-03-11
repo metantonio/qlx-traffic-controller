@@ -109,7 +109,8 @@ class BatchOrchestrator:
             "workflow_id": job.workflow_id,
             "total_files": job.total_files,
             "processed_files": job.processed_files,
-            "status": job.status
+            "status": job.status,
+            "variables": job.extra_variables
         }
 
 # Global singleton

@@ -129,6 +129,15 @@ export default function BatchView() {
         }
     };
 
+    const handleRepeatBatch = (job: BatchJob) => {
+        setFolderPath(job.folder);
+        setSelectedWorkflowId(job.workflow_id);
+        // job handles variables, but interface says it might be missing if it's an old job
+        // @ts-expect-error - variables might be present in the status response but not in the type definition yet
+        setVariableValues(job.variables || {});
+        setView('create');
+    };
+
     const selectedWfObj = workflows.find(w => w.id === selectedWorkflowId);
 
     return (
@@ -210,9 +219,22 @@ export default function BatchView() {
                                                             {job.folder.split(/[\\/]/).pop() || "Root"}
                                                         </h4>
                                                     </div>
-                                                    <button onClick={() => handleStopBatch(job.id)} className="p-2.5 text-neutral-600 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all">
-                                                        <Trash2 size={18} />
-                                                    </button>
+                                                    <div className="flex gap-2">
+                                                        <button 
+                                                            onClick={() => handleRepeatBatch(job)} 
+                                                            className="p-2.5 text-neutral-600 hover:text-purple-400 hover:bg-purple-400/10 rounded-xl transition-all"
+                                                            title="Repeat Batch"
+                                                        >
+                                                            <RefreshCw size={18} />
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => handleStopBatch(job.id)} 
+                                                            className="p-2.5 text-neutral-600 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all"
+                                                            title="Stop/Delete Batch"
+                                                        >
+                                                            <Trash2 size={18} />
+                                                        </button>
+                                                    </div>
                                                 </div>
 
                                                 <div className="space-y-6">
