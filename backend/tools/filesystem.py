@@ -2,8 +2,34 @@ import os
 import asyncio
 from pydantic import BaseModel, Field
 from backend.tools.mcp_registry import MCPTool, system_registry
+from backend.core.database import SessionLocal
+from backend.models.database_models import DbAllowedDirectory
 
 _file_locks = {}
+
+def is_path_allowed(filepath: str) -> bool:
+    """Verifies if the path is within the project root OR a user-allowed directory."""
+    abs_path = os.path.abspath(filepath)
+    
+    # 1. Base directory (project root: where backend/ is)
+    # filesystem.py is in backend/tools/
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    if abs_path.startswith(project_root):
+        return True
+        
+    # 2. Check Database for custom allowed directories
+    try:
+        with SessionLocal() as db:
+            allowed = db.query(DbAllowedDirectory).all()
+            for entry in allowed:
+                norm_allowed = os.path.abspath(entry.path)
+                if abs_path.startswith(norm_allowed):
+                    return True
+    except Exception as e:
+        # If DB fails, we default to Project Root only
+        pass
+        
+    return False
 
 def get_file_lock(filepath: str) -> asyncio.Lock:
     abs_path = os.path.abspath(filepath)
@@ -12,7 +38,10 @@ def get_file_lock(filepath: str) -> asyncio.Lock:
     return _file_locks[abs_path]
 
 async def read_file(filepath: str) -> str:
-    """Basic file reader, ensuring it exists."""
+    """Basic file reader, ensuring it exists and is allowed."""
+    if not is_path_allowed(filepath):
+        raise PermissionError(f"Access Denied: path '{filepath}' is outside of permitted boundaries.")
+
     if not os.path.exists(filepath):
         raise FileNotFoundError(f"File {filepath} not found.")
         
@@ -30,7 +59,10 @@ filesystem_read_tool = MCPTool(
 )
 
 async def list_directory(path: str) -> list[str]:
-    """Lists files in a directory."""
+    """Lists files in a directory if allowed."""
+    if not is_path_allowed(path):
+        raise PermissionError(f"Access Denied: directory '{path}' is outside of permitted boundaries.")
+
     if not os.path.isdir(path):
         raise NotADirectoryError(f"{path} is not a directory.")
     return [os.path.join(path, f) for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
@@ -50,6 +82,10 @@ system_registry.register(filesystem_list_tool)
 async def append_to_file(filepath: str, content: str) -> str:
     """Appends text to a file safely. Creates the file if it doesn't exist."""
     print(f"Appending to {filepath}")
+    
+    if not is_path_allowed(filepath):
+        return f"Permission Error: Path '{filepath}' is unauthorized."
+
     os.makedirs(os.path.dirname(os.path.abspath(filepath)), exist_ok=True)
     lock = get_file_lock(filepath)
     try:
@@ -63,6 +99,10 @@ async def append_to_file(filepath: str, content: str) -> str:
 async def write_file_safe(filepath: str, content: str) -> str:
     """Writes/Overwrites text content to a specified file safely. Creates parent directories if needed."""
     print(f"Writing to {filepath}")
+    
+    if not is_path_allowed(filepath):
+        return f"Permission Error: Path '{filepath}' is unauthorized."
+
     os.makedirs(os.path.dirname(os.path.abspath(filepath)), exist_ok=True)
     lock = get_file_lock(filepath)
     try:
