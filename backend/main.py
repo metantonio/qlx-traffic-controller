@@ -28,6 +28,7 @@ import backend.tools.agent_tools
 from backend.tools.sharing_manager import sharing_manager
 from backend.tools.mcp_manager import mcp_manager
 import backend.tools.vision_tools
+import backend.tools.desktop_tools
 
 logger = get_kernel_logger("QLX-TC.Main")
 

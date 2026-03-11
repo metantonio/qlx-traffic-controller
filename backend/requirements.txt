@@ -34,3 +34,6 @@ rich>=13.0.0
 python-dotenv>=1.0.0
 requests>=2.28.0
 slack-bolt>=1.18.0
+mss>=9.0.1
+pywin32>=306
+pillow>=10.0.0
