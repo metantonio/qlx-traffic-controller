@@ -94,13 +94,10 @@ def download_and_install_skill(slug: str, version: Optional[str] = None) -> Cust
     new_agent_data = {
         "id": slug,
         "name": agent_name,
-        "role": f"Skill Agent: {agent_name}",
-        "goal": f"Execute the {agent_name} skill.",
-        "backstory": "Installed via ClawHub Skills Store.",
+        "description": f"Skill package installed from ClawHub: {agent_name}",
         "system_prompt": system_prompt,
         "provider": "anthropic", # Default or configurable
         "model": "claude-3-7-sonnet-20250219", # Default capable model
-        "temperature": 0.2,
         "static_tools": ["read_file", "write_file_safe", "list_directory", "shell_execute", "append_to_file", "delegate_to_agent"], # Standard agent tools
         "mcp_servers": [],
         "working_directory": relative_working_dir
@@ -110,7 +107,6 @@ def download_and_install_skill(slug: str, version: Optional[str] = None) -> Cust
     agent = CustomAgent(**new_agent_data)
     
     # Save it using the agent manager
-    agent_manager.agents[slug] = agent
-    agent_manager._save_agents()
+    agent_manager.add_agent(agent)
     
     return agent

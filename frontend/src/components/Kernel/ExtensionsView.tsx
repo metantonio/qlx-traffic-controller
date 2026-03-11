@@ -201,48 +201,18 @@ export default function ExtensionsView() {
                 }
             } else {
                 // Install Skill
-                let skill: { name: string; description: string; system_prompt?: string; mcp_servers?: string[]; static_tools?: string[] } | null = null;
-                const skillsData = await (await fetch(`${apiUrl}/api/store/skills`)).json();
-
-                if (skillsData.items && skillsData.items[id]) {
-                    skill = skillsData.items[id];
-                } else {
-                    // Try fetching details from ClawHub via backend proxy if available, or directly (with CORS risk)
-                    // Better to use search/details via backend
-                    const detailRes = await fetch(`${apiUrl}/api/store/search?q=${id}`); // Re-using search as a quick detail check or specific endpoint
-                    const searchData = await detailRes.json();
-                    const found = searchData.results?.find((s: { slug: string; displayName?: string; summary?: string }) => s.slug === id);
-                    if (found) {
-                        skill = {
-                            name: found.displayName || found.slug,
-                            description: found.summary || "",
-                            system_prompt: `I am the specialized agent for ${found.displayName}. My purpose is to ${found.summary}.`,
-                            mcp_servers: [],
-                            static_tools: []
-                        };
-                    }
-                }
-
-                if (!skill) {
-                    alert("Could not find skill details for installation.");
-                    return;
-                }
-
-                const res = await fetch(`${apiUrl}/api/agents/custom`, {
+                const res = await fetch(`${apiUrl}/api/store/install-skill`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        id,
-                        name: skill.name,
-                        description: skill.description,
-                        system_prompt: skill.system_prompt || `I am the ${skill.name} specialist.`,
-                        mcp_servers: skill.mcp_servers || [],
-                        static_tools: skill.static_tools || []
-                    })
+                    body: JSON.stringify({ slug: id })
                 });
+                
                 if (res.ok) {
                     fetchData();
                     setActiveTab('installed');
+                } else {
+                    const errorData = await res.json();
+                    alert(`Installation failed: ${errorData.detail || errorData.error || 'Unknown error. Check backend logs for rate limits.'}`);
                 }
             }
         } catch (err) {

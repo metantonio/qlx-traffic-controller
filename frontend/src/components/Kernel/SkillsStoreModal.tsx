@@ -107,8 +107,8 @@ export default function SkillsStoreModal({ isOpen, onClose, onChanged }: SkillsS
                 onChanged();
             } else {
                 const errorData = await res.json();
-                console.error("Install failed:", errorData.error);
-                // Optionally could add a toast here
+                console.error("Install failed:", errorData.detail || errorData.error);
+                alert(`Installation failed: ${errorData.detail || errorData.error || 'Unknown error'}`);
             }
         } catch (err) {
             console.error("Failed to install skill:", err);

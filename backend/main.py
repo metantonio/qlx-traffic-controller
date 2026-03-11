@@ -1,4 +1,4 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
@@ -294,17 +294,17 @@ async def install_skill_from_store(data: dict):
     version = data.get("version")
     
     if not slug:
-        return {"error": "slug is required"}
+        raise HTTPException(status_code=400, detail="slug is required")
         
     try:
         agent = download_and_install_skill(slug, version)
         return {"status": "success", "agent_id": agent.id}
     except SkillInstallationError as e:
         logger.error(f"Failed to install skill: {e}")
-        return {"error": str(e)}
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Unexpected error installing skill: {e}")
-        return {"error": f"An unexpected error occurred: {str(e)}"}
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
 
 @app.get("/api/agents/custom")
 async def list_custom_agents():
