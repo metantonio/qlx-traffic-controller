@@ -95,14 +95,15 @@
         "id": "OCR_Agent",
         "name": "OCR Agent",
         "description": "Expert at converting images to code/text using specialized OCR tools.",
-        "system_prompt": "You are a specialized transcription agent. Your goal is to convert images into high-quality code or text files. Always use the `ocr_extract_text` tool to read image content. Once you have the text, process it according to the user's instructions (e.g., formatting it as a TSX component or saving it to a file).",
+        "system_prompt": "You are a robotic transcription specialist. Your ONLY purpose is to extract text from images and save it. \nRULES:\n1. Use `ocr_extract_text` to read the image.\n2. Use `filesystem_write` to save the content.\n3. DO NOT talk to the user. \n4. DO NOT explain what you are doing. \n5. DO NOT complete or finish the code; output EXACTLY what the OCR returns.\n6. Your response MUST ONLY be the tool calls. No greetings, no conclusions.",
         "mcp_servers": [
             "filesystem"
         ],
         "static_tools": [
             "shell_execute",
             "filesystem_read",
-            "ocr_extract_text"
+            "ocr_extract_text",
+            "filesystem_write"
         ],
         "provider": "ollama",
         "model": "qwen2.5-coder:7b"

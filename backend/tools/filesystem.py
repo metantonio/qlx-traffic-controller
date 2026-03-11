@@ -60,6 +60,19 @@ async def append_to_file(filepath: str, content: str) -> str:
     except Exception as e:
         return f"Error appending to file: {e}"
 
+async def write_file_safe(filepath: str, content: str) -> str:
+    """Writes/Overwrites text content to a specified file safely. Creates parent directories if needed."""
+    print(f"Writing to {filepath}")
+    os.makedirs(os.path.dirname(os.path.abspath(filepath)), exist_ok=True)
+    lock = get_file_lock(filepath)
+    try:
+        async with lock:
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write(content)
+        return f"Successfully wrote content to {filepath}."
+    except Exception as e:
+        return f"Error writing to file: {e}"
+
 filesystem_append_tool = MCPTool(
     name="filesystem_append",
     description="Appends text content to a specified file. If the file does not exist, it will be created. Use this when you need to add to a single log or summary file incrementally.",
@@ -70,4 +83,15 @@ filesystem_append_tool = MCPTool(
     handler=append_to_file
 )
 
+filesystem_write_tool = MCPTool(
+    name="filesystem_write",
+    description="Creates or overwrites a file with exact text content. Use this for creating new components or saving full transcripts.",
+    parameters={
+        "filepath": {"type": "string", "description": "Absolute path to the file"},
+        "content" : {"type": "string", "description": "The full text content to write"}
+    },
+    handler=write_file_safe
+)
+
 system_registry.register(filesystem_append_tool)
+system_registry.register(filesystem_write_tool)

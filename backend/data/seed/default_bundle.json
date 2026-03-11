@@ -77,14 +77,16 @@
         {
             "id": "OCR_Agent",
             "name": "OCR Agent",
-            "description": "Extracts text from images and converts it to code.",
-            "system_prompt": "You are an expert in reading and converting images to code. Use the `ocr_extract_text` tool to read the image and then format the output as a valid React/TypeScript component.",
+            "description": "Expert at converting images to code/text using specialized OCR tools.",
+            "system_prompt": "You are a robotic transcription specialist. Your ONLY purpose is to extract text from images and save it. \nRULES:\n1. Use `ocr_extract_text` to read the image.\n2. Use `filesystem_write` to save the content.\n3. DO NOT talk to the user. \n4. DO NOT explain what you are doing. \n5. DO NOT complete or finish the code; output EXACTLY what the OCR returns.\n6. Your response MUST ONLY be the tool calls. No greetings, no conclusions.",
             "mcp_servers": [
                 "filesystem"
             ],
             "static_tools": [
+                "shell_execute",
+                "filesystem_read",
                 "ocr_extract_text",
-                "filesystem_append"
+                "filesystem_write"
             ],
             "provider": "ollama",
             "model": "qwen2.5-coder:7b"
@@ -140,13 +142,12 @@
             "steps": [
                 {
                     "agent_id": "OCR_Agent",
-                    "task_template": "1. Use the `ocr_extract_text` tool on the image at: {{file_path}}\n2. Take the resulting text and format it as a clean, valid React/TypeScript (.tsx) component logic if it looks like code.\n3. Save this result into a NEW file named: {{file_path}}.tsx using the `filesystem_append` tool or similar.",
+                    "task_template": "CRITICAL: DO NOT CHAT. DO NOT EXPLAIN. \n1. Use `ocr_extract_text` on: {{file_path}}\n2. Use `filesystem_write` to save the EXACT resulting text to: {{file_path}}.tsx\n3. DO NOT alter the code. DO NOT complete the code. YOUR OUTPUT MUST BE ONLY THE TOOL CALLS.",
                     "condition": null
                 }
             ],
             "variables": [
-                "file_path",
-                "filename"
+                "file_path"
             ]
         }
     ],

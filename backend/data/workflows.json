@@ -63,7 +63,7 @@
         "steps": [
             {
                 "agent_id": "OCR_Agent",
-                "task_template": "1. Use the `ocr_extract_text` tool on the image at: {{file_path}}\n2. Take the resulting text and format it as a clean, valid React/TypeScript (.tsx) component logic if it looks like code.\n3. Save this result into a NEW file named: {{file_path}}.tsx using the `filesystem_append` tool or similar.",
+                "task_template": "CRITICAL: DO NOT CHAT. DO NOT EXPLAIN. \n1. Use `ocr_extract_text` on: {{file_path}}\n2. Use `filesystem_write` to save the EXACT resulting text to: {{file_path}}.tsx\n3. DO NOT alter the code. DO NOT complete the code. YOUR OUTPUT MUST BE ONLY THE TOOL CALLS.",
                 "condition": null
             }
         ],
