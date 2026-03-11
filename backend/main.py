@@ -1,5 +1,6 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from typing import List
 import os
@@ -91,6 +92,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Serve screenshots as static files
+SCREENSHOTS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "data", "screenshots"))
+os.makedirs(SCREENSHOTS_DIR, exist_ok=True)
+app.mount("/api/screenshots", StaticFiles(directory=SCREENSHOTS_DIR), name="screenshots")
 
 class ConnectionManager:
     def __init__(self):

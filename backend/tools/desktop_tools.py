@@ -40,12 +40,16 @@ async def take_system_screenshot(monitor_index: int = 1) -> Dict[str, Any]:
             
             logger.info(f"Screenshot saved to {filepath}")
             
+            preview_url = f"/api/screenshots/{filename}"
+            
             return {
                 "status": "success",
                 "file_path": filepath,
+                "preview_url": preview_url,
                 "filename": filename,
                 "monitor": monitor_index,
-                "resolution": f"{monitor['width']}x{monitor['height']}"
+                "resolution": f"{monitor['width']}x{monitor['height']}",
+                "message": f"Screenshot captured. Preview: ![Screenshot]({preview_url})"
             }
     except Exception as e:
         logger.error(f"Error taking screenshot: {str(e)}")
