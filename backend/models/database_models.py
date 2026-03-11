@@ -53,3 +53,11 @@ class DbMCPServer(Base):
     enabled = Column(Integer, default=1) # 1 for True, 0 for False (SQLite preference)
     transport = Column(String, default="stdio")
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+class DbAllowedDirectory(Base):
+    __tablename__ = "allowed_directories"
+
+    id = Column(Integer, primary_key=True, index=True)
+    path = Column(String, unique=True, index=True)
+    description = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)

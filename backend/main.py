@@ -1,5 +1,6 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
 from typing import List
 import os
 import json
@@ -14,8 +15,9 @@ from backend.kernel.agent_manager import CustomAgent, agent_manager
 from backend.kernel.workflow_manager import Workflow, workflow_manager
 from backend.kernel.workflow_orchestrator import workflow_orchestrator
 from backend.models.database_models import DbProcess, DbMessage
-from backend.core.database import SessionLocal
+from backend.core.database import SessionLocal, get_db, init_db
 from sqlalchemy import desc
+from contextlib import asynccontextmanager
 
 # Force tool registry load
 import backend.tools.shell
@@ -61,16 +63,25 @@ If you don't have a specific tool to fulfill a request (like Wikipedia search or
 use 'list_available_agents' to find an expert and 'delegate_to_agent' to send them the task.
 Always be concise and professional. You act as the brain of the operation."""
 
-app = FastAPI(title="AI Control Tower API", version="0.1.0")
-
-@app.on_event("startup")
-async def startup_event():
-    # Start the task scheduler in the background
-    asyncio.create_task(system_scheduler.start_scheduler())
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 1. Initialize Database and apply migrations
+    init_db()
+    logger.info("Database initialized and migrations applied.")
+    
+    # 2. Start the task scheduler in the background
+    scheduler_task = asyncio.create_task(system_scheduler.start_scheduler())
     logger.info("Background Task Scheduler initialized.")
     
-    # Bootstrap if empty
+    # 3. Bootstrap if empty
     bootstrap_system()
+    
+    yield
+    
+    # Shutdown logic if needed
+    # scheduler_task.cancel()
+
+app = FastAPI(title="AI Control Tower API", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -430,6 +441,39 @@ async def list_llm_models():
 async def get_system_settings():
     from backend.kernel.settings_manager import settings_manager
     return settings_manager.get_all()
+
+@app.get("/api/settings/directories")
+async def get_allowed_directories(db: Session = Depends(get_db)):
+    from backend.models.database_models import DbAllowedDirectory
+    dirs = db.query(DbAllowedDirectory).all()
+    return [{"id": d.id, "path": d.path, "description": d.description} for d in dirs]
+
+@app.post("/api/settings/directories")
+async def add_allowed_directory(data: dict, db: Session = Depends(get_db)):
+    from backend.models.database_models import DbAllowedDirectory
+    path = data.get("path")
+    if not path:
+        return {"error": "Path is required"}
+    
+    # Check if already exists
+    existing = db.query(DbAllowedDirectory).filter(DbAllowedDirectory.path == path).first()
+    if existing:
+        return {"error": "Directory already allowed"}
+
+    new_dir = DbAllowedDirectory(path=path, description=data.get("description", ""))
+    db.add(new_dir)
+    db.commit()
+    return {"status": "success", "id": new_dir.id}
+
+@app.delete("/api/settings/directories/{id}")
+async def remove_allowed_directory(id: int, db: Session = Depends(get_db)):
+    from backend.models.database_models import DbAllowedDirectory
+    db_dir = db.query(DbAllowedDirectory).filter(DbAllowedDirectory.id == id).first()
+    if not db_dir:
+        return {"error": "Directory not found"}
+    db.delete(db_dir)
+    db.commit()
+    return {"status": "success"}
 
 @app.put("/api/settings")
 async def update_system_settings(data: dict):

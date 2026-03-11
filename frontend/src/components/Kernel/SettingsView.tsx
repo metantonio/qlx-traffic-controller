@@ -7,6 +7,12 @@ interface SystemSettings {
   VISION_MODEL: string;
 }
 
+interface AllowedDirectory {
+  id: number;
+  path: string;
+  description: string;
+}
+
 interface LLMProviderInfo {
   provider: string;
   name: string;
@@ -23,6 +29,11 @@ export default function SettingsView() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  
+  // Directory management
+  const [directories, setDirectories] = useState<AllowedDirectory[]>([]);
+  const [newDirPath, setNewDirPath] = useState("");
+  const [newDirDesc, setNewDirDesc] = useState("");
 
   const fetchSettings = useCallback(async () => {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/settings`);
@@ -41,16 +52,27 @@ export default function SettingsView() {
     }
   }, []);
 
+  const fetchDirectories = useCallback(async () => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/settings/directories`);
+      if (res.ok) {
+        setDirectories(await res.json());
+      }
+    } catch (err) {
+      console.error("Failed to fetch directories:", err);
+    }
+  }, []);
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      await Promise.all([fetchSettings(), fetchModels()]);
+      await Promise.all([fetchSettings(), fetchModels(), fetchDirectories()]);
     } catch {
       setError("Error loading initial data");
     } finally {
       setLoading(false);
     }
-  }, [fetchSettings, fetchModels]);
+  }, [fetchSettings, fetchModels, fetchDirectories]);
 
   useEffect(() => {
     fetchData();
@@ -73,6 +95,40 @@ export default function SettingsView() {
       setError(err instanceof Error ? err.message : "Error saving settings");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleAddDirectory = async () => {
+    if (!newDirPath) return;
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/settings/directories`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: newDirPath, description: newDirDesc })
+      });
+      if (res.ok) {
+        setNewDirPath("");
+        setNewDirDesc("");
+        fetchDirectories();
+      } else {
+        const d = await res.json();
+        alert(d.error || "Failed to add directory");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleRemoveDirectory = async (id: number) => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/settings/directories/${id}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        fetchDirectories();
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -169,6 +225,81 @@ export default function SettingsView() {
                 <p className="mt-3 text-[10px] text-neutral-600 leading-relaxed ml-1 italic">
                   * Used for extracting text and code from images within Neural Pipelines.
                 </p>
+              </div>
+            </div>
+          </section>
+
+          {/* Directory Management Section */}
+          <section className="bg-neutral-900/60 border border-neutral-800/80 rounded-3xl p-8 shadow-xl backdrop-blur-xl border-t-neutral-700/50">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="p-3 bg-purple-500/10 rounded-2xl">
+                <Globe size={20} className="text-purple-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-white tracking-tight">Security Boundary</h3>
+                <p className="text-xs text-neutral-500 font-medium">Manage permitted directories for AI file operations</p>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              {/* List of Directories */}
+              <div className="space-y-3">
+                <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] mb-4 ml-1">
+                  Permitted Paths
+                </label>
+                <div className="grid grid-cols-1 gap-3">
+                  {directories.length === 0 ? (
+                    <div className="p-6 border-2 border-dashed border-neutral-800 rounded-2xl text-center">
+                      <p className="text-xs text-neutral-600 font-mono italic">No exclusive boundaries defined. System currently utilizes global defaults.</p>
+                    </div>
+                  ) : (
+                    directories.map((dir) => (
+                      <div key={dir.id} className="group flex items-center justify-between p-4 bg-neutral-950/50 border border-neutral-800 rounded-2xl hover:border-purple-500/30 transition-all">
+                        <div className="min-w-0">
+                          <p className="text-sm font-mono text-white truncate">{dir.path}</p>
+                          {dir.description && <p className="text-[10px] text-neutral-500 mt-0.5">{dir.description}</p>}
+                        </div>
+                        <button 
+                          onClick={() => handleRemoveDirectory(dir.id)}
+                          className="p-2 text-neutral-600 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all"
+                        >
+                          <RefreshCw size={14} className="rotate-45" />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Add New Directory Form */}
+              <div className="pt-6 border-t border-neutral-800/50 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[9px] text-neutral-600 font-black uppercase tracking-widest ml-1">Absolute Path</label>
+                    <input 
+                      className="w-full bg-neutral-950/50 border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white focus:border-purple-500/50 outline-none transition-all"
+                      placeholder="e.g. C:/Data/Projects"
+                      value={newDirPath}
+                      onChange={(e) => setNewDirPath(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[9px] text-neutral-600 font-black uppercase tracking-widest ml-1">Description (Optional)</label>
+                    <input 
+                      className="w-full bg-neutral-950/50 border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white focus:border-purple-500/50 outline-none transition-all"
+                      placeholder="e.g. Workspace for R&D"
+                      value={newDirDesc}
+                      onChange={(e) => setNewDirDesc(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <button 
+                  onClick={handleAddDirectory}
+                  disabled={!newDirPath}
+                  className="w-full py-3 bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 border border-purple-500/20 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  Authorize New Boundary
+                </button>
               </div>
             </div>
           </section>
