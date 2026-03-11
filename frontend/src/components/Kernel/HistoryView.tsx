@@ -83,7 +83,10 @@ export default function HistoryView({ onSelectPid, onBack }: HistoryViewProps) {
     const totalPages = data ? Math.ceil(data.total / data.page_size) : 0;
 
     const formatDate = (dateStr: string) => {
-        const date = new Date(dateStr);
+        if (!dateStr) return 'N/A';
+        // Ensure the string is treated as UTC if it lacks timezone info
+        const normalizedStr = dateStr.endsWith('Z') || dateStr.includes('+') ? dateStr : `${dateStr}Z`;
+        const date = new Date(normalizedStr);
         return date.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' +
             date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
     };

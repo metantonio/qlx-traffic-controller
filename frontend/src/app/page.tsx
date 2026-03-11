@@ -126,7 +126,6 @@ export default function Dashboard() {
 
   useEffect(() => {
     const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://127.0.0.1:8000/ws";
-    setWsStatus('connecting');
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 

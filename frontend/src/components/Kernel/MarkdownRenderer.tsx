@@ -132,7 +132,7 @@ const MarkdownRenderer = memo(({ content }: MarkdownRendererProps) => {
                             {children}
                         </blockquote>
                     ),
-                    img: ({ src, alt, ...props }) => {
+                    img: ({ src, alt }) => {
                         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
                         const srcStr = typeof src === 'string' ? src : '';
                         const fullSrc = srcStr.startsWith('/') && !srcStr.startsWith('http') 

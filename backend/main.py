@@ -536,7 +536,7 @@ async def get_process_history(page: int = 1, page_size: int = 10):
                 "agent_name": p.agent_name,
                 "task": p.task_description,
                 "state": p.state,
-                "created_at": p.created_at.isoformat() if p.created_at else None,
+                "created_at": p.created_at.isoformat() + "Z" if p.created_at else None,
                 "metrics": {
                     "tokens_used": p.tokens_used,
                     "tools_called": p.tools_called,

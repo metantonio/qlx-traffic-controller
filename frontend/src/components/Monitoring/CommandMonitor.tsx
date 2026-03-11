@@ -30,7 +30,7 @@ export default function CommandMonitor({ events, onClear }: CommandMonitorProps)
 
     const formatTime = (ts?: number) => {
         if (!ts) return "00:00:00";
-        return new Date(ts * 1000).toLocaleTimeString([], { hour12: false });
+        return new Date(ts * 1000).toLocaleTimeString(undefined, { hour12: false });
     };
 
     return (
