@@ -14,6 +14,7 @@ import WorkflowView from "@/components/Kernel/WorkflowView";
 import BatchView from "@/components/Kernel/BatchView";
 import CommandBar from "@/components/Kernel/CommandBar";
 import SettingsView from "@/components/Kernel/SettingsView";
+import packageJson from "../../package.json";
 import { GitBranch, History, LayoutDashboard, Layers, Cpu, MessageSquare, WifiOff, RefreshCw, Activity, Settings } from "lucide-react";
 
 export interface ProcessData {
@@ -192,7 +193,10 @@ export default function Dashboard() {
                   'Kernel Offline'}
             </span>
           </div>
-          <h1 className="text-xl font-black tracking-tighter text-white">QLX-Traffic-Controller</h1>
+          <h1 className="text-xl font-black tracking-tighter text-white flex items-baseline gap-2">
+            QLX-Traffic-Controller
+            <span className="text-[10px] text-blue-500/50 font-mono tracking-widest uppercase">v{packageJson.version}</span>
+          </h1>
         </div>
 
         <nav className="flex-grow p-4 space-y-2">
