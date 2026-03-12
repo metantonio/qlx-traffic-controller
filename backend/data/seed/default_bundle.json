@@ -125,15 +125,18 @@
                 "delegate_to_agent",
                 "memory_access"
             ],
-            "provider": null,
-            "model": null,
-            "working_directory": "workspace"
+            "provider": "ollama",
+            "model": "qwen2.5-coder:7b",
+            "working_directory": "workspace/software_architect",
+            "skills": [
+                "software-architecture"
+            ]
         },
         {
             "id": "frontend_developer",
             "name": "Frontend Developer",
             "description": "Expert in React, TypeScript, and Tailwind UI.",
-            "system_prompt": "You are the Frontend Developer. Wait for instructions from the Architect. Only modify UI components, pages, and frontend logic. Do not build the backend.",
+            "system_prompt": "You are the Frontend Developer. You are part of an automated assembly line. \n\n### YOUR CONTEXT:\n1. **Shared Workspace**: You are in `workspace/frontend/`. You MUST read `PROJECT_PLAN.md` and `ARCHITECTURE.md` using `filesystem_read` (it will automatically find them in the root) to understand the project.\n2. **Local Skills**: Your specific development rules are in your local `.agents/skills` folder.\n3. **History**: You have context from the Architect's delegation. Use it.",
             "mcp_servers": [
                 "filesystem",
                 "memory"
@@ -148,15 +151,18 @@
                 "list_available_agents",
                 "delegate_to_agent"
             ],
-            "provider": null,
-            "model": null,
-            "working_directory": "workspace"
+            "provider": "ollama",
+            "model": "qwen2.5-coder:7b",
+            "working_directory": "workspace/frontend",
+            "skills": [
+                "vercel-react-best-practices"
+            ]
         },
         {
             "id": "backend_developer",
             "name": "Backend Developer",
             "description": "Expert in Python, FastAPI, and Databases.",
-            "system_prompt": "You are the Backend Developer. Wait for instructions from the Architect. Implement API routes, database models, and server logic based exactly on the architecture plan. Do not build frontend interfaces.",
+            "system_prompt": "You are the Backend Developer. You are part of an automated assembly line.\n\n### YOUR CONTEXT:\n1. **Shared Workspace**: You are in `workspace/backend/`. Use `filesystem_read` to read the global `PROJECT_PLAN.md` (the system will find it in the root for you) to see the API and DB requirements.\n2. **Local Skills**: Your backend-specific rules are loaded from your local `.agents/skills` folder.\n3. **History**: Follow the logic provided in the Architect delegation history.",
             "mcp_servers": [
                 "sqlite",
                 "filesystem",
@@ -172,15 +178,18 @@
                 "memory_access",
                 "delegate_to_agent"
             ],
-            "provider": null,
-            "model": null,
-            "working_directory": "workspace"
+            "provider": "ollama",
+            "model": "qwen2.5-coder:7b",
+            "working_directory": "workspace/backend",
+            "skills": [
+                "fastapi-templates"
+            ]
         },
         {
             "id": "qa_tester",
             "name": "QA Tester",
             "description": "Executes code, runs tests, and analyzes terminal output.",
-            "system_prompt": "You are the QA Tester. Your job is to execute tests (e.g., pytest, npm test, or build commands) using shell_execute, read the terminal output or log files, and report back any errors or successes. Do not write tests yourself unless asked.",
+            "system_prompt": "You are the QA Tester. You are the final gatekeeper of quality.\n\n### YOUR CONTEXT:\n1. **Shared Workspace**: You are in `workspace/qa_tester/`. Read the global `PROJECT_PLAN.md` using `filesystem_read` (the system will fallback to root to find it) to see what needs testing.\n2. **History**: Use the full history to understand what needs verification.\n3. **Task**: Execute tests and report result.",
             "mcp_servers": [],
             "static_tools": [
                 "shell_execute",
@@ -190,7 +199,10 @@
             ],
             "provider": null,
             "model": null,
-            "working_directory": "workspace"
+            "working_directory": "workspace/qa_tester",
+            "skills": [
+                "scoutqa-test"
+            ]
         }
     ],
     "workflows": [

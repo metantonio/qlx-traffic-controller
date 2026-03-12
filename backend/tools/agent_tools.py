@@ -51,8 +51,13 @@ async def delegate_to_agent(agent_id: str, task: str) -> str:
     if model:
         new_proc.memory_context["llm_model"] = model
     
-    # Support for parent-child relationship (not fully implemented in scheduler yet but good for tracking)
-    new_proc.memory_context["parent_pid"] = pid
+    from backend.kernel.process import system_process_table
+    parent_proc = system_process_table.get(pid) if pid else None
+    if parent_proc and parent_proc.history:
+        new_proc.memory_context["initial_history"] = parent_proc.history
+        # Carry over provider settings for consistency
+        new_proc.memory_context["llm_session_provider"] = parent_proc.memory_context.get("llm_session_provider")
+        new_proc.memory_context["llm_session_model"] = parent_proc.memory_context.get("llm_session_model")
     
     await system_scheduler.submit(new_proc, Priority.MEDIUM)
     

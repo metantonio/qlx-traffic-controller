@@ -6,7 +6,6 @@ logger = get_kernel_logger("QLX-TC.SkillInjector")
 def inject_skills_into_prompt(base_prompt: str, working_directory: str = None, assigned_skills: list[str] = None) -> str:
     """Scans for assigned skills and .cursorrules and appends them to the prompt."""
     if not working_directory:
-        # Default to the centralized workspace if no specific working directory is set
         resolved_pwd = os.path.abspath("./workspace")
     else:
         resolved_pwd = os.path.abspath(working_directory)
@@ -14,10 +13,23 @@ def inject_skills_into_prompt(base_prompt: str, working_directory: str = None, a
     injected_prompt = base_prompt or ""
     skills_content = []
     
-    # 1. Check for assigned skills in .agents/skills/
-    skills_root = os.path.join(resolved_pwd, ".agents", "skills")
+    # 1. Check for assigned skills in .agents/skills/ (Climb up to find .agents)
+    curr = resolved_pwd
+    skills_root = None
+    while curr and os.path.dirname(curr) != curr: # Stop at root
+        potential_root = os.path.join(curr, ".agents", "skills")
+        if os.path.exists(potential_root):
+            skills_root = potential_root
+            break
+        curr = os.path.dirname(curr)
     
-    if os.path.exists(skills_root):
+    # Fallback to absolute relative path just in case
+    if not skills_root:
+        potential_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".agents", "skills"))
+        if os.path.exists(potential_root):
+            skills_root = potential_root
+
+    if skills_root and os.path.exists(skills_root):
         if assigned_skills is not None:
             # ISOLATION MODE: ONLY inject explicitly assigned skills (could be empty list)
             for skill_name in assigned_skills:

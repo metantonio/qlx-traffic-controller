@@ -44,15 +44,27 @@ async def proceed_with_plan(pid: str):
     arch_content = ""
     
     # Simple extraction logic: find sections or content between header hints
-    if "project plan" in last_msg.lower():
+    if "project plan" in last_msg.lower() or "PROJECT_PLAN.md" in last_msg:
         # Try to extract from "Project Plan" to "Architecture" or end
         plan_part = re.split(r"(?i)architecture", last_msg)[0]
+        # Clean up common lead-ins
+        plan_part = re.sub(r"(?i).*project plan.*", "", plan_part, count=1)
         plan_content = plan_part.strip()
     
-    if "architecture" in last_msg.lower():
+    # Robust fallback: Find ANY markdown block if no headers matched
+    if not plan_content:
+        blocks = re.findall(r"```(?:markdown)?\n(.*?)\n```", last_msg, re.DOTALL)
+        if blocks:
+            plan_content = blocks[0].strip()
+            if len(blocks) > 1:
+                arch_content = blocks[1].strip()
+
+    if "architecture" in last_msg.lower() or "ARCHITECTURE.md" in last_msg:
         arch_parts = re.split(r"(?i)architecture", last_msg)
         if len(arch_parts) > 1:
             arch_content = arch_parts[1].split("Conclusion")[0].strip()
+            # Clean up common lead-ins
+            arch_content = re.sub(r"(?i)^.*architecture.*", "", arch_content, count=1)
 
     # Save files directly to avoid empty files
     if plan_content:

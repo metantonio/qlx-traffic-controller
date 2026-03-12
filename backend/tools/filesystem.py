@@ -78,26 +78,45 @@ def get_file_lock(filepath: str) -> asyncio.Lock:
         _file_locks[abs_path] = asyncio.Lock()
     return _file_locks[abs_path]
 
-async def read_file(filepath: str) -> str:
-    """Basic file reader, ensuring it exists and is allowed."""
-    filepath = _resolve_path(filepath)
-    if not is_path_allowed(filepath):
-        raise PermissionError(f"Access Denied: path '{filepath}' is outside of permitted boundaries.")
-
-    if not os.path.exists(filepath):
-        raise FileNotFoundError(f"File {filepath} not found.")
+async def filesystem_read(path: str) -> str:
+    """Reads a file and returns its content. Supports global fallback to 'workspace'."""
+    resolved_path = _resolve_path(path)
+    
+    # 1. Primary check (Current Agent WD)
+    if os.path.exists(resolved_path) and os.path.isfile(resolved_path):
+        if not is_path_allowed(resolved_path):
+             return f"Permission Error: Path '{resolved_path}' is unauthorized."
+        try:
+            with open(resolved_path, "r", encoding="utf-8") as f:
+                return f.read()
+        except Exception as e:
+            return f"Error reading file {path}: {str(e)}"
+    
+    # 2. MONOREPO FALLBACK: Check the root 'workspace' if file not found locally
+    if not os.path.isabs(path):
+        # We assume the project root is 3 levels up from this file (backend/tools/filesystem.py)
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        root_ws = os.path.join(project_root, "workspace")
+        fallback_path = os.path.join(root_ws, path)
         
-    # Later: We can integrate PyMuPDF here for PDFs, pandas for CSV, etc.
-    with open(filepath, 'r', encoding='utf-8') as f:
-        return f.read()
+        if os.path.exists(fallback_path) and os.path.isfile(fallback_path):
+            if not is_path_allowed(fallback_path):
+                 return f"Permission Error: Fallback path '{fallback_path}' is unauthorized."
+            try:
+                with open(fallback_path, "r", encoding="utf-8") as f:
+                    return f.read()
+            except Exception:
+                pass 
+                
+    return f"Error: File '{path}' not found in agent directory or root workspace."
 
 filesystem_read_tool = MCPTool(
     name="filesystem_read",
-    description="Reads contents of a specified file. Currently supports .txt files.",
+    description="Reads contents of a specified file. Attempts to read from the current agent's working directory first. If not found and the path is relative, it then attempts to read from the root 'workspace/' folder.",
     parameters={
-        "filepath": {"type": "string", "description": "Absolute path to the file to read"}
+        "path": {"type": "string", "description": "Absolute or relative path to the file to read"}
     },
-    handler=read_file
+    handler=filesystem_read
 )
 
 async def list_directory(path: str) -> list[str]:

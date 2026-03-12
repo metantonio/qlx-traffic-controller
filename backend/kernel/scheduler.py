@@ -110,7 +110,28 @@ class TaskScheduler:
                 "Use the provided tools whenever the user task requires executing commands, reading files, or interacting with the system. "
                 "Always prefer using a tool over guessing. After using a tool, provide a clear summary of the results."
             )
-            system_prompt = process.memory_context.get("system_prompt", default_prompt)
+            
+            raw_system_prompt = process.memory_context.get("system_prompt")
+            if not raw_system_prompt:
+                # If no system prompt in context, fetch from agent manager
+                from backend.kernel.agent_manager import agent_manager
+                agent_cfg = agent_manager.get_agent(process.agent_name)
+                if agent_cfg:
+                    raw_system_prompt = agent_cfg.system_prompt
+                else:
+                    raw_system_prompt = default_prompt
+            
+            # Injection of skills and .cursorrules
+            from backend.kernel.skill_injector import inject_skills_into_prompt
+            from backend.kernel.agent_manager import agent_manager
+            agent_cfg = agent_manager.get_agent(process.agent_name)
+            assigned_skills = agent_cfg.skills if agent_cfg else []
+            
+            system_prompt = inject_skills_into_prompt(
+                raw_system_prompt, 
+                process.working_directory, 
+                assigned_skills
+            )
             
             # 1. Static tools from Custom Registry (shell, etc.)
             custom_tools = []
