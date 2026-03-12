@@ -227,28 +227,53 @@ class MCPManager:
 
         with SessionLocal() as db:
             servers = db.query(DbMCPServer).filter(DbMCPServer.enabled == 1).all()
-            enabled_servers = {
-                s.id: {
+            enabled_servers = [
+                {
+                    "id": s.id,
                     "command": s.command,
                     "args": s.args,
                     "transport": s.transport,
                     "env": self._decrypt(s.env_encrypted)
                 }
                 for s in servers
-            }
+            ]
 
         if not enabled_servers:
             return []
 
-        client = MultiServerMCPClient(enabled_servers)
-        try:
-            all_tools = await client.get_tools()
+        from langchain_mcp_adapters.client import MultiServerMCPClient
+        
+        def fix_command(cmd):
+            if os.name == "nt" and cmd == "npx":
+                return "npx.cmd"
+            return cmd
+
+        all_tools = []
+        for server_info in enabled_servers:
+            try:
+                # Initialize a single-server client for resilience
+                server_id = server_info["id"]
+                client_config = {
+                    server_id: {
+                        "command": fix_command(server_info["command"]),
+                        "args": server_info["args"],
+                        "transport": server_info.get("transport", "stdio"),
+                        "env": server_info.get("env")
+                    }
+                }
+                client = MultiServerMCPClient(client_config)
+                server_tools = await client.get_tools()
+                all_tools.extend(server_tools)
+                logger.info(f"Loaded {len(server_tools)} tools from MCP server: {server_id}")
+            except Exception as e:
+                # Log failure but continue with other servers
+                logger.error(f"Failed to load tools from MCP server '{server_info['id']}': {e}")
+
+        if all_tools:
             self._cache = all_tools
             self._cache_time = now
-            return all_tools
-        except Exception as e:
-            logger.error(f"Error fetching tools from MCP servers: {e}")
-            return self._cache if self._cache else []
+            
+        return all_tools if all_tools else (self._cache if self._cache else [])
 
     def add_server(self, id: str, name: str, command: str, args: List[str], env: Optional[Dict] = None):
         with SessionLocal() as db:

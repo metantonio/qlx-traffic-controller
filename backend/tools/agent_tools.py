@@ -44,7 +44,8 @@ async def delegate_to_agent(agent_id: str, task: str) -> str:
     
     from backend.kernel.skill_injector import inject_skills_into_prompt
     if system_prompt:
-        new_proc.memory_context["system_prompt"] = inject_skills_into_prompt(system_prompt, working_directory)
+        assigned_skills = agent.skills if agent else None
+        new_proc.memory_context["system_prompt"] = inject_skills_into_prompt(system_prompt, working_directory, assigned_skills)
     if provider:
         new_proc.memory_context["llm_provider"] = provider
     if model:

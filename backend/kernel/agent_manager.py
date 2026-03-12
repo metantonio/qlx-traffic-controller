@@ -16,6 +16,7 @@ class CustomAgent(BaseModel):
     provider: Optional[str] = None
     model: Optional[str] = None
     working_directory: Optional[str] = None
+    skills: List[str] = []
 
 class AgentManager:
     def __init__(self, config_path: str):

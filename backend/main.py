@@ -746,7 +746,8 @@ async def websocket_endpoint(websocket: WebSocket):
                     
                     from backend.kernel.skill_injector import inject_skills_into_prompt
                     if system_prompt_override:
-                        proc.memory_context["system_prompt"] = inject_skills_into_prompt(system_prompt_override, working_directory)
+                        assigned_skills = custom_agent.skills if 'custom_agent' in locals() and custom_agent else None
+                        proc.memory_context["system_prompt"] = inject_skills_into_prompt(system_prompt_override, working_directory, assigned_skills)
                     
                     if initial_history:
                         proc.memory_context["initial_history"] = initial_history

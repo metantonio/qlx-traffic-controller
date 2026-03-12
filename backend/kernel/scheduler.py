@@ -161,16 +161,26 @@ class TaskScheduler:
                                 return "npx.cmd"
                             return cmd
 
-                        client = MultiServerMCPClient({
-                            k: {
-                                "command": fix_command(v["command"]),
-                                "args": v["args"],
-                                "transport": v.get("transport", "stdio"),
-                                "env": v.get("env")
-                            } for k, v in enabled_for_agent.items()
-                        })
-                        dynamic_mcp_tools = await client.get_tools()
-                        logger.info(f"Loaded {len(dynamic_mcp_tools)} tools from servers: {list(enabled_for_agent.keys())}")
+                        all_loaded_tools = []
+                        for s_id, s_info in enabled_for_agent.items():
+                            try:
+                                logger.info(f"Attempting to load tools from MCP server: {s_id}")
+                                client = MultiServerMCPClient({
+                                    s_id: {
+                                        "command": fix_command(s_info["command"]),
+                                        "args": s_info["args"],
+                                        "transport": s_info.get("transport", "stdio"),
+                                        "env": s_info.get("env")
+                                    }
+                                })
+                                server_tools = await client.get_tools()
+                                all_loaded_tools.extend(server_tools)
+                                logger.info(f"Success: Loaded {len(server_tools)} tools from {s_id}")
+                            except Exception as sub_e:
+                                logger.error(f"Failed to load tools specifically from MCP server {s_id}: {sub_e}")
+                        
+                        dynamic_mcp_tools = all_loaded_tools
+                        logger.info(f"Process {process.pid} finally loaded {len(dynamic_mcp_tools)} dynamic tools total.")
                 except Exception as e:
                     logger.warning(f"Could not load dynamic MCP tools for agent: {e}")
             
