@@ -116,20 +116,32 @@ async def proceed_with_plan(pid: str):
         logger.info(f"Fail-safe: Saved ARCHITECTURE.md to {arch_path}")
 
     # Identify target specialist
+    # Use keyword analysis for smarter defaults
     specialists = ["backend_developer", "frontend_developer", "qa_tester"]
     target_agent = None
     
+    # 1. Look for explicit mentions of agent IDs
     for s in specialists:
         if s in last_msg.lower():
             target_agent = s
             break
             
+    # 2. Keyword-based inference if no specific agent was mentioned
     if not target_agent:
-        # Fallback logic for common roles
-        if "backend" in last_msg.lower(): target_agent = "backend_developer"
-        elif "frontend" in last_msg.lower(): target_agent = "frontend_developer"
-        elif "qa" in last_msg.lower(): target_agent = "qa_tester"
-        else: target_agent = "backend_developer" # Default to backend for setup
+        low_msg = last_msg.lower()
+        frontend_keywords = ["frontend", "ui", "style", "css", "html", "react", "game", "canvas", "graphic", "display", "screen", "frontend_developer"]
+        backend_keywords = ["backend", "api", "database", "model", "schema", "server", "python", "fastapi", "logic", "route", "backend_developer"]
+        
+        # Check for UI/Frontend signals
+        if any(k in low_msg for k in frontend_keywords):
+            target_agent = "frontend_developer"
+        elif any(k in low_msg for k in backend_keywords):
+            target_agent = "backend_developer"
+        elif "test" in low_msg or "qa" in low_msg:
+            target_agent = "qa_tester"
+        else:
+            # Default fallback
+            target_agent = "backend_developer"
 
     task_hint = "Implement the first step of the project plan."
     plan_match = re.search(r"(?:Step|Task)\s*1[:.]?\s*(.*)", last_msg, re.IGNORECASE)
