@@ -155,7 +155,20 @@ async def proceed_with_plan(pid: str):
     
     new_proc = AIProcess(
         agent_name=target_agent,
-        task_description=f"Automated Proceed from Architect.\n\nTask: {task_hint}\n\nProject Directory: '{ws_dir}'. Read PROJECT_PLAN.md and implement its first logical component. If files like index.html or package.json are missing, create them in the project directory.",
+        task_description=f"""### ENVIRONMENT METADATA (MANDATORY)
+PROJECT_DIR: '{ws_dir}'
+PROJECT_NAME: '{normalized_name if project_name_match else "default_project"}'
+CURRENT_WD: '{ws_dir}'
+
+### ASSIGNMENT
+Task: {task_hint}
+
+### WORKFLOW INSTRUCTIONS
+1. Read `PROJECT_PLAN.md` in '{ws_dir}'. 
+2. implement the logical component described in the plan. 
+3. If core files (index.html, package.json, etc.) are missing in the project folder, you MUST create them.
+4. ONLY operate within '{ws_dir}'. Generic placeholders like '/path/to/your/...' are FORBIDDEN and will trigger a system error.
+""",
         limits=ResourceLimits(allowed_tools=resolved_tools),
         working_directory=ws_dir # Specialists MUST work in the project folder
     )

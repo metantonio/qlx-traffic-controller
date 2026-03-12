@@ -10,6 +10,33 @@ logger = get_kernel_logger("QLX-TC.Tools.Filesystem")
 
 _file_locks = {}
 
+def detect_placeholder_path(path: str) -> bool:
+    """Detects if a path contains common AI hallucinations/placeholders."""
+    placeholders = [
+        "/path/to/", "path/to/your", "<project_name>", "[your-app]", 
+        "{project_name}", "your-username", "example.com", "YOUR_API_KEY",
+        "react-project", "my-app", "myapp", "[agent_workspace]"
+    ]
+    path_low = path.lower()
+    return any(p.lower() in path_low for p in placeholders)
+
+def get_placeholder_error(path: str) -> str:
+    """Returns a corrective error message for hallucinated paths."""
+    pid = "unknown"
+    msg = f"ERROR: You used a placeholder path '{path}'. This is forbidden.\n"
+    try:
+        from backend.core.context import current_pid
+        from backend.kernel.process import system_process_table
+        pid = current_pid.get()
+        if pid and pid != "kernel":
+            proc = system_process_table.processes.get(pid)
+            if proc and proc.working_directory:
+                msg += f"Your ACTUAL working directory is: {proc.working_directory}\n"
+                msg += "You MUST use real paths relative to this directory. Do not guess paths."
+    except Exception:
+        pass
+    return msg
+
 def _resolve_path(filepath: str) -> str:
     """Resolves relative paths against the current process's working_directory if set."""
     pid = None
@@ -106,6 +133,9 @@ def get_file_lock(filepath: str) -> asyncio.Lock:
 
 async def filesystem_read(path: str) -> str:
     """Reads a file and returns its content. Supports global fallback to 'workspace'."""
+    if detect_placeholder_path(path):
+        return get_placeholder_error(path)
+        
     resolved_path = _resolve_path(path)
     
     # 1. Primary check (Current Agent WD)
@@ -147,6 +177,9 @@ filesystem_read_tool = MCPTool(
 
 async def list_directory_tool_handler(path: str) -> str:
     """Lists files and directories in a path."""
+    if detect_placeholder_path(path):
+        return get_placeholder_error(path)
+        
     path = _resolve_path(path)
     if not is_path_allowed(path):
         return f"Permission Error: directory '{path}' is outside of permitted boundaries."
@@ -169,6 +202,9 @@ async def list_directory_tool_handler(path: str) -> str:
 
 async def list_directory_with_sizes(path: str) -> str:
     """Lists files in a directory with their sizes."""
+    if detect_placeholder_path(path):
+        return get_placeholder_error(path)
+        
     path = _resolve_path(path)
     if not is_path_allowed(path):
          return f"Permission Error: Path '{path}' is unauthorized."
@@ -217,6 +253,9 @@ system_registry.register(list_directory_sizes_tool)
 
 async def append_to_file(filepath: str, content: str) -> str:
     """Appends text to a file safely. Creates the file if it doesn't exist."""
+    if detect_placeholder_path(filepath):
+        return get_placeholder_error(filepath)
+        
     filepath = _resolve_path(filepath)
     print(f"Appending to {filepath}")
     
@@ -235,6 +274,9 @@ async def append_to_file(filepath: str, content: str) -> str:
 
 async def write_file_safe(filepath: str, content: str) -> str:
     """Writes/Overwrites text content to a specified file safely. Creates parent directories if needed."""
+    if detect_placeholder_path(filepath):
+        return get_placeholder_error(filepath)
+        
     filepath = _resolve_path(filepath)
     print(f"Writing to {filepath}")
     
@@ -273,6 +315,9 @@ filesystem_write_tool = MCPTool(
 
 async def create_directory(path: str) -> str:
     """Creates a new directory in the agent workspace."""
+    if detect_placeholder_path(path):
+        return get_placeholder_error(path)
+        
     resolved_path = _resolve_path(path)
     if not is_path_allowed(resolved_path):
         return f"Permission Error: Path '{resolved_path}' is unauthorized."

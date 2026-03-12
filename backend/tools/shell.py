@@ -32,8 +32,18 @@ def needs_approval(command: str) -> bool:
                 
     return False
 
+from backend.tools.filesystem import detect_placeholder_path, get_placeholder_error
+
 async def execute_shell_command(command: str) -> dict:
     """Executes a shell command after validating it securely."""
+    if detect_placeholder_path(command):
+        error_msg = get_placeholder_error(command)
+        return {
+            "status": "error",
+            "stdout": "",
+            "stderr": f"CRITICAL HALLUCINATION BLOCK: {error_msg}. SYSTEM INSTRUCTION: DO NOT USE PLACEHOLDERS. Use the PROJECT DIRECTORY mentioned in your task description.",
+            "exit_code": 1
+        }
     
     is_safe, message = validator.validate_command(command)
     
