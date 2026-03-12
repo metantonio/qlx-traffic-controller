@@ -83,21 +83,24 @@ async def proceed_with_plan(pid: str):
 
     # 2. If no markdown blocks, try header-based extraction (Mid Signal)
     if not plan_content:
-        # Match from "Project Plan" header until the next major header (Architecture, etc) or end
-        plan_match = re.search(r"(?i)(?:#|\*\*)\s*Project Plan\s*(?:#|\*\*|:)?(.*?)(?=(?:#|\*\*)\s*Architecture|#|\*\*|$)", last_msg, re.DOTALL)
+        # Match from "Step 1" or "Project Plan" or "Requirements" until Architecture or end
+        # We use a broad lookahead to avoid cutting off at words like 'architecture' in lowercase narrative
+        plan_match = re.search(
+            r"(?is)(?:#|\*\*|Step\s+1[:.]?)\s*(?:Project Plan|Plan|Game Architecture)?\s*(.*?)(?=(?:#|\*\*)\s*Architecture|(?:\n\s*Conclusion)|$)", 
+            last_msg
+        )
         if plan_match:
             plan_content = plan_match.group(1).strip()
             
     if not arch_content:
         # Match from "Architecture" header until next header or end
-        arch_match = re.search(r"(?i)(?:#|\*\*)\s*Architecture\s*(?:#|\*\*|:)?(.*?)(?=(?:#|\*\*)\s*Conclusion|#|\*\*|$)", last_msg, re.DOTALL)
+        arch_match = re.search(r"(?is)(?:#|\*\*)\s*Architecture\s*(?:#|\*\*|:)?(.*?)(?=(?:#|\*\*)\s*Conclusion|#|\*\*|$)", last_msg)
         if arch_match:
             arch_content = arch_match.group(1).strip()
 
-    # 3. Final Fallback: if STILL empty, use the splitting logic but only as a last resort and with more caution
-    if not plan_content and ("project plan" in last_msg.lower()):
-        plan_parts = re.split(r"(?i)#+\s*Architecture", last_msg)
-        plan_content = re.sub(r"(?i).*project plan.*", "", plan_parts[0], count=1).strip()
+    # 3. Final Fallback: if STILL empty, use the whole message as plan base
+    if not plan_content:
+        plan_content = last_msg.strip()
 
     # Save files directly to avoid empty files
     if plan_content and len(plan_content) > 10: # Only save if we found actual content
