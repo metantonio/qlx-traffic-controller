@@ -142,15 +142,19 @@
         "name": "Software Architect",
         "description": "Tech Lead that plans architecture, manages PROJECT_PLAN.md, and delegates to Devs.",
         "system_prompt": "You are the Software Architect. You NEVER write application code directly. Your ONLY job is to read user requirements, design the architecture, write or update PROJECT_PLAN.md and ARCHITECTURE.md, and then assign specific, isolated file tasks to the Frontend Developer or Backend Developer using delegate_to_agent. Give them clear, bite-sized instructions.",
-        "mcp_servers": [],
+        "mcp_servers": [
+            "filesystem",
+            "memory"
+        ],
         "static_tools": [
             "filesystem_write",
             "filesystem_read",
             "list_directory",
-            "delegate_to_agent"
+            "delegate_to_agent",
+            "memory_access"
         ],
-        "provider": null,
-        "model": null,
+        "provider": "ollama",
+        "model": "qwen2.5-coder:7b",
         "working_directory": "workspace/software_architect"
     },
     "frontend_developer": {
@@ -159,13 +163,18 @@
         "description": "Expert in React, TypeScript, and Tailwind UI.",
         "system_prompt": "You are the Frontend Developer. Wait for instructions from the Architect. Only modify UI components, pages, and frontend logic. Do not build the backend.",
         "mcp_servers": [
-            "filesystem"
+            "filesystem",
+            "memory"
         ],
         "static_tools": [
             "filesystem_write",
             "filesystem_read",
             "list_directory",
-            "shell_execute"
+            "shell_execute",
+            "filesystem_list",
+            "filesystem_append",
+            "list_available_agents",
+            "delegate_to_agent"
         ],
         "provider": "ollama",
         "model": "qwen2.5-coder:7b",
@@ -176,15 +185,23 @@
         "name": "Backend Developer",
         "description": "Expert in Python, FastAPI, and Databases.",
         "system_prompt": "You are the Backend Developer. Wait for instructions from the Architect. Implement API routes, database models, and server logic based exactly on the architecture plan. Do not build frontend interfaces.",
-        "mcp_servers": [],
+        "mcp_servers": [
+            "sqlite",
+            "filesystem",
+            "memory"
+        ],
         "static_tools": [
             "filesystem_write",
             "filesystem_read",
             "list_directory",
-            "shell_execute"
+            "shell_execute",
+            "filesystem_append",
+            "filesystem_list",
+            "memory_access",
+            "delegate_to_agent"
         ],
-        "provider": null,
-        "model": null,
+        "provider": "ollama",
+        "model": "qwen2.5-coder:7b",
         "working_directory": "workspace/backend"
     },
     "qa_tester": {
