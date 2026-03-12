@@ -12,28 +12,19 @@ _file_locks = {}
 
 def _resolve_path(filepath: str) -> str:
     """Resolves relative paths against the current process's working_directory if set."""
-    # Hallucination Guard: If the agent provides a Linux-style path on Windows, strip it.
-    if os.name == 'nt':
-        # common patterns used by LLMs in their training data or sandbox environments
-        hallucinated_prefixes = ["/home/user/projects/", "/mnt/data/", "/app/", "/workspace/"]
-        for prefix in hallucinated_prefixes:
-            if filepath.startswith(prefix):
-                filepath = filepath[len(prefix):]
-                break
-
-    if os.path.isabs(filepath):
-        return filepath
-        
+    pid = None
     try:
         from backend.llm.provider import current_pid
         from backend.kernel.process import system_process_table
         pid = current_pid.get()
-        if pid:
+        if pid and pid != "kernel":
             proc = system_process_table.processes.get(pid)
             if proc and proc.working_directory:
-                return os.path.join(proc.working_directory, filepath)
-    except Exception:
-        pass
+                target = os.path.join(proc.working_directory, filepath)
+                logger.info(f"[{pid}] Resolved '{filepath}' to '{target}' (WD: {proc.working_directory})")
+                return target
+    except Exception as e:
+        logger.error(f"Error in _resolve_path for pid {pid}: {e}")
         
     return filepath
 
@@ -41,22 +32,25 @@ def is_path_allowed(filepath: str) -> bool:
     """Verifies if the path is within the project root OR a user-allowed directory OR the process working directory."""
     abs_path = os.path.abspath(filepath)
     
-    # 0. Check current process working directory
+    # 0. Check current process working directory (STRICTEST)
     try:
         from backend.llm.provider import current_pid
         from backend.kernel.process import system_process_table
         pid = current_pid.get()
-        if pid:
+        if pid and pid != "kernel":
             proc = system_process_table.processes.get(pid)
             if proc and proc.working_directory:
                 norm_wd = os.path.abspath(proc.working_directory)
+                # Specialist MUST stay in their WD. No root access for them.
                 if abs_path.startswith(norm_wd):
                     return True
+                else:
+                    logger.warning(f"[{pid}] Blocked access to path outside sandbox: {abs_path}")
+                    return False
     except Exception:
         pass
     
-    # 1. Base directory (project root: where backend/ is)
-    # filesystem.py is in backend/tools/
+    # 1. Base directory (project root) - Only for 'kernel' or nonsandboxed processes
     project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     if abs_path.startswith(project_root):
         return True
@@ -69,8 +63,7 @@ def is_path_allowed(filepath: str) -> bool:
                 norm_allowed = os.path.abspath(entry.path)
                 if abs_path.startswith(norm_allowed):
                     return True
-    except Exception as e:
-        # If DB fails, we default to Project Root only
+    except Exception:
         pass
         
     return False
@@ -122,27 +115,75 @@ filesystem_read_tool = MCPTool(
     handler=filesystem_read
 )
 
-async def list_directory(path: str) -> list[str]:
-    """Lists files in a directory if allowed."""
+async def list_directory_tool_handler(path: str) -> str:
+    """Lists files and directories in a path."""
     path = _resolve_path(path)
     if not is_path_allowed(path):
-        raise PermissionError(f"Access Denied: directory '{path}' is outside of permitted boundaries.")
+        return f"Permission Error: directory '{path}' is outside of permitted boundaries."
 
     if not os.path.isdir(path):
-        raise NotADirectoryError(f"{path} is not a directory.")
-    return [os.path.join(path, f) for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
+        return f"Error: {path} is not a directory."
+    
+    try:
+        items = os.listdir(path)
+        result = []
+        for item in items:
+            full_path = os.path.join(path, item)
+            if os.path.isdir(full_path):
+                result.append(f"[DIR] {item}")
+            else:
+                result.append(f"[FILE] {item}")
+        return "\n".join(result) if result else "No files found."
+    except Exception as e:
+        return f"Error listing directory: {e}"
+
+async def list_directory_with_sizes(path: str) -> str:
+    """Lists files in a directory with their sizes."""
+    path = _resolve_path(path)
+    if not is_path_allowed(path):
+         return f"Permission Error: Path '{path}' is unauthorized."
+    
+    if not os.path.isdir(path):
+        return f"Error: '{path}' is not a directory."
+        
+    try:
+        lines = []
+        for f in os.listdir(path):
+            full_path = os.path.join(path, f)
+            if os.path.isdir(full_path):
+                lines.append(f"[DIR] {f}")
+            else:
+                size = os.path.getsize(full_path)
+                lines.append(f"[FILE] {f} {size} B")
+        return "\n".join(lines) if lines else "No files found."
+    except Exception as e:
+        return f"Error listing directory: {e}"
 
 filesystem_list_tool = MCPTool(
     name="filesystem_list",
-    description="Lists all files in a specified directory.",
-    parameters={
-        "path": {"type": "string", "description": "Absolute path to the directory"}
-    },
-    handler=list_directory
+    description="Lists items in a directory.",
+    parameters={"path": {"type": "string", "description": "Path to list"}},
+    handler=list_directory_tool_handler
+)
+
+list_directory_tool = MCPTool(
+    name="list_directory",
+    description="Lists all files and directories in a specified directory.",
+    parameters={"path": {"type": "string", "description": "Path to the directory"}},
+    handler=list_directory_tool_handler
+)
+
+list_directory_sizes_tool = MCPTool(
+    name="list_directory_with_sizes",
+    description="Lists all files in a directory with their sizes in bytes.",
+    parameters={"path": {"type": "string", "description": "Path to the directory"}},
+    handler=list_directory_with_sizes
 )
 
 system_registry.register(filesystem_read_tool)
 system_registry.register(filesystem_list_tool)
+system_registry.register(list_directory_tool)
+system_registry.register(list_directory_sizes_tool)
 
 async def append_to_file(filepath: str, content: str) -> str:
     """Appends text to a file safely. Creates the file if it doesn't exist."""
@@ -200,5 +241,13 @@ filesystem_write_tool = MCPTool(
     handler=write_file_safe
 )
 
+read_file_tool = MCPTool(
+    name="read_file",
+    description="Reads a file. Same as filesystem_read.",
+    parameters={"path": {"type": "string", "description": "Path to the file"}},
+    handler=filesystem_read
+)
+
 system_registry.register(filesystem_append_tool)
 system_registry.register(filesystem_write_tool)
+system_registry.register(read_file_tool)

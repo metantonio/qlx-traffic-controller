@@ -60,6 +60,7 @@ async def proceed_with_plan(pid: str):
         else:
              ws_dir = proc.working_directory or "workspace"
              
+    ws_dir = os.path.abspath(ws_dir)
     os.makedirs(ws_dir, exist_ok=True)
     
     plan_content = ""
