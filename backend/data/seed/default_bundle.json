@@ -122,7 +122,8 @@
                 "delegate_to_agent"
             ],
             "provider": null,
-            "model": null
+            "model": null,
+            "working_directory": null
         },
         {
             "id": "frontend_developer",
@@ -137,7 +138,8 @@
                 "shell_execute"
             ],
             "provider": null,
-            "model": null
+            "model": null,
+            "working_directory": null
         },
         {
             "id": "backend_developer",
@@ -152,7 +154,8 @@
                 "shell_execute"
             ],
             "provider": null,
-            "model": null
+            "model": null,
+            "working_directory": null
         },
         {
             "id": "qa_tester",
@@ -167,7 +170,8 @@
                 "delegate_to_agent"
             ],
             "provider": null,
-            "model": null
+            "model": null,
+            "working_directory": null
         }
     ],
     "workflows": [
