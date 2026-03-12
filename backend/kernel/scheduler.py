@@ -150,7 +150,16 @@ class TaskScheduler:
             dynamic_mcp_tools = []
             
             # Collect specific MCP servers to load (explicit mcp: prefix only)
-            target_mcp_servers = [n.split("mcp:")[1] for n in allowed_tool_names if n.startswith("mcp:")]
+            # HARD BLACKLIST: The raw "filesystem" MCP is unsandboxed and forbidden for specialist agents.
+            # All filesystem operations must use the sandboxed static tools (filesystem_write, etc.)
+            target_mcp_servers = []
+            for n in allowed_tool_names:
+                if n.startswith("mcp:"):
+                    server_id = n.split("mcp:")[1]
+                    if server_id == "filesystem":
+                        logger.warning(f"SANDBOX BLOCK [PID:{process.pid}]: Agent '{process.agent_name}' attempted to load forbidden MCP server 'filesystem'.")
+                        continue
+                    target_mcp_servers.append(server_id)
             
             if target_mcp_servers:
                 try:

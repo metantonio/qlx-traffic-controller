@@ -292,8 +292,30 @@ read_file_tool = MCPTool(
     handler=filesystem_read
 )
 
+filesystem_write_tool_alias1 = MCPTool(
+    name="write_file",
+    description="Alias for filesystem_write.",
+    parameters={
+        "filepath": {"type": "string", "description": "Absolute path to the file"},
+        "content" : {"type": "string", "description": "The full text content to write"}
+    },
+    handler=write_file_safe
+)
+
+filesystem_write_tool_alias2 = MCPTool(
+    name="write_file_safe",
+    description="Alias for filesystem_write.",
+    parameters={
+        "filepath": {"type": "string", "description": "Absolute path to the file"},
+        "content" : {"type": "string", "description": "The full text content to write"}
+    },
+    handler=write_file_safe
+)
+
 system_registry.register(create_directory_tool)
 system_registry.register(filesystem_create_dir_tool)
 system_registry.register(read_file_tool)
 system_registry.register(filesystem_append_tool)
 system_registry.register(filesystem_write_tool)
+system_registry.register(filesystem_write_tool_alias1)
+system_registry.register(filesystem_write_tool_alias2)
