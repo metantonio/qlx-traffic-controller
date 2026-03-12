@@ -151,7 +151,7 @@
         ],
         "provider": null,
         "model": null,
-        "working_directory": null
+        "working_directory": "workspace/software_architect"
     },
     "frontend_developer": {
         "id": "frontend_developer",
@@ -169,7 +169,7 @@
         ],
         "provider": "ollama",
         "model": "qwen2.5-coder:7b",
-        "working_directory": ""
+        "working_directory": "workspace/frontend"
     },
     "backend_developer": {
         "id": "backend_developer",
@@ -185,7 +185,7 @@
         ],
         "provider": null,
         "model": null,
-        "working_directory": null
+        "working_directory": "workspace/backend"
     },
     "qa_tester": {
         "id": "qa_tester",
@@ -201,6 +201,6 @@
         ],
         "provider": null,
         "model": null,
-        "working_directory": null
+        "working_directory": "workspace/qa_tester"
     }
 }
