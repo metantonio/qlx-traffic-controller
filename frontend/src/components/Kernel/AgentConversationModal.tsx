@@ -16,6 +16,7 @@ interface Process {
     agent_name: string;
     task: string;
     history: Message[];
+    has_proceeded?: boolean;
 }
 
 interface AgentConversationModalProps {
@@ -194,7 +195,7 @@ export default function AgentConversationModal({ pid, onClose, onContinue, readO
                 {/* Footer / Input */}
                 {!readOnly && onContinue && (
                     <div className="p-4 border-t border-neutral-800 bg-neutral-900/50 space-y-4">
-                        {procDetails?.agent_name === 'software_architect' && (
+                        {procDetails?.agent_name === 'software_architect' && !procDetails?.has_proceeded && (
                             <div className="flex justify-center">
                                 <button
                                     onClick={handleProceed}

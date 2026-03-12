@@ -6,9 +6,10 @@ import { Search, Command, Zap, ArrowRight } from 'lucide-react';
 interface CommandBarProps {
     onSpawnAgent: (task: string) => void;
     onViewChange: (view: 'dashboard' | 'extensions' | 'history') => void;
+    pendingCount?: number;
 }
 
-export default function CommandBar({ onSpawnAgent, onViewChange }: CommandBarProps) {
+export default function CommandBar({ onSpawnAgent, onViewChange, pendingCount = 0 }: CommandBarProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [query, setQuery] = useState('');
     const inputRef = useRef<HTMLInputElement>(null);
@@ -49,9 +50,14 @@ export default function CommandBar({ onSpawnAgent, onViewChange }: CommandBarPro
             onClick={() => setIsOpen(true)}
             className="fixed bottom-8 left-1/2 -translate-x-1/2 px-4 py-2 bg-neutral-900/80 border border-neutral-800 rounded-2xl backdrop-blur-xl text-neutral-500 hover:text-white hover:border-neutral-700 transition-all shadow-2xl flex items-center gap-4 group z-30"
         >
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 relative">
                 <Command size={14} />
                 <span className="text-[10px] font-black uppercase tracking-widest">Command Center</span>
+                {pendingCount > 0 && (
+                    <span className="absolute -top-3 -right-3 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white animate-bounce shadow-lg shadow-blue-500/50">
+                        {pendingCount}
+                    </span>
+                )}
             </div>
             <div className="h-4 w-px bg-neutral-800" />
             <span className="text-[10px] font-mono opacity-40 group-hover:opacity-100 transition-opacity">Press ⌘K to activate</span>

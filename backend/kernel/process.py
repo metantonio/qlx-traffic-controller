@@ -41,6 +41,7 @@ class AIProcess:
         self.workflow_step: Optional[int] = None
         self.history: List[Dict[str, Any]] = []
         self.proposed_plan: Optional[Dict[str, Any]] = None
+        self.has_proceeded: bool = False
 
     def start(self):
         self.state = ProcessState.RUNNING
@@ -91,7 +92,8 @@ class ProcessTable:
                 tools_called=process.metrics["tools_called"],
                 start_time=process.metrics["start_time"],
                 end_time=process.metrics["end_time"],
-                proposed_plan=process.proposed_plan
+                proposed_plan=process.proposed_plan,
+                has_proceeded=1 if process.has_proceeded else 0
             )
             db.merge(db_proc)
             db.commit()
@@ -174,6 +176,7 @@ class ProcessTable:
                     "end_time": db_proc.end_time
                 }
                 proc.proposed_plan = db_proc.proposed_plan
+                proc.has_proceeded = bool(db_proc.has_proceeded)
                 # Load history from messages table
                 proc.history = [
                     {

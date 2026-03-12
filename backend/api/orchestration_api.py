@@ -166,6 +166,10 @@ async def proceed_with_plan(pid: str):
     new_proc.memory_context["llm_provider"] = proc.memory_context.get("llm_provider")
     new_proc.memory_context["llm_model"] = proc.memory_context.get("llm_model")
     
+    # Mark parent as proceeded to hide button in UI
+    proc.has_proceeded = True
+    system_process_table.register(proc)
+    
     await system_scheduler.submit(new_proc, Priority.MEDIUM)
     
     return {
@@ -174,3 +178,16 @@ async def proceed_with_plan(pid: str):
         "new_pid": new_proc.pid,
         "hint": task_hint
     }
+
+@router.get("/pending")
+async def get_pending_plans():
+    """Returns a count or list of processes that have a pending plan."""
+    pending = []
+    for pid, proc in system_process_table.processes.items():
+        if proc.agent_name == "software_architect" and not proc.has_proceeded:
+            pending.append({
+                "pid": proc.pid,
+                "agent": proc.agent_name,
+                "task": proc.task_description
+            })
+    return {"pending": pending, "count": len(pending)}

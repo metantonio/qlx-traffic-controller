@@ -15,6 +15,7 @@ class DbProcess(Base):
     workflow_id = Column(String, index=True, nullable=True)
     workflow_step = Column(Integer, nullable=True)
     proposed_plan = Column(JSON, nullable=True) # Metadata for the 'Proceed' UI button
+    has_proceeded = Column(Integer, default=0) # 1 if Proceed button was clicked
     
     # Resource Limits stored as JSON
     resource_limits = Column(JSON)

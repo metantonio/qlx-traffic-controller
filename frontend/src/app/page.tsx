@@ -74,6 +74,9 @@ export default function Dashboard() {
   const wsRef = useRef<WebSocket | null>(null);
 
   const [pendingApprovals, setPendingApprovals] = useState<Array<{approval_id: string, command: string, pid: string}>>([]);
+  const [pendingPlans, setPendingPlans] = useState<Array<{pid: string, agent: string, task: string}>>([]);
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
   const handleSpawnAgent = useCallback((manualTask?: string, parent_pid?: string, initial_history?: Message[]) => {
     const finalTask = manualTask || taskText;
@@ -188,6 +191,24 @@ export default function Dashboard() {
       wsRef.current = null;
     };
   }, [reconnectAttempts]);
+
+  useEffect(() => {
+    const fetchPending = async () => {
+      try {
+        const res = await fetch(`${apiUrl}/api/processes/pending`);
+        const data = await res.json();
+        if (res.ok) {
+          setPendingPlans(data.pending || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch pending plans:", err);
+      }
+    };
+
+    fetchPending();
+    const interval = setInterval(fetchPending, 10000); // Check every 10s
+    return () => clearInterval(interval);
+  }, [apiUrl]);
 
 
   return (
@@ -544,6 +565,7 @@ export default function Dashboard() {
           else if (v === 'workflows') setActiveView('workflows');
           else if (v === 'batches') setActiveView('batches');
         }}
+        pendingCount={pendingPlans.length}
       />
     </div>
   );

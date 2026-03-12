@@ -55,7 +55,7 @@ class TaskScheduler:
         }
         
         procs_list = []
-        for pid, proc in system_process_table.processes.items():
+        for pid, proc in list(system_process_table.processes.items()):
             procs_list.append({
                 "pid": proc.pid,
                 "agent": proc.agent_name,
