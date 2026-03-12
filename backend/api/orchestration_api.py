@@ -56,7 +56,7 @@ async def proceed_with_plan(pid: str):
     ws_dir = project_folder
     if not ws_dir:
         if proc.agent_name == "software_architect":
-             ws_dir = os.path.join("workspace", "default_project")
+             ws_dir = "workspace/default_project"
         else:
              ws_dir = proc.working_directory or "workspace"
              
@@ -85,18 +85,15 @@ async def proceed_with_plan(pid: str):
     if not plan_content:
         # Match from "Step 1" or "Project Plan" or "Requirements" until Architecture or end
         # We use a broad lookahead to avoid cutting off at words like 'architecture' in lowercase narrative
-        plan_match = re.search(
-            r"(?is)(?:#|\*\*|Step\s+1[:.]?)\s*(?:Project Plan|Plan|Game Architecture)?\s*(.*?)(?=(?:#|\*\*)\s*Architecture|(?:\n\s*Conclusion)|$)", 
-            last_msg
-        )
+        plan_match = re.search(r"(?is)(?:#|\*\*)\s*(?:Step\s+1|Plan|Implementation|Requirements|Developing).*?(?=(?:#|\*\*)\s*Architecture|(?:\n\s*Conclusion)|$)", last_msg)
         if plan_match:
-            plan_content = plan_match.group(1).strip()
+            plan_content = plan_match.group(0).strip()
             
     if not arch_content:
         # Match from "Architecture" header until next header or end
-        arch_match = re.search(r"(?is)(?:#|\*\*)\s*Architecture\s*(?:#|\*\*|:)?(.*?)(?=(?:#|\*\*)\s*Conclusion|#|\*\*|$)", last_msg)
+        arch_match = re.search(r"(?is)(?:#|\*\*)\s*(?:Architecture|Structure).*?(?=(?:\n\s*Conclusion)|$)", last_msg)
         if arch_match:
-            arch_content = arch_match.group(1).strip()
+            arch_content = arch_match.group(0).strip()
 
     # 3. Final Fallback: if STILL empty, use the whole message as plan base
     if not plan_content:
@@ -157,7 +154,7 @@ async def proceed_with_plan(pid: str):
     
     new_proc = AIProcess(
         agent_name=target_agent,
-        task_description=f"Automated Proceed from Architect.\n\nTask: {task_hint}\n\nProject Directory: '{ws_dir}'. Read PROJECT_PLAN.md from this directory to start.",
+        task_description=f"Automated Proceed from Architect.\n\nTask: {task_hint}\n\nProject Directory: '{ws_dir}'. Read PROJECT_PLAN.md and implement its first logical component. If files like index.html or package.json are missing, create them in the project directory.",
         limits=ResourceLimits(allowed_tools=resolved_tools),
         working_directory=ws_dir # Specialists MUST work in the project folder
     )
