@@ -33,55 +33,68 @@ def is_path_allowed(filepath: str) -> bool:
     abs_path = os.path.abspath(filepath)
     pid = None
     
-    # 0. Check current process working directory (STRICTEST)
-    try:
-        from backend.core.context import current_pid
-        from backend.kernel.process import system_process_table
-        pid = current_pid.get()
-        if pid and pid != "kernel":
-            proc = system_process_table.processes.get(pid)
-            if proc and proc.working_directory:
-                norm_wd = os.path.abspath(proc.working_directory)
-                # Specialist MUST stay in their WD. No root access for them.
-                if abs_path.startswith(norm_wd):
-                    return True
-                else:
-                    logger.warning(f"[{pid}] Blocked access to path outside sandbox: {abs_path}")
-                    return False
-    except Exception:
-        pass
-    
-    # 1. Base directory (project root) - ONLY for explicit 'kernel'
-    if pid == "kernel":
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        if abs_path.startswith(project_root):
-            logger.info(f"[kernel] ALLOWED access to project root: {abs_path}")
-            return True
-        else:
-            logger.warning(f"[kernel] BLOCKED access outside project root: {abs_path}")
-            return False
-    
-    # 2. If PID is set but not kernel, and we reached here, it means it's NOT in its WD.
-    if pid and pid != "kernel":
-        logger.warning(f"[{pid}] BLOCKED access outside sandbox (WD check failed): {abs_path}")
-        return False
-
-    # 3. Fallback for unknown PID or semi-system processes: Fail-safe to BLOCKED for repo root.
-    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    if abs_path.startswith(project_root):
-        logger.error(f"[SYSTEM-FAULT][{pid}] ACCESS DENIED: Unidentified process attempted root access: {abs_path}")
-        return False
-        
-    # 2. Check Database for custom allowed directories (Global whitelist)
+    # 1. Check Global Whitelist (Security Boundary) FIRST
+    # If the user explicitly whitelisted a path, it should be accessible system-wide.
     try:
         with SessionLocal() as db:
             allowed = db.query(DbAllowedDirectory).all()
             for entry in allowed:
-                norm_allowed = os.path.abspath(entry.path)
-                if abs_path.startswith(norm_allowed):
+                norm_allowed = os.path.normcase(os.path.abspath(entry.path))
+                p_target = os.path.normcase(abs_path)
+                
+                if p_target.startswith(norm_allowed):
+                    try:
+                        if os.path.commonpath([p_target, norm_allowed]) == norm_allowed:
+                            return True
+                    except ValueError:
+                        pass
+    except Exception as e:
+        logger.error(f"Error checking global whitelist: {e}")
+
+    # 2. Specialist Agent Restriction (Sandbox)
+    # If not in global whitelist, specialist agents are strictly limited to their assigned working_directory.
+    try:
+        from backend.core.context import current_pid
+        from backend.kernel.process import system_process_table
+        pid = current_pid.get()
+        
+        if pid and pid != "kernel":
+            proc = system_process_table.processes.get(pid)
+            if proc and proc.working_directory:
+                norm_wd = os.path.normcase(os.path.abspath(proc.working_directory))
+                p_target = os.path.normcase(abs_path)
+                
+                if p_target.startswith(norm_wd):
+                    try:
+                        if os.path.commonpath([p_target, norm_wd]) == norm_wd:
+                            return True
+                    except ValueError:
+                        pass
+                
+                logger.warning(f"[{pid}] BLOCKED access outside sandbox (WD check failed): {abs_path}")
+                return False
+    except Exception as e:
+        logger.error(f"Error in specialist sandbox check: {e}")
+    
+    # 3. Base directory (project root) - ONLY for explicit 'kernel' or unknown system processes
+    project_root = os.path.normcase(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+    p_target = os.path.normcase(abs_path)
+    
+    if pid == "kernel":
+        if p_target.startswith(project_root):
+            try:
+                if os.path.commonpath([p_target, project_root]) == project_root:
                     return True
-    except Exception:
-        pass
+            except ValueError:
+                pass
+        
+        logger.warning(f"[kernel] BLOCKED access outside project root: {abs_path}")
+        return False
+        
+    # 4. Fallback: Identify unidentified processes attempting root access
+    if p_target.startswith(project_root):
+        logger.error(f"[SYSTEM-FAULT][{pid}] ACCESS DENIED: Unidentified process attempted root access: {abs_path}")
+        return False
         
     return False
 

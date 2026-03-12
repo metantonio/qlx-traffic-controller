@@ -101,7 +101,7 @@
             "command": "npx",
             "args": [
                 "-y",
-                "@modelcontextprotocol/server-sqlite",
+                "@pollinations/mcp-server-sqlite",
                 "--db-path",
                 "local.db"
             ],
