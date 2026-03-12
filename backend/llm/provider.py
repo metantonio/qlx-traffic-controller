@@ -9,6 +9,8 @@ import re
 
 from backend.core.context import current_pid
 
+logger = logging.getLogger("QLX-TC.LLMProvider")
+
 
 class LLMProvider:
     """Abstraction layer for language models."""
