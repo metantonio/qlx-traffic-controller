@@ -1,4 +1,5 @@
 import asyncio
+import sys
 from backend.tools.mcp_registry import MCPTool, system_registry
 from backend.core.security import SafetyValidator
 from backend.core.logger import get_kernel_logger
@@ -36,6 +37,21 @@ from backend.tools.filesystem import detect_placeholder_path, get_placeholder_er
 
 async def execute_shell_command(command: str) -> dict:
     """Executes a shell command after validating it securely."""
+    loop = asyncio.get_running_loop()
+    loop_type = type(loop).__name__
+    logger.info(f"DEBUG: execute_shell_command loop type: {loop_type}")
+
+    # CRITICAL: On Windows, we MUST use ProactorEventLoop for subprocesses
+    if sys.platform == 'win32' and loop_type != 'ProactorEventLoop':
+        logger.error(f"Incompatible event loop detected: {loop_type}. Subprocesses will fail.")
+        return {
+            "status": "error",
+            "stdout": "",
+            "stderr": f"SYSTEM CONFIGURATION ERROR: The system is using {loop_type} instead of ProactorEventLoop on Windows. "
+                      "Asynchronous subprocesses are not supported in this mode. Please restart the backend.",
+            "exit_code": 1
+        }
+    
     if detect_placeholder_path(command):
         error_msg = get_placeholder_error(command)
         return {

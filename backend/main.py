@@ -4,7 +4,7 @@ import logging
 import asyncio
 import sys
 
-if sys.platform == "win32":
+if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException
@@ -80,6 +80,11 @@ Always be concise and professional. You act as the brain of the operation."""
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Set loop policy again within the worker thread
+    if sys.platform == 'win32':
+        asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+    
+    logger.info("Kernel starting up...")
     # 1. Initialize Database and apply migrations
     init_db()
     logger.info("Database initialized and migrations applied.")
@@ -790,6 +795,8 @@ def check_port(host: str, port: int):
 
 if __name__ == "__main__":
     import uvicorn
+    if sys.platform == 'win32':
+        asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
     # 1. Diagnostic check for port availability
     if not check_port(settings.API_HOST, settings.API_PORT):
         # We don't exit to allow uvicorn to show its own error, but we log the warning
