@@ -1,7 +1,10 @@
 import asyncio
 from backend.tools.mcp_registry import MCPTool, system_registry
 from backend.core.security import SafetyValidator
+from backend.core.logger import get_kernel_logger
 import shlex
+
+logger = get_kernel_logger("QLX-TC.Tools.Shell")
 
 validator = SafetyValidator()
 

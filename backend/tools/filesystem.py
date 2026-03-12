@@ -4,6 +4,9 @@ from pydantic import BaseModel, Field
 from backend.tools.mcp_registry import MCPTool, system_registry
 from backend.core.database import SessionLocal
 from backend.models.database_models import DbAllowedDirectory
+from backend.core.logger import get_kernel_logger
+
+logger = get_kernel_logger("QLX-TC.Tools.Filesystem")
 
 _file_locks = {}
 
