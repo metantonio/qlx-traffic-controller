@@ -17,23 +17,33 @@ def inject_skills_into_prompt(base_prompt: str, working_directory: str = None, a
     skills_root = None
     
     if agent_id:
-        # Check in agent's specific home: workspace/<agent_id>/.agents/skills
-        agent_home = os.path.abspath(os.path.join("./workspace", agent_id))
+        from backend.kernel.agent_manager import agent_manager
+        agent = agent_manager.get_agent(agent_id)
+        
+        # Use configured working_directory as the "Home" for skills
+        # This is where .agents/skills/ lives for that agent
+        agent_home = None
+        if agent and agent.working_directory:
+            agent_home = os.path.abspath(agent.working_directory)
+        else:
+            # Fallback for built-in or legacy agents
+            agent_home = os.path.abspath(os.path.join(".", "workspace", agent_id))
+            
         potential_root = os.path.join(agent_home, ".agents", "skills")
         if os.path.exists(potential_root):
              skills_root = potential_root
              
-    # Fallback to climbing from working directory if not found in home
+    # Fallback to climbing from current working directory if not found in home
     if not skills_root:
         curr = resolved_pwd
         while curr and os.path.dirname(curr) != curr: # Stop at root
             potential_root = os.path.join(curr, ".agents", "skills")
             if os.path.exists(potential_root):
-                skills_root = potential_root
+                skills_root = os.path.abspath(potential_root)
                 break
             curr = os.path.dirname(curr)
     
-    # Final fallback to absolute relative path
+    # Final fallback to absolute relative path (software_architect root)
     if not skills_root:
         potential_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".agents", "skills"))
         if os.path.exists(potential_root):

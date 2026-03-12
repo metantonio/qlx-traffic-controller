@@ -37,46 +37,67 @@ async def proceed_with_plan(pid: str):
 
     # DYNAMIC PROJECT DETECTION
     # We try to find a project name to avoid cluttering the Architect's home or root workspace
-    project_name_match = re.search(r"(?i)Project Name:\s*([a-zA-Z0-9_-]+)", last_msg)
+    # Support spaces and capture common phrasings
+    project_name_match = re.search(r"(?i)Project Name:\s*([a-zA-Z0-9_\-\s]+)", last_msg)
     if not project_name_match:
-        # Fallback: look for "developing [Name] game" or similar
-        project_name_match = re.search(r"(?i)developing\s+([a-zA-Z0-9_-]+)\s+game", last_msg)
+        # Fallback: look for "developing [Name] game" or similar phrasings
+        project_name_match = re.search(r"(?i)developing\s+([a-zA-Z0-9_\-\s]+)\s+(?:game|app|system|project|software)", last_msg)
         
     project_folder = None
     if project_name_match:
-        project_name = project_name_match.group(1).lower().replace(" ", "_")
-        project_folder = os.path.join("workspace", project_name)
+        # Normalize: strip, lowercase, and replace spaces/hyphens with underscores
+        raw_name = project_name_match.group(1).strip()
+        normalized_name = re.sub(r"[\s\-]+", "_", raw_name).lower()
+        project_folder = os.path.join("workspace", normalized_name)
     
     # FAIL-SAFE ws_dir logic
-    ws_dir = project_folder or proc.working_directory or "workspace"
+    # If we are an architect but couldn't detect a project, do NOT use proc.working_directory (which is the agent's home)
+    # Use "workspace/default_project" so specialist work doesn't pollute the architect's home.
+    ws_dir = project_folder
+    if not ws_dir:
+        if proc.agent_name == "software_architect":
+             ws_dir = os.path.join("workspace", "default_project")
+        else:
+             ws_dir = proc.working_directory or "workspace"
+             
     os.makedirs(ws_dir, exist_ok=True)
     
     plan_content = ""
     arch_content = ""
     
-    # Simple extraction logic: find sections or content between header hints
-    if "project plan" in last_msg.lower() or "PROJECT_PLAN.md" in last_msg:
-        # Try to extract from "Project Plan" to "Architecture" or end
-        plan_part = re.split(r"(?i)architecture", last_msg)[0]
-        # Clean up common lead-ins
-        plan_part = re.sub(r"(?i).*project plan.*", "", plan_part, count=1)
-        plan_content = plan_part.strip()
-    
-    # Robust fallback: Find ANY markdown block if no headers matched
-    if not plan_content:
-        blocks = re.findall(r"```(?:markdown)?\n(.*?)\n```", last_msg, re.DOTALL)
-        if blocks:
-            # If multiple blocks, first is likely plan, second is arch
+    # 1. Look for explicit Markdown blocks FIRST (Highest Signal)
+    blocks = re.findall(r"```(?:markdown)?\n(.*?)\n```", last_msg, re.DOTALL)
+    if blocks:
+        for block in blocks:
+            lower_block = block.lower()
+            if "project plan" in lower_block or "step 1" in lower_block:
+                plan_content = block.strip()
+            elif "architecture" in lower_block or "component" in lower_block:
+                arch_content = block.strip()
+                
+        # Fallback if roles weren't identified in blocks
+        if not plan_content and blocks:
             plan_content = blocks[0].strip()
-            if len(blocks) > 1:
-                arch_content = blocks[1].strip()
+        if not arch_content and len(blocks) > 1:
+            arch_content = blocks[1].strip()
 
-    if "architecture" in last_msg.lower() or "ARCHITECTURE.md" in last_msg:
-        arch_parts = re.split(r"(?i)architecture", last_msg)
-        if len(arch_parts) > 1:
-            arch_content = arch_parts[1].split("Conclusion")[0].strip()
-            # Clean up common lead-ins
-            arch_content = re.sub(r"(?i)^.*architecture.*", "", arch_content, count=1)
+    # 2. If no markdown blocks, try header-based extraction (Mid Signal)
+    if not plan_content:
+        # Match from "Project Plan" header until the next major header (Architecture, etc) or end
+        plan_match = re.search(r"(?i)(?:#|\*\*)\s*Project Plan\s*(?:#|\*\*|:)?(.*?)(?=(?:#|\*\*)\s*Architecture|#|\*\*|$)", last_msg, re.DOTALL)
+        if plan_match:
+            plan_content = plan_match.group(1).strip()
+            
+    if not arch_content:
+        # Match from "Architecture" header until next header or end
+        arch_match = re.search(r"(?i)(?:#|\*\*)\s*Architecture\s*(?:#|\*\*|:)?(.*?)(?=(?:#|\*\*)\s*Conclusion|#|\*\*|$)", last_msg, re.DOTALL)
+        if arch_match:
+            arch_content = arch_match.group(1).strip()
+
+    # 3. Final Fallback: if STILL empty, use the splitting logic but only as a last resort and with more caution
+    if not plan_content and ("project plan" in last_msg.lower()):
+        plan_parts = re.split(r"(?i)#+\s*Architecture", last_msg)
+        plan_content = re.sub(r"(?i).*project plan.*", "", plan_parts[0], count=1).strip()
 
     # Save files directly to avoid empty files
     if plan_content and len(plan_content) > 10: # Only save if we found actual content
