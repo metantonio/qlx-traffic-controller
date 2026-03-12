@@ -19,9 +19,10 @@ interface AgentSelectorProps {
     onSelect: (agent: CustomAgent | null) => void;
     currentAgentId: string | null;
     onViewChange?: (view: 'dashboard' | 'extensions' | 'history') => void;
+    allowedAgentIds?: string[];
 }
 
-export default function AgentSelector({ onSelect, currentAgentId, onViewChange }: AgentSelectorProps) {
+export default function AgentSelector({ onSelect, currentAgentId, onViewChange, allowedAgentIds }: AgentSelectorProps) {
     const [agents, setAgents] = useState<CustomAgent[]>([]);
     const [isOpen, setIsOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -33,12 +34,15 @@ export default function AgentSelector({ onSelect, currentAgentId, onViewChange }
             const url = `${apiUrl}/api/agents/custom`;
             const res = await fetch(url);
             if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
-            const data = await res.json();
+            let data = await res.json();
+            if (allowedAgentIds) {
+                data = data.filter((a: CustomAgent) => allowedAgentIds.includes(a.id));
+            }
             setAgents(data);
         } catch (err) {
             console.error("Agent Sync Failure:", err);
         }
-    }, [apiUrl]);
+    }, [apiUrl, allowedAgentIds]);
 
     useEffect(() => {
         fetchAgents();

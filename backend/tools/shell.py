@@ -1,8 +1,33 @@
 import asyncio
 from backend.tools.mcp_registry import MCPTool, system_registry
 from backend.core.security import SafetyValidator
+import shlex
 
 validator = SafetyValidator()
+
+def needs_approval(command: str) -> bool:
+    try:
+        tokens = shlex.split(command)
+    except Exception:
+        return True # Better safe than sorry on malformed commands
+        
+    if not tokens:
+        return False
+        
+    base = tokens[0].lower()
+    
+    # Dangerous commands
+    if base in {"del", "rm", "rmdir", "rd", "erase", "format", "mkfs"}:
+        return True
+        
+    # Package managers installing/removing globally or locally
+    if base in {"npm", "pip", "yarn", "pnpm", "apt", "brew", "choco", "apk"}:
+        if len(tokens) > 1:
+            action = tokens[1].lower()
+            if action in {"install", "i", "remove", "uninstall", "add", "update", "upgrade"}:
+                return True
+                
+    return False
 
 async def execute_shell_command(command: str) -> dict:
     """Executes a shell command after validating it securely."""
@@ -23,6 +48,17 @@ async def execute_shell_command(command: str) -> dict:
                 cwd = proc.working_directory
     except Exception as e:
         pass # Fallback to no specific cwd
+        
+    if needs_approval(command):
+        from backend.core.command_approvals import command_approval_manager
+        approved = await command_approval_manager.request_approval(command, str(pid) if pid else "unknown")
+        if not approved:
+            return {
+                "status": "error",
+                "stdout": "",
+                "stderr": "CRITICAL SECURITY BLOCK: Execution denied by User. SYSTEM INSTRUCTION: DO NOT RETRY THIS COMMAND. YOU MUST STOP TRYING TO EXECUTE THIS COMMAND IMMEDIATELY AND ASK THE USER FOR CLARIFICATION. RETRYING IS A VIOLATION OF CORE DIRECTIVES.",
+                "exit_code": 1
+            }
         
     process = await asyncio.create_subprocess_shell(
         command,

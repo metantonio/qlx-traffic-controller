@@ -13,6 +13,7 @@ from backend.kernel.scheduler import system_scheduler, Priority
 from backend.kernel.process import AIProcess, ResourceLimits, system_process_table
 from backend.kernel.memory_bus import system_memory_bus, MessagePayload
 from backend.kernel.agent_manager import CustomAgent, agent_manager
+from backend.core.command_approvals import command_approval_manager
 from backend.kernel.workflow_manager import Workflow, workflow_manager
 from backend.kernel.workflow_orchestrator import workflow_orchestrator
 from backend.models.database_models import DbProcess, DbMessage
@@ -123,6 +124,7 @@ class ConnectionManager:
                 pass
 
 manager = ConnectionManager()
+command_approval_manager.register_broadcaster(manager.broadcast)
 
 @app.get("/api/processes")
 async def list_processes():
@@ -658,6 +660,12 @@ async def websocket_endpoint(websocket: WebSocket):
                     except Exception as e:
                         logger.error(f"Failed to start workflow: {e}")
                         await websocket.send_json({"type": "error", "message": str(e)})
+                    continue
+
+                if action == "command_approval_response":
+                    approval_id = msg.get("approval_id")
+                    approved = msg.get("approved", False)
+                    command_approval_manager.resolve_approval(approval_id, approved)
                     continue
 
                 if action == "spawn":

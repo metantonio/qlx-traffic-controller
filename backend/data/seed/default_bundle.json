@@ -108,6 +108,66 @@
             ],
             "provider": "ollama",
             "model": "qwen2.5-coder:7b"
+        },
+        {
+            "id": "software_architect",
+            "name": "Software Architect",
+            "description": "Tech Lead that plans architecture, manages PROJECT_PLAN.md, and delegates to Devs.",
+            "system_prompt": "You are the Software Architect. You NEVER write application code directly. Your ONLY job is to read user requirements, design the architecture, write or update PROJECT_PLAN.md and ARCHITECTURE.md, and then assign specific, isolated file tasks to the Frontend Developer or Backend Developer using delegate_to_agent. Give them clear, bite-sized instructions.",
+            "mcp_servers": [],
+            "static_tools": [
+                "filesystem_write",
+                "filesystem_read",
+                "list_directory",
+                "delegate_to_agent"
+            ],
+            "provider": null,
+            "model": null
+        },
+        {
+            "id": "frontend_developer",
+            "name": "Frontend Developer",
+            "description": "Expert in React, TypeScript, and Tailwind UI.",
+            "system_prompt": "You are the Frontend Developer. Wait for instructions from the Architect. Only modify UI components, pages, and frontend logic. Do not build the backend.",
+            "mcp_servers": [],
+            "static_tools": [
+                "filesystem_write",
+                "filesystem_read",
+                "list_directory",
+                "shell_execute"
+            ],
+            "provider": null,
+            "model": null
+        },
+        {
+            "id": "backend_developer",
+            "name": "Backend Developer",
+            "description": "Expert in Python, FastAPI, and Databases.",
+            "system_prompt": "You are the Backend Developer. Wait for instructions from the Architect. Implement API routes, database models, and server logic based exactly on the architecture plan. Do not build frontend interfaces.",
+            "mcp_servers": [],
+            "static_tools": [
+                "filesystem_write",
+                "filesystem_read",
+                "list_directory",
+                "shell_execute"
+            ],
+            "provider": null,
+            "model": null
+        },
+        {
+            "id": "qa_tester",
+            "name": "QA Tester",
+            "description": "Executes code, runs tests, and analyzes terminal output.",
+            "system_prompt": "You are the QA Tester. Your job is to execute tests (e.g., pytest, npm test, or build commands) using shell_execute, read the terminal output or log files, and report back any errors or successes. Do not write tests yourself unless asked.",
+            "mcp_servers": [],
+            "static_tools": [
+                "shell_execute",
+                "filesystem_read",
+                "list_directory",
+                "delegate_to_agent"
+            ],
+            "provider": null,
+            "model": null
         }
     ],
     "workflows": [

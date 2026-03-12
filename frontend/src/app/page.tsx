@@ -15,7 +15,7 @@ import BatchView from "@/components/Kernel/BatchView";
 import CommandBar from "@/components/Kernel/CommandBar";
 import SettingsView from "@/components/Kernel/SettingsView";
 import packageJson from "../../package.json";
-import { GitBranch, History, LayoutDashboard, Layers, Cpu, MessageSquare, WifiOff, RefreshCw, Activity, Settings } from "lucide-react";
+import { GitBranch, History, LayoutDashboard, Layers, Cpu, MessageSquare, WifiOff, RefreshCw, Activity, Settings, AlertTriangle, Terminal, Factory } from "lucide-react";
 
 export interface ProcessData {
   pid: string;
@@ -67,11 +67,13 @@ export default function Dashboard() {
     currentPid?: string;
   } | null>(null);
 
-  const [activeView, setActiveView] = useState<'dashboard' | 'extensions' | 'history' | 'workflows' | 'batches' | 'settings'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'extensions' | 'history' | 'workflows' | 'batches' | 'settings' | 'factory'>('dashboard');
   const [historyPid, setHistoryPid] = useState<string | null>(null);
   const [wsStatus, setWsStatus] = useState<'connected' | 'disconnected' | 'connecting' | 'error'>('connecting');
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
   const wsRef = useRef<WebSocket | null>(null);
+
+  const [pendingApprovals, setPendingApprovals] = useState<Array<{approval_id: string, command: string, pid: string}>>([]);
 
   const handleSpawnAgent = useCallback((manualTask?: string, parent_pid?: string, initial_history?: Message[]) => {
     const finalTask = manualTask || taskText;
@@ -124,6 +126,16 @@ export default function Dashboard() {
     }
   }, []);
 
+  const handleRespondApproval = useCallback((approval_id: string, approved: boolean) => {
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+    wsRef.current.send(JSON.stringify({
+        action: "command_approval_response",
+        approval_id,
+        approved
+    }));
+    setPendingApprovals(prev => prev.filter(p => p.approval_id !== approval_id));
+  }, []);
+
   useEffect(() => {
     const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://127.0.0.1:8000/ws";
     const ws = new WebSocket(wsUrl);
@@ -150,6 +162,11 @@ export default function Dashboard() {
             currentPid: payload.pid || prev?.currentPid
           };
         });
+      } else if (data.action === "command_approval_requested") {
+        setPendingApprovals(prev => {
+            if (prev.some(p => p.approval_id === data.approval_id)) return prev;
+            return [...prev, data];
+        });
       } else {
         setEvents((prev) => [data, ...prev].slice(0, 50));
       }
@@ -175,6 +192,40 @@ export default function Dashboard() {
   return (
     <div className="h-screen bg-[#050506] text-neutral-100 font-sans antialiased selection:bg-blue-500/30 overflow-hidden flex relative">
       <div className="absolute inset-0 bg-grid pointer-events-none opacity-50"></div>
+      
+      {/* Global Command Approval Modal */}
+      {pendingApprovals.length > 0 && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+              <div className="bg-neutral-900 border border-amber-500/50 p-6 rounded-2xl max-w-lg w-full shadow-2xl shadow-amber-500/10">
+                  <div className="flex items-center gap-3 mb-4 text-amber-500">
+                      <AlertTriangle size={24} />
+                      <h3 className="text-xl font-bold">Command Approval Required</h3>
+                  </div>
+                  <p className="text-neutral-300 mb-4">
+                      Agent <span className="font-mono text-xs bg-neutral-800 px-2 py-1 rounded text-neutral-400">{pendingApprovals[0].pid}</span> is attempting to execute a potentially destructive command.
+                  </p>
+                  <div className="bg-black/50 p-4 rounded-xl border border-neutral-800 font-mono text-sm text-neutral-200 mb-6 overflow-x-auto whitespace-pre-wrap">
+                      {pendingApprovals[0].command}
+                  </div>
+                  <div className="flex gap-3 justify-end">
+                      <button 
+                          onClick={() => handleRespondApproval(pendingApprovals[0].approval_id, false)}
+                          className="px-6 py-2 bg-neutral-800 hover:bg-red-900/50 text-neutral-300 hover:text-red-400 rounded-xl transition-colors font-medium border border-neutral-700 hover:border-red-900/50"
+                      >
+                          Reject
+                      </button>
+                      <button 
+                          onClick={() => handleRespondApproval(pendingApprovals[0].approval_id, true)}
+                          className="px-6 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl transition-colors font-medium flex items-center gap-2 shadow-lg shadow-amber-500/20"
+                      >
+                          <Terminal size={16} />
+                          Approve Execution
+                      </button>
+                  </div>
+              </div>
+          </div>
+      )}
+
       {/* Sidebar */}
       <aside className="w-64 border-r border-neutral-800/50 bg-neutral-900/20 backdrop-blur-xl flex flex-col shrink-0">
         <div className="p-6 border-b border-neutral-800/50">
@@ -204,6 +255,12 @@ export default function Dashboard() {
             onClick={() => setActiveView('dashboard')}
             icon={<LayoutDashboard size={18} />}
             label="Analytics"
+          />
+          <NavItem
+            active={activeView === 'factory'}
+            onClick={() => setActiveView('factory')}
+            icon={<Factory size={18} />}
+            label="System Factory"
           />
           <NavItem
             active={activeView === 'workflows'}
@@ -261,16 +318,20 @@ export default function Dashboard() {
           <div className="absolute bottom-[0%] -right-[5%] w-[30%] h-[50%] bg-purple-600/5 blur-[100px] rounded-full"></div>
         </div>
 
-        {activeView === 'dashboard' ? (
+        {activeView === 'dashboard' || activeView === 'factory' ? (
           <div className="flex-grow flex flex-col overflow-hidden p-4 md:p-8">
             {/* Header - Fixed at top */}
             <header className="flex items-end justify-between mb-8 border-b border-neutral-800/30 pb-8 shrink-0 relative">
               <div className="absolute -left-8 -top-8 w-64 h-64 bg-blue-600/5 blur-[100px] pointer-events-none" />
               <div className="relative z-10">
-                <h2 className="text-5xl font-black tracking-tighter text-white text-glow-blue italic">SYSTEM</h2>
+                <h2 className="text-5xl font-black tracking-tighter text-white text-glow-blue italic">
+                    {activeView === 'factory' ? 'FACTORY' : 'SYSTEM'}
+                </h2>
                 <div className="flex items-center gap-2 mt-1">
                   <div className="h-px w-8 bg-blue-500/50" />
-                  <p className="text-neutral-500 text-[10px] font-black uppercase tracking-[0.3em]">Autonomous Orchestration Engine</p>
+                  <p className="text-neutral-500 text-[10px] font-black uppercase tracking-[0.3em]">
+                      {activeView === 'factory' ? 'Multi-Agent Assembly Line' : 'Autonomous Orchestration Engine'}
+                  </p>
                 </div>
               </div>
 
@@ -283,6 +344,7 @@ export default function Dashboard() {
                     else if (v === 'dashboard') setActiveView('dashboard');
                     else if (v === 'history') setActiveView('history');
                   }}
+                  allowedAgentIds={activeView === 'factory' ? ['software_architect', 'frontend_developer', 'backend_developer', 'qa_tester'] : undefined}
                 />
                 <div className="h-10 w-px bg-neutral-800" />
                 <ModelSelector
