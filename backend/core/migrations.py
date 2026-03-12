@@ -46,4 +46,18 @@ def apply_migrations(engine: Engine):
         set_version(engine, 2)
         current_version = 2
 
+    # Migration 3: Add proposed_plan column to processes table
+    if current_version < 3:
+        logger.info("Migrating to version 3 (Add proposed_plan to processes)")
+        with engine.connect() as conn:
+            try:
+                # SQLite ALTER TABLE is limited but adding a column is supported
+                conn.execute(text("ALTER TABLE processes ADD COLUMN proposed_plan JSON"))
+                conn.commit()
+            except Exception as e:
+                # If it already exists for some reason, we just continue
+                logger.warning(f"Note: Could not add proposed_plan column (it may already exist): {e}")
+        set_version(engine, 3)
+        current_version = 3
+
     logger.info(f"Database schema is up to date at version {current_version}")

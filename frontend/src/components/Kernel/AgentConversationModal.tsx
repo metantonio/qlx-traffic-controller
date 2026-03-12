@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Send, Terminal, User, Cpu, Activity } from 'lucide-react';
+import { X, Send, Terminal, User, Cpu, Activity, Zap } from 'lucide-react';
 import MarkdownRenderer from './MarkdownRenderer';
 
 export interface Message {
@@ -30,6 +30,7 @@ export default function AgentConversationModal({ pid, onClose, onContinue, readO
     const [loading, setLoading] = useState(true);
     const [followUp, setFollowUp] = useState('');
     const [visibleCount, setVisibleCount] = useState(30);
+    const [proceeding, setProceeding] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
@@ -70,6 +71,29 @@ export default function AgentConversationModal({ pid, onClose, onContinue, readO
         if (!followUp.trim() || !procDetails || !onContinue) return;
         onContinue(pid, followUp, procDetails.history);
         onClose();
+    };
+
+    const handleProceed = async () => {
+        if (!procDetails) return;
+        setProceeding(true);
+        try {
+            const res = await fetch(`${apiUrl}/api/processes/${pid}/proceed`, {
+                method: 'POST'
+            });
+            const data = await res.json();
+            if (res.ok) {
+                // Inform user or close? Best is to refresh or close and let them see the new process.
+                // For now, let's close and rely on the dashboard to show the new spawned AI.
+                onClose();
+            } else {
+                alert(`Proceed failed: ${data.detail || 'Unknown error'}`);
+            }
+        } catch (err) {
+            console.error('Proceed error:', err);
+            alert('Failed to trigger delegation. Check console.');
+        } finally {
+            setProceeding(false);
+        }
     };
 
     if (loading) return null;
@@ -169,7 +193,19 @@ export default function AgentConversationModal({ pid, onClose, onContinue, readO
 
                 {/* Footer / Input */}
                 {!readOnly && onContinue && (
-                    <div className="p-4 border-t border-neutral-800 bg-neutral-900/50">
+                    <div className="p-4 border-t border-neutral-800 bg-neutral-900/50 space-y-4">
+                        {procDetails?.agent_name === 'software_architect' && (
+                            <div className="flex justify-center">
+                                <button
+                                    onClick={handleProceed}
+                                    disabled={proceeding}
+                                    className="group flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-500/20 active:scale-95 border border-blue-400/50"
+                                >
+                                    <Zap size={18} className={proceeding ? 'animate-spin' : 'group-hover:scale-110 transition-transform'} />
+                                    {proceeding ? 'Orchestrating...' : 'Proceed with First Step'}
+                                </button>
+                            </div>
+                        )}
                         <div className="flex gap-4 items-center max-w-3xl mx-auto">
                             <div className="relative flex-1 group">
                                 <input

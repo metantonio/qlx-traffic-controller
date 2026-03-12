@@ -20,6 +20,7 @@ from backend.models.database_models import DbProcess, DbMessage
 from backend.core.database import SessionLocal, get_db, init_db
 from sqlalchemy import desc
 from contextlib import asynccontextmanager
+from backend.api import orchestration_api
 
 # Force tool registry load
 import backend.tools.shell
@@ -98,6 +99,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include Routers
+app.include_router(orchestration_api.router)
 
 # Serve screenshots as static files
 SCREENSHOTS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "data", "screenshots"))
