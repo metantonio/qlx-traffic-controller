@@ -149,15 +149,9 @@ class TaskScheduler:
             # 2. Dynamic tools from Configured MCP Servers
             dynamic_mcp_tools = []
             
-            # Collect specific MCP servers to load
+            # Collect specific MCP servers to load (explicit mcp: prefix only)
             target_mcp_servers = [n.split("mcp:")[1] for n in allowed_tool_names if n.startswith("mcp:")]
             
-            # Support legacy tags by mapping to known server IDs
-            if "filesystem_read" in allowed_tool_names:
-                target_mcp_servers.append("filesystem")
-            if "memory_access" in allowed_tool_names:
-                target_mcp_servers.append("memory")
-
             if target_mcp_servers:
                 try:
                     # Filter: if it's a legacy tool, we allow it specifically.

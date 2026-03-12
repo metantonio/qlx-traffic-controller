@@ -7,6 +7,11 @@ import os
 import json
 import logging
 import asyncio
+import sys
+
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+
 from backend.core.config import settings
 from backend.core.logger import get_kernel_logger
 from backend.kernel.scheduler import system_scheduler, Priority

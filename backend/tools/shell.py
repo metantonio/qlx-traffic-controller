@@ -42,7 +42,7 @@ async def execute_shell_command(command: str) -> dict:
         
     cwd = None
     try:
-        from backend.llm.provider import current_pid
+        from backend.core.context import current_pid
         from backend.kernel.process import system_process_table
         pid = current_pid.get()
         if pid:

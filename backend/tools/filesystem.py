@@ -51,14 +51,25 @@ def is_path_allowed(filepath: str) -> bool:
     except Exception:
         pass
     
-    # 1. Base directory (project root) - ONLY for 'kernel'
+    # 1. Base directory (project root) - ONLY for explicit 'kernel'
     if pid == "kernel":
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         if abs_path.startswith(project_root):
             logger.info(f"[kernel] ALLOWED access to project root: {abs_path}")
             return True
-    else:
-        logger.warning(f"[{pid}] DENIED access to root (sandbox only): {abs_path}")
+        else:
+            logger.warning(f"[kernel] BLOCKED access outside project root: {abs_path}")
+            return False
+    
+    # 2. If PID is set but not kernel, and we reached here, it means it's NOT in its WD.
+    if pid and pid != "kernel":
+        logger.warning(f"[{pid}] BLOCKED access outside sandbox (WD check failed): {abs_path}")
+        return False
+
+    # 3. Fallback for unknown PID or semi-system processes: Fail-safe to BLOCKED for repo root.
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    if abs_path.startswith(project_root):
+        logger.error(f"[SYSTEM-FAULT][{pid}] ACCESS DENIED: Unidentified process attempted root access: {abs_path}")
         return False
         
     # 2. Check Database for custom allowed directories (Global whitelist)
@@ -247,6 +258,33 @@ filesystem_write_tool = MCPTool(
     handler=write_file_safe
 )
 
+async def create_directory(path: str) -> str:
+    """Creates a new directory in the agent workspace."""
+    resolved_path = _resolve_path(path)
+    if not is_path_allowed(resolved_path):
+        return f"Permission Error: Path '{resolved_path}' is unauthorized."
+    
+    try:
+        os.makedirs(resolved_path, exist_ok=True)
+        logger.info(f"Successfully created directory: {resolved_path}")
+        return f"Successfully created directory: {path}"
+    except Exception as e:
+        return f"Error creating directory: {e}"
+
+create_directory_tool = MCPTool(
+    name="create_directory",
+    description="Creates a new directory. Automatically handles relative paths within the agent's project folder.",
+    parameters={"path": {"type": "string", "description": "Path of the directory to create"}},
+    handler=create_directory
+)
+
+filesystem_create_dir_tool = MCPTool(
+    name="filesystem_create_directory",
+    description="Alias for create_directory.",
+    parameters={"path": {"type": "string", "description": "Path of the directory to create"}},
+    handler=create_directory
+)
+
 read_file_tool = MCPTool(
     name="read_file",
     description="Reads a file. Same as filesystem_read.",
@@ -254,6 +292,8 @@ read_file_tool = MCPTool(
     handler=filesystem_read
 )
 
+system_registry.register(create_directory_tool)
+system_registry.register(filesystem_create_dir_tool)
+system_registry.register(read_file_tool)
 system_registry.register(filesystem_append_tool)
 system_registry.register(filesystem_write_tool)
-system_registry.register(read_file_tool)
