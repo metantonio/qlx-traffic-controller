@@ -744,8 +744,9 @@ async def websocket_endpoint(websocket: WebSocket):
                         working_directory=working_directory
                     )
                     
+                    from backend.kernel.skill_injector import inject_skills_into_prompt
                     if system_prompt_override:
-                        proc.memory_context["system_prompt"] = system_prompt_override
+                        proc.memory_context["system_prompt"] = inject_skills_into_prompt(system_prompt_override, working_directory)
                     
                     if initial_history:
                         proc.memory_context["initial_history"] = initial_history
