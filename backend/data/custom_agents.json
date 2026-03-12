@@ -105,7 +105,7 @@
         ],
         "provider": "ollama",
         "model": "qwen2.5-coder:7b",
-        "working_directory": null,
+        "working_directory": "workspace",
         "skills": []
     },
     "desktop_controller": {
