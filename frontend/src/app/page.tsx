@@ -189,6 +189,7 @@ export default function Dashboard() {
     };
   }, [reconnectAttempts]);
 
+
   return (
     <div className="h-screen bg-[#050506] text-neutral-100 font-sans antialiased selection:bg-blue-500/30 overflow-hidden flex relative">
       <div className="absolute inset-0 bg-grid pointer-events-none opacity-50"></div>
@@ -252,13 +253,19 @@ export default function Dashboard() {
         <nav className="flex-grow p-4 space-y-2">
           <NavItem
             active={activeView === 'dashboard'}
-            onClick={() => setActiveView('dashboard')}
+            onClick={() => {
+              setActiveView('dashboard');
+              setSelectedAgentId(null);
+            }}
             icon={<LayoutDashboard size={18} />}
             label="Analytics"
           />
-          <NavItem
+           <NavItem
             active={activeView === 'factory'}
-            onClick={() => setActiveView('factory')}
+            onClick={() => {
+              setActiveView('factory');
+              setSelectedAgentId('software_architect');
+            }}
             icon={<Factory size={18} />}
             label="System Factory"
           />

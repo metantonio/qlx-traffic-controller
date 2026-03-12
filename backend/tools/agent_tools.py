@@ -75,7 +75,7 @@ async def delegate_to_agent(agent_id: str, task: str) -> str:
 
 delegate_tool = MCPTool(
     name="delegate_to_agent",
-    description="Delegates a sub-task to a specialized agent or skill by ID. Use this when you need specific expertise (e.g. Excel expert, file creator) that you don't want to handle directly or that requires specific tools.",
+    description="Delegates a sub-task to a specialized agent or skill by ID. ALWAYS use 'list_available_agents' FIRST to get the correct valid IDs. Use this when you need specific expertise that you do not want to handle directly.",
     parameters={
         "agent_id": {
             "type": "string",
@@ -91,13 +91,27 @@ delegate_tool = MCPTool(
 
 async def list_available_agents() -> str:
     """Lists all available specialized agents and skills currently installed."""
+    from backend.kernel.process import system_process_table
+    pid = current_pid.get()
+    current_proc = system_process_table.get(pid) if pid else None
+    
     agents = agent_manager.list_agents()
     if not agents:
         return "No specialized agents or skills found."
     
+    # Filtering logic for Software Architect focus
+    authorized_ids = None
+    if current_proc and current_proc.agent_name == "software_architect":
+        authorized_ids = ["frontend_developer", "backend_developer", "qa_tester"]
+        # Filter for only authorized specialists
+        agents = [a for a in agents if a.id in authorized_ids]
+    
     result = "Available Specialized Agents & Skills:\n"
     for agent in agents:
         result += f"- {agent.id}: {agent.name} ({agent.description})\n"
+    
+    if authorized_ids:
+        result += "\nNote: As the Architect, your view is focused on the core development assembly line."
     
     return result
 
