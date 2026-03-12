@@ -177,6 +177,7 @@ class ProcessTable:
                 }
                 proc.proposed_plan = db_proc.proposed_plan
                 proc.has_proceeded = bool(db_proc.has_proceeded)
+                proc.working_directory = db_proc.working_directory
                 # Load history from messages table
                 proc.history = [
                     {

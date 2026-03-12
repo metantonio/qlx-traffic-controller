@@ -14,7 +14,7 @@ def _resolve_path(filepath: str) -> str:
     """Resolves relative paths against the current process's working_directory if set."""
     pid = None
     try:
-        from backend.llm.provider import current_pid
+        from backend.core.context import current_pid
         from backend.kernel.process import system_process_table
         pid = current_pid.get()
         if pid and pid != "kernel":
@@ -31,10 +31,11 @@ def _resolve_path(filepath: str) -> str:
 def is_path_allowed(filepath: str) -> bool:
     """Verifies if the path is within the project root OR a user-allowed directory OR the process working directory."""
     abs_path = os.path.abspath(filepath)
+    pid = None
     
     # 0. Check current process working directory (STRICTEST)
     try:
-        from backend.llm.provider import current_pid
+        from backend.core.context import current_pid
         from backend.kernel.process import system_process_table
         pid = current_pid.get()
         if pid and pid != "kernel":
@@ -50,12 +51,17 @@ def is_path_allowed(filepath: str) -> bool:
     except Exception:
         pass
     
-    # 1. Base directory (project root) - Only for 'kernel' or nonsandboxed processes
-    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    if abs_path.startswith(project_root):
-        return True
+    # 1. Base directory (project root) - ONLY for 'kernel'
+    if pid == "kernel":
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        if abs_path.startswith(project_root):
+            logger.info(f"[kernel] ALLOWED access to project root: {abs_path}")
+            return True
+    else:
+        logger.warning(f"[{pid}] DENIED access to root (sandbox only): {abs_path}")
+        return False
         
-    # 2. Check Database for custom allowed directories
+    # 2. Check Database for custom allowed directories (Global whitelist)
     try:
         with SessionLocal() as db:
             allowed = db.query(DbAllowedDirectory).all()

@@ -7,12 +7,7 @@ import logging
 import json
 import re
 
-from contextvars import ContextVar
-
-logger = logging.getLogger("QLX-TC.LLMProvider")
-
-# Global context to track which process is calling a tool
-current_pid = ContextVar("current_pid", default="kernel")
+from backend.core.context import current_pid
 
 
 class LLMProvider:
