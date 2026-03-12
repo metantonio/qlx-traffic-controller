@@ -130,7 +130,8 @@ class TaskScheduler:
             system_prompt = inject_skills_into_prompt(
                 raw_system_prompt, 
                 process.working_directory, 
-                assigned_skills
+                assigned_skills,
+                agent_id=process.agent_name
             )
             
             # 1. Static tools from Custom Registry (shell, etc.)

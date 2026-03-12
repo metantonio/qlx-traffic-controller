@@ -35,9 +35,20 @@ async def proceed_with_plan(pid: str):
     if not last_msg:
         raise HTTPException(status_code=400, detail="No assistant message found to parse")
 
-    # FAIL-SAFE: Extract and Save Documentation if Architect hasn't done it
-    # We look for Markdown sections or the words "PROJECT_PLAN.md" etc.
-    ws_dir = proc.working_directory or "workspace"
+    # DYNAMIC PROJECT DETECTION
+    # We try to find a project name to avoid cluttering the Architect's home or root workspace
+    project_name_match = re.search(r"(?i)Project Name:\s*([a-zA-Z0-9_-]+)", last_msg)
+    if not project_name_match:
+        # Fallback: look for "developing [Name] game" or similar
+        project_name_match = re.search(r"(?i)developing\s+([a-zA-Z0-9_-]+)\s+game", last_msg)
+        
+    project_folder = None
+    if project_name_match:
+        project_name = project_name_match.group(1).lower().replace(" ", "_")
+        project_folder = os.path.join("workspace", project_name)
+    
+    # FAIL-SAFE ws_dir logic
+    ws_dir = project_folder or proc.working_directory or "workspace"
     os.makedirs(ws_dir, exist_ok=True)
     
     plan_content = ""
@@ -55,6 +66,7 @@ async def proceed_with_plan(pid: str):
     if not plan_content:
         blocks = re.findall(r"```(?:markdown)?\n(.*?)\n```", last_msg, re.DOTALL)
         if blocks:
+            # If multiple blocks, first is likely plan, second is arch
             plan_content = blocks[0].strip()
             if len(blocks) > 1:
                 arch_content = blocks[1].strip()
@@ -67,13 +79,13 @@ async def proceed_with_plan(pid: str):
             arch_content = re.sub(r"(?i)^.*architecture.*", "", arch_content, count=1)
 
     # Save files directly to avoid empty files
-    if plan_content:
+    if plan_content and len(plan_content) > 10: # Only save if we found actual content
         plan_path = os.path.join(ws_dir, "PROJECT_PLAN.md")
         with open(plan_path, 'w', encoding='utf-8') as f:
             f.write(plan_content)
         logger.info(f"Fail-safe: Saved PROJECT_PLAN.md to {plan_path}")
 
-    if arch_content:
+    if arch_content and len(arch_content) > 10:
         arch_path = os.path.join(ws_dir, "ARCHITECTURE.md")
         with open(arch_path, 'w', encoding='utf-8') as f:
             f.write(arch_content)
@@ -109,9 +121,9 @@ async def proceed_with_plan(pid: str):
     
     new_proc = AIProcess(
         agent_name=target_agent,
-        task_description=f"Automated Proceed from Architect.\n\nTask: {task_hint}\n\nDocumentation has been saved to '{ws_dir}'. Read PROJECT_PLAN.md to start.",
+        task_description=f"Automated Proceed from Architect.\n\nTask: {task_hint}\n\nProject Directory: '{ws_dir}'. Read PROJECT_PLAN.md from this directory to start.",
         limits=ResourceLimits(allowed_tools=resolved_tools),
-        working_directory=custom_agent.working_directory or ws_dir
+        working_directory=ws_dir # Specialists MUST work in the project folder
     )
     
     new_proc.memory_context["initial_history"] = proc.history

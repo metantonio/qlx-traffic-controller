@@ -3,7 +3,7 @@ from backend.core.logger import get_kernel_logger
 
 logger = get_kernel_logger("QLX-TC.SkillInjector")
 
-def inject_skills_into_prompt(base_prompt: str, working_directory: str = None, assigned_skills: list[str] = None) -> str:
+def inject_skills_into_prompt(base_prompt: str, working_directory: str = None, assigned_skills: list[str] = None, agent_id: str = None) -> str:
     """Scans for assigned skills and .cursorrules and appends them to the prompt."""
     if not working_directory:
         resolved_pwd = os.path.abspath("./workspace")
@@ -13,17 +13,27 @@ def inject_skills_into_prompt(base_prompt: str, working_directory: str = None, a
     injected_prompt = base_prompt or ""
     skills_content = []
     
-    # 1. Check for assigned skills in .agents/skills/ (Climb up to find .agents)
-    curr = resolved_pwd
+    # 1. Determine Skills Root based on agent_id (Home Directory vs. Generic Workspace)
     skills_root = None
-    while curr and os.path.dirname(curr) != curr: # Stop at root
-        potential_root = os.path.join(curr, ".agents", "skills")
-        if os.path.exists(potential_root):
-            skills_root = potential_root
-            break
-        curr = os.path.dirname(curr)
     
-    # Fallback to absolute relative path just in case
+    if agent_id:
+        # Check in agent's specific home: workspace/<agent_id>/.agents/skills
+        agent_home = os.path.abspath(os.path.join("./workspace", agent_id))
+        potential_root = os.path.join(agent_home, ".agents", "skills")
+        if os.path.exists(potential_root):
+             skills_root = potential_root
+             
+    # Fallback to climbing from working directory if not found in home
+    if not skills_root:
+        curr = resolved_pwd
+        while curr and os.path.dirname(curr) != curr: # Stop at root
+            potential_root = os.path.join(curr, ".agents", "skills")
+            if os.path.exists(potential_root):
+                skills_root = potential_root
+                break
+            curr = os.path.dirname(curr)
+    
+    # Final fallback to absolute relative path
     if not skills_root:
         potential_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".agents", "skills"))
         if os.path.exists(potential_root):
