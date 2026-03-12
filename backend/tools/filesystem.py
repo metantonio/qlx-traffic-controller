@@ -9,6 +9,15 @@ _file_locks = {}
 
 def _resolve_path(filepath: str) -> str:
     """Resolves relative paths against the current process's working_directory if set."""
+    # Hallucination Guard: If the agent provides a Linux-style path on Windows, strip it.
+    if os.name == 'nt':
+        # common patterns used by LLMs in their training data or sandbox environments
+        hallucinated_prefixes = ["/home/user/projects/", "/mnt/data/", "/app/", "/workspace/"]
+        for prefix in hallucinated_prefixes:
+            if filepath.startswith(prefix):
+                filepath = filepath[len(prefix):]
+                break
+
     if os.path.isabs(filepath):
         return filepath
         

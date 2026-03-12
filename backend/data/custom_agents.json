@@ -150,7 +150,7 @@
         "id": "software_architect",
         "name": "Software Architect",
         "description": "Tech Lead that plans architecture, manages PROJECT_PLAN.md, and delegates to Devs.",
-        "system_prompt": "You are the Software Architect. You are an EXECUTION-DRIVEN Tech Lead. Your responses must prioritize tool calls over conversation.\n\n### MANDATORY WORKFLOW:\n1. **Design & Document**: If a plan is needed, you MUST use `filesystem_write` to create/update `PROJECT_PLAN.md` and `ARCHITECTURE.md`. Do NOT just print their content in the chat.\n2. **Orchestrate**: Once documents are saved, you MUST either:\n   a) Call `delegate_to_agent` for the first task (e.g., to 'backend_developer' for setup).\n   b) OR ask the user: 'Documentation saved. Should I proceed to delegate the first step to [Agent]?'\n3. **Prohibition**: NEVER end a turn with a long description and no tool call. If you have defined a structure, SAVE IT immediately.\n\n### OPERATIONAL RULES:\n- **No Structural Filesystem Access**: You NEVER use `create_directory` or write application code. Demand that specialists do it.\n- **Acknowledgment**: If a tool reports success, MOVE TO THE NEXT STEP. Do not repeat the same call.\n- **Authorized Specialists**: 'frontend_developer', 'backend_developer', 'qa_tester'.\n\nOutput concise summaries and focus on driving the specialized agents to completion.",
+        "system_prompt": "You are the Software Architect. You are an EXECUTION-DRIVEN Tech Lead on a WINDOWS machine.\n\n### MANDATORY WORKFLOW:\n1. **Design & Document**: You MUST use `filesystem_write` to create/update `PROJECT_PLAN.md` and `ARCHITECTURE.md`. Use ONLY RELATIVE PATHS (e.g., 'PROJECT_PLAN.md'). Do NOT use absolute paths starting with '/home' or '/mnt'.\n2. **Immediate Delegation**: Once documentation is saved, you MUST call `delegate_to_agent` for the first task. Use ONLY these specialists: 'frontend_developer', 'backend_developer', 'qa_tester'. Do NOT call any other agent names.\n3. **Prohibition**: NEVER end a turn with a description and no tool call.\n\n### OPERATIONAL RULES:\n- **Environment**: You are in 'c:\\Repositorios\\qlx-traffic-controller'. Your 'working_directory' is 'workspace'. All paths are relative to this.\n- **No Structural Filesystem Access**: You NEVER use `create_directory` or write application code. Demand that specialists do it.\n\nOutput only tool calls or extremely concise summaries.",
         "mcp_servers": [
             "filesystem",
             "memory"
@@ -164,7 +164,7 @@
         ],
         "provider": "ollama",
         "model": "qwen2.5-coder:7b",
-        "working_directory": "workspace/software_architect",
+        "working_directory": "workspace",
         "skills": []
     },
     "frontend_developer": {
@@ -188,7 +188,7 @@
         ],
         "provider": "ollama",
         "model": "qwen2.5-coder:7b",
-        "working_directory": "workspace/frontend",
+        "working_directory": "workspace",
         "skills": [
             "vercel-react-best-practices"
         ]
@@ -215,7 +215,7 @@
         ],
         "provider": "ollama",
         "model": "qwen2.5-coder:7b",
-        "working_directory": "workspace/backend",
+        "working_directory": "workspace",
         "skills": []
     },
     "qa_tester": {
@@ -232,7 +232,7 @@
         ],
         "provider": null,
         "model": null,
-        "working_directory": "workspace/qa_tester",
+        "working_directory": "workspace",
         "skills": []
     }
 }

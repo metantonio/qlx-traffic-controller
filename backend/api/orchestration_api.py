@@ -6,6 +6,8 @@ from backend.kernel.scheduler import system_scheduler, Priority
 from backend.kernel.agent_manager import agent_manager
 from backend.core.logger import get_kernel_logger
 import re
+import os
+import json
 
 logger = get_kernel_logger("QLX-TC.Orchestration")
 
@@ -33,20 +35,39 @@ async def proceed_with_plan(pid: str):
     if not last_msg:
         raise HTTPException(status_code=400, detail="No assistant message found to parse")
 
-    # ORCHESTRATION STRATEGY 1: Detect "Permission Loop" (Asking to save files)
-    if "would you like me to" in last_msg.lower() and ("create" in last_msg.lower() or "save" in last_msg.lower()) and "md" in last_msg.lower():
-        logger.info(f"Detected permission loop for {pid}. Re-triggering architect with auto-confirm.")
-        # We re-trigger the SAME process but add a system hint to force execution
-        proc.task_description += "\n\n[SYSTEM ACTION: USER CLICKED PROCEED. SAVE THE FILES NOW USING TOOLS.]"
-        proc.state = Priority.MEDIUM # Actually we need to re-submit
-        await system_scheduler.submit(proc, Priority.HIGH)
-        return {
-            "status": "success",
-            "action": "re_triggered",
-            "message": "Forced Architect to execute plan."
-        }
+    # FAIL-SAFE: Extract and Save Documentation if Architect hasn't done it
+    # We look for Markdown sections or the words "PROJECT_PLAN.md" etc.
+    ws_dir = proc.working_directory or "workspace"
+    os.makedirs(ws_dir, exist_ok=True)
+    
+    plan_content = ""
+    arch_content = ""
+    
+    # Simple extraction logic: find sections or content between header hints
+    if "project plan" in last_msg.lower():
+        # Try to extract from "Project Plan" to "Architecture" or end
+        plan_part = re.split(r"(?i)architecture", last_msg)[0]
+        plan_content = plan_part.strip()
+    
+    if "architecture" in last_msg.lower():
+        arch_parts = re.split(r"(?i)architecture", last_msg)
+        if len(arch_parts) > 1:
+            arch_content = arch_parts[1].split("Conclusion")[0].strip()
 
-    # ORCHESTRATION STRATEGY 2: delegation
+    # Save files directly to avoid empty files
+    if plan_content:
+        plan_path = os.path.join(ws_dir, "PROJECT_PLAN.md")
+        with open(plan_path, 'w', encoding='utf-8') as f:
+            f.write(plan_content)
+        logger.info(f"Fail-safe: Saved PROJECT_PLAN.md to {plan_path}")
+
+    if arch_content:
+        arch_path = os.path.join(ws_dir, "ARCHITECTURE.md")
+        with open(arch_path, 'w', encoding='utf-8') as f:
+            f.write(arch_content)
+        logger.info(f"Fail-safe: Saved ARCHITECTURE.md to {arch_path}")
+
+    # Identify target specialist
     specialists = ["backend_developer", "frontend_developer", "qa_tester"]
     target_agent = None
     
@@ -56,27 +77,16 @@ async def proceed_with_plan(pid: str):
             break
             
     if not target_agent:
-        # Fallback to first developer found if any
+        # Fallback logic for common roles
         if "backend" in last_msg.lower(): target_agent = "backend_developer"
         elif "frontend" in last_msg.lower(): target_agent = "frontend_developer"
-        elif "qa" in last_msg.lower() or "test" in last_msg.lower(): target_agent = "qa_tester"
+        elif "qa" in last_msg.lower(): target_agent = "qa_tester"
+        else: target_agent = "backend_developer" # Default to backend for setup
 
-    if not target_agent:
-        raise HTTPException(status_code=422, detail="Could not identify a clear next step or agent from the conversation.")
-
-    # Try to extract a task snippet
-    # e.g., "Step 1: Set up the project structure" -> "Set up the project structure"
-    task_hint = "Execute next step from project plan"
+    task_hint = "Implement the first step of the project plan."
     plan_match = re.search(r"(?:Step|Task)\s*1[:.]?\s*(.*)", last_msg, re.IGNORECASE)
     if plan_match:
         task_hint = plan_match.group(1).strip()
-    elif "delegate" in last_msg.lower():
-        # Look for sentences containing 'delegate' and 'to'
-        delegate_match = re.search(r"delegate.*to.*(?:the\s+)?(\w+ developer|qa tester).*", last_msg, re.IGNORECASE)
-        if delegate_match:
-            task_hint = f"Proceed with delegation as suggested: {delegate_match.group(0)}"
-
-    logger.info(f"Proceeding from {pid} to {target_agent} with task hint: {task_hint}")
 
     # Spawn the next process
     custom_agent = agent_manager.get_agent(target_agent)
@@ -87,15 +97,12 @@ async def proceed_with_plan(pid: str):
     
     new_proc = AIProcess(
         agent_name=target_agent,
-        task_description=f"Task from Architect: {task_hint}\n\nContext from Plan: {last_msg[:500]}...",
+        task_description=f"Automated Proceed from Architect.\n\nTask: {task_hint}\n\nDocumentation has been saved to '{ws_dir}'. Read PROJECT_PLAN.md to start.",
         limits=ResourceLimits(allowed_tools=resolved_tools),
-        working_directory=custom_agent.working_directory
+        working_directory=custom_agent.working_directory or ws_dir
     )
     
-    # Inject history so the sub-agent knows what happened
     new_proc.memory_context["initial_history"] = proc.history
-    
-    # LLM Settings from parent if available
     new_proc.memory_context["llm_provider"] = proc.memory_context.get("llm_provider")
     new_proc.memory_context["llm_model"] = proc.memory_context.get("llm_model")
     
