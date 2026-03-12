@@ -13,6 +13,21 @@ logger = get_kernel_logger("QLX-TC.Orchestration")
 
 router = APIRouter(prefix="/api/processes", tags=["orchestration"])
 
+def get_project_snapshot(startpath: str) -> str:
+    """Generates a recursive string representation of the project structure."""
+    snapshot = []
+    for root, dirs, files in os.walk(startpath):
+        # Skip common folders to keep context small
+        dirs[:] = [d for d in dirs if d not in ['.git', '__pycache__', 'node_modules', 'venv', '.agents']]
+        
+        level = root.replace(startpath, '').count(os.sep)
+        indent = ' ' * 4 * level
+        snapshot.append(f"{indent}{os.path.basename(root)}/")
+        subindent = ' ' * 4 * (level + 1)
+        for f in files:
+            snapshot.append(f"{subindent}{f}")
+    return "\n".join(snapshot)
+
 @router.post("/{pid}/proceed")
 async def proceed_with_plan(pid: str):
     """
@@ -153,12 +168,17 @@ async def proceed_with_plan(pid: str):
 
     resolved_tools = custom_agent.static_tools + [f"mcp:{s}" for s in custom_agent.mcp_servers]
     
+    project_snapshot = get_project_snapshot(ws_dir)
+
     new_proc = AIProcess(
         agent_name=target_agent,
         task_description=f"""### ENVIRONMENT METADATA (MANDATORY)
 PROJECT_DIR: '{ws_dir}'
 PROJECT_NAME: '{normalized_name if project_name_match else "default_project"}'
 CURRENT_WD: '{ws_dir}'
+
+### PROJECT SNAPSHOT (CURRENT FILES)
+{project_snapshot}
 
 ### ASSIGNMENT
 Task: {task_hint}
