@@ -1,1 +1,0 @@
-#### JavaScript Structure (game.js)

@@ -2,6 +2,9 @@ from typing import List, Dict, Callable, Any, Type
 from langchain_core.tools import StructuredTool
 from pydantic import BaseModel, Field, create_model
 import asyncio
+from backend.core.logger import get_kernel_logger
+
+logger = get_kernel_logger("QLX-TC.MCPRegistry")
 
 
 class MCPTool:
