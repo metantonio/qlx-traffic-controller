@@ -74,6 +74,10 @@ async def proceed_with_plan(pid: str):
     ws_dir = os.path.abspath(ws_dir)
     os.makedirs(ws_dir, exist_ok=True)
     
+    # Windows IO overhead / Race condition protection
+    import time
+    time.sleep(0.1)
+
     if not os.path.exists(ws_dir):
         logger.error(f"CRITICAL: Failed to initialize workspace at {ws_dir}")
         raise HTTPException(status_code=500, detail=f"Failed to create workspace directory at {ws_dir}")
