@@ -100,64 +100,72 @@ async def proceed_with_plan(pid: str):
 
     logger.info(f"Workspace verified at {ws_dir}")
     
-    plan_content = ""
-    arch_content = ""
-    
+    def clean_block(text: str) -> str:
+        if not text: return ""
+        # Remove JSON tool call blocks
+        text = re.sub(r"\{[\s\n]*\"name\"[\s\n]*:[\s\n]*\"[^\"]+\"[\s\n\*,]*\"arguments\"[\s\n\*:].*?\}", "", text, flags=re.DOTALL)
+        text = re.sub(r"```json.*?```", "", text, flags=re.DOTALL)
+        # Remove empty markdown headers or trailing noise
+        text = re.sub(r"^(?:#|\*\*)+\s*$", "", text, flags=re.MULTILINE)
+        return text.strip()
+
     # 1. Source of Truth: Look for files on disk FIRST
     plan_path = os.path.join(ws_dir, "PROJECT_PLAN.md")
     arch_path = os.path.join(ws_dir, "ARCHITECTURE.md")
     
+    disk_plan = ""
+    disk_arch = ""
+    
     if os.path.exists(plan_path):
         with open(plan_path, 'r', encoding='utf-8') as f:
-            plan_content = f.read().strip()
-            logger.info(f"Loaded PROJECT_PLAN from disk at {plan_path}")
+            disk_plan = clean_block(f.read())
+            if disk_plan: 
+                plan_content = disk_plan
+                logger.info(f"Loaded valid PROJECT_PLAN from disk at {plan_path}")
             
     if os.path.exists(arch_path):
         with open(arch_path, 'r', encoding='utf-8') as f:
-            arch_content = f.read().strip()
-            logger.info(f"Loaded ARCHITECTURE from disk at {arch_path}")
+            disk_arch = clean_block(f.read())
+            if disk_arch:
+                arch_content = disk_arch
+                logger.info(f"Loaded valid ARCHITECTURE from disk at {arch_path}")
 
-    # 2. Fallback: Parse from message content if disk files are missing or empty
+    # 2. Fallback: Parse from message content if disk files are missing or resulted in empty after cleanup
     if not plan_content or not arch_content:
         blocks = re.findall(r"```(?:markdown)?\n(.*?)\n```", last_msg, re.DOTALL)
         if blocks:
             for block in blocks:
-                # FILTER: Skip blocks that look like JSON tool calls
-                if block.strip().startswith("{") and '"name":' in block:
-                    continue
+                cleaned_block_content = clean_block(block)
+                if not cleaned_block_content: continue
                     
                 lower_block = block.lower()
                 if not plan_content and ("project plan" in lower_block or "step 1" in lower_block):
-                    plan_content = block.strip()
+                    plan_content = cleaned_block_content
                 elif not arch_content and ("architecture" in lower_block or "component" in lower_block):
-                    arch_content = block.strip()
+                    arch_content = cleaned_block_content
                     
             # Final raw fallback (preserving existing logic)
             if not plan_content and blocks:
-                # Only use as plan if it doesn't look like a tool call
-                if not (blocks[0].strip().startswith("{") and '"name":' in blocks[0]):
-                    plan_content = blocks[0].strip()
+                plan_content = clean_block(blocks[0])
         
         # Header-based extraction if markdown blocks failed
         if not plan_content:
             plan_match = re.search(r"(?is)(?:#|\*\*)\s*(?:Step\s+1|Plan|Implementation|Requirements|Developing).*?(?=(?:#|\*\*)\s*Architecture|(?:\n\s*Conclusion)|$)", last_msg)
             if plan_match:
-                plan_content = plan_match.group(0).strip()
+                plan_content = clean_block(plan_match.group(0))
                 
         if not arch_content:
             arch_match = re.search(r"(?is)(?:#|\*\*)\s*(?:Architecture|Structure).*?(?=(?:\n\s*Conclusion)|$)", last_msg)
             if arch_match:
-                arch_content = arch_match.group(0).strip()
+                arch_content = clean_block(arch_match.group(0))
 
     # 3. Final Fallback: if STILL empty, use the whole message as plan base
     if not plan_content:
-        plan_content = last_msg.strip()
+        plan_content = clean_block(last_msg)
     
-    # 4. FINAL CLEANUP: Remove any JSON tool-call-like blocks from the final plan
-    # This prevents specialists from seeing Architect tool calls as their "Project Plan"
-    plan_content = re.sub(r"\{[\s\n]*\"name\"[\s\n]*:[\s\n]*\"[^\"]+\"[\s\n\*,]*\"arguments\"[\s\n\*:].*?\}", "", plan_content, flags=re.DOTALL)
-    plan_content = re.sub(r"```json.*?```", "", plan_content, flags=re.DOTALL)
-    plan_content = plan_content.strip()
+    if not arch_content:
+        # If no architecture was found, we don't want to leave it empty if there's info in the plan
+        arch_content = "See PROJECT_PLAN.md for structure."
 
     # Save files directly to avoid empty files
     if plan_content and len(plan_content) > 10: # Only save if we found actual content
