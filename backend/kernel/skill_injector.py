@@ -68,8 +68,10 @@ def inject_skills_into_prompt(base_prompt: str, working_directory: str = None, a
                                     logger.error(f"Failed to read skill file {file_path}: {e}")
                 else:
                     logger.warning(f"Skill '{skill_name}' assigned to agent but not found at {skill_path}")
-        else:
-            # LEGACY/BROWSE MODE: No skills list provided, scan everything
+        elif assigned_skills is None:
+            # LEGACY/BROWSE MODE: Scan all .md files in the skills_root
+            # CAUTION: This can inject too much context. Only use for debug/legacy.
+            logger.warning(f"Agent '{agent_id}' running in LEGACY skill mode. Injecting everything from {skills_root}")
             for root, _, files in os.walk(skills_root):
                 for file in files:
                     if file.endswith(".md"):

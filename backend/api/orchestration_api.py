@@ -66,17 +66,19 @@ async def proceed_with_plan(pid: str):
         project_folder = os.path.join("workspace", normalized_name)
     
     # FAIL-SAFE ws_dir logic
-    # If we are an architect but couldn't detect a project, do NOT use proc.working_directory (which is the agent's home)
-    # Use "workspace/default_project" so specialist work doesn't pollute the architect's home.
     ws_dir = project_folder
     if not ws_dir:
-        if proc.agent_name == "software_architect":
-             ws_dir = "workspace/default_project"
-        else:
-             ws_dir = proc.working_directory or "workspace"
+        ws_dir = "workspace/default_project"
              
+    # Ensure it's absolute relative to the CURRENT WORKING DIRECTORY of the backend
     ws_dir = os.path.abspath(ws_dir)
     os.makedirs(ws_dir, exist_ok=True)
+    
+    if not os.path.exists(ws_dir):
+        logger.error(f"CRITICAL: Failed to initialize workspace at {ws_dir}")
+        raise HTTPException(status_code=500, detail=f"Failed to create workspace directory at {ws_dir}")
+
+    logger.info(f"Workspace verified at {ws_dir}")
     
     plan_content = ""
     arch_content = ""
