@@ -16,6 +16,7 @@ async def delegate_to_agent(agent_id: str, task: str) -> str:
     pid = current_pid.get()
     logger.info(f"Agent {pid} delegating to {agent_id}: {task}")
     
+    agent = agent_manager.get_agent(agent_id)
     if not agent and agent_id.lower() != "kernel":
         available = agent_manager.list_agents()
         ids = [a.id for a in available]

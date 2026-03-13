@@ -1,26 +1,33 @@
-### Architecture Overview
-The game architecture will be based on Clean Architecture and Domain-Driven Design principles to ensure separation of concerns and maintainability.
+# Architecture
 
-### Layers
-1. **Presentation Layer (Frontend)**
-   - Handles user interface and user input.
-2. **Application Layer (Backend)**
-   - Manages business logic and interaction with the presentation layer.
-3. **Infrastructure Layer (Backend)**
-   - Handles database and other external services.
+## Overview
+The architecture of the Space Invaders React Game will follow the Clean Architecture and Domain Driven Design principles to ensure separation of concerns and maintainability.
 
-### Components
-1. **PlayerShip**
-   - Part of the Presentation Layer.
-2. **EnemyShips**
-   - Part of the Presentation Layer.
-3. **Bullet**
-   - Part of the Presentation Layer.
-4. **GameLogic**
-   - Part of the Application Layer.
-5. **Database**
-   - Part of the Infrastructure Layer.
+## Bounded Contexts
+- **GameContext**: Contains all domain logic related to the game, including player, invaders, and bullets.
+- **UIContext**: Contains components and logic related to the user interface.
 
-### Dependencies
-- Presentation Layer -> Application Layer
-- Application Layer -> Infrastructure Layer
+## Layered Architecture
+
+### 1. **Entity Layer**
+- Contains domain entities, value objects, and aggregates.
+
+### 2. **Use Case Layer**
+- Contains use cases that represent the domain logic.
+
+### 3. **Entity Service Layer**
+- Contains services that interact with the database or other infrastructure.
+
+### 4. **UI Layer**
+- Contains React components and their logic.
+
+### 5. **Framework Integration Layer**
+- Contains adapters that integrate with frameworks and libraries, such as React and Axios.
+
+## Infrastructure
+- **Database**: PostgreSQL for storing game data.
+- **APIs**: Axios for making HTTP requests.
+
+## Development Approach
+- **Library-First Approach**: Use existing libraries instead of writing custom code where possible.
+- **Clean Architecture & DDD Principles**: Keep business logic separate from UI components and infrastructure concerns.
