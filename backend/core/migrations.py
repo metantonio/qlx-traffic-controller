@@ -60,4 +60,28 @@ def apply_migrations(engine: Engine):
         set_version(engine, 3)
         current_version = 3
 
+    # Migration 4: Add mission anchoring and metrics columns to processes
+    if current_version < 4:
+        logger.info("Migrating to version 4 (Add anchoring and metrics to processes)")
+        with engine.connect() as conn:
+            columns_to_add = [
+                ("proposed_plan", "JSON"),
+                ("has_proceeded", "INTEGER DEFAULT 0"),
+                ("resource_limits", "JSON"),
+                ("memory_context", "JSON"),
+                ("original_request", "TEXT"),
+                ("tokens_used", "INTEGER DEFAULT 0"),
+                ("tools_called", "INTEGER DEFAULT 0"),
+                ("start_time", "FLOAT"),
+                ("end_time", "FLOAT")
+            ]
+            for col_name, col_type in columns_to_add:
+                try:
+                    conn.execute(text(f"ALTER TABLE processes ADD COLUMN {col_name} {col_type}"))
+                    conn.commit()
+                except Exception as e:
+                    logger.warning(f"Note: Could not add {col_name} column (it may already exist): {e}")
+        set_version(engine, 4)
+        current_version = 4
+
     logger.info(f"Database schema is up to date at version {current_version}")
