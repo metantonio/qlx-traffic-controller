@@ -15,7 +15,8 @@ def detect_placeholder_path(path: str) -> bool:
     placeholders = [
         "/path/to/", "path/to/your", "<project_name>", "[your-app]", 
         "{project_name}", "your-username", "example.com", "YOUR_API_KEY",
-        "react-project", "my-app", "myapp", "[agent_workspace]"
+        "react-project", "my-app", "myapp", "[agent_workspace]",
+        "home/user/project", "/home/user"
     ]
     path_low = path.lower()
     return any(p.lower() in path_low for p in placeholders)
@@ -29,17 +30,18 @@ def sanitize_agent_path(path: str) -> str:
     if not path:
         return path
 
-    # Intercept literal placeholders
+    # 1. Intercept literal placeholders
     if "PROJECT_DIR" in path:
-        # If they use just 'PROJECT_DIR' or 'PROJECT_DIR/file'
-        # we treat it as relative to the current working directory ('.')
         path = path.replace("PROJECT_DIR/", "").replace("PROJECT_DIR", ".")
+    
+    # 2. Hallucination Strip: Remove /home/user/project/ or similar prefixes
+    # These often leak from LLMs trained on generic Linux environments.
+    path = re.sub(r'^(?:/)?home/user/(?:project/)?', '', path, flags=re.IGNORECASE)
         
-    # 1. Strip drive letters (e.g., C:/)
-    import re
+    # 3. Strip drive letters (e.g., C:/)
     path = re.sub(r'^[a-zA-Z]:[/\\]+', '', path)
     
-    # 2. Strip leading slashes and backslashes
+    # 4. Strip leading slashes and backslashes
     path = path.lstrip('/\\')
     
     return path
