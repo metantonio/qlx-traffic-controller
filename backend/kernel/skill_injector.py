@@ -98,5 +98,11 @@ def inject_skills_into_prompt(base_prompt: str, working_directory: str = None, a
         injected_prompt += "You MUST follow these rules and guidelines strictly during your execution:\n"
         injected_prompt += "".join(skills_content)
         logger.info(f"Injected {len(skills_content)} skill/rule files into prompt from {resolved_pwd} (Skills: {assigned_skills})")
+    
+    # Global Literal Guard: Replace the placeholder 'PROJECT_DIR' with the actual resolved path
+    # This prevents agents from literally typing 'PROJECT_DIR' in their tool calls when they copy-paste from prompts.
+    if "PROJECT_DIR" in injected_prompt:
+        injected_prompt = injected_prompt.replace("PROJECT_DIR", resolved_pwd)
+        logger.info(f"Globally replaced PROJECT_DIR literals with {resolved_pwd}")
         
     return injected_prompt

@@ -24,9 +24,17 @@ def sanitize_agent_path(path: str) -> str:
     """
     Strips leading slashes, backslashes, and drive letters to prevent os.path.join 
     from escaping the sandbox.
-    Example: '/workspace/foo' -> 'workspace/foo'
-    Example: 'C:/workspace/foo' -> 'workspace/foo'
+    Also handles the literal 'PROJECT_DIR' placeholder if it leaks from prompts.
     """
+    if not path:
+        return path
+
+    # Intercept literal placeholders
+    if "PROJECT_DIR" in path:
+        # If they use just 'PROJECT_DIR' or 'PROJECT_DIR/file'
+        # we treat it as relative to the current working directory ('.')
+        path = path.replace("PROJECT_DIR/", "").replace("PROJECT_DIR", ".")
+        
     # 1. Strip drive letters (e.g., C:/)
     import re
     path = re.sub(r'^[a-zA-Z]:[/\\]+', '', path)
