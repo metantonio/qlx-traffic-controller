@@ -1,11 +1,12 @@
-import os
-import json
-import logging
-import asyncio
 import sys
+import asyncio
 
 if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+
+import os
+import json
+import logging
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -87,10 +88,6 @@ Always be concise and professional. You act as the brain of the operation."""
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Set loop policy again within the worker thread
-    if sys.platform == 'win32':
-        asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
-    
     logger.info("Kernel starting up...")
     # 1. Initialize Database and apply migrations
     init_db()
