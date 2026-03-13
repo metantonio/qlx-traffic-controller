@@ -143,9 +143,7 @@
                 "list_directory",
                 "shell_execute",
                 "filesystem_list",
-                "filesystem_append",
-                "list_available_agents",
-                "delegate_to_agent"
+                "filesystem_append"
             ],
             "provider": "ollama",
             "model": "qwen2.5-coder:7b",
@@ -168,8 +166,7 @@
                 "list_directory",
                 "shell_execute",
                 "filesystem_append",
-                "filesystem_list",
-                "delegate_to_agent"
+                "filesystem_list"
             ],
             "provider": "ollama",
             "model": "qwen2.5-coder:7b",

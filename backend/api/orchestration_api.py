@@ -106,9 +106,15 @@ async def proceed_with_plan(pid: str):
     
     def clean_block(text: str) -> str:
         if not text: return ""
-        # Remove JSON tool call blocks
-        text = re.sub(r"\{[\s\n]*\"name\"[\s\n]*:[\s\n]*\"[^\"]+\"[\s\n\*,]*\"arguments\"[\s\n\*:].*?\}", "", text, flags=re.DOTALL)
-        text = re.sub(r"```json.*?```", "", text, flags=re.DOTALL)
+        # Remove JSON tool call blocks ONLY if there is other substantial markdown content
+        # or if the block is explicitly marked as a tool call.
+        json_clean = re.sub(r"\{[\s\n]*\"name\"[\s\n]*:[\s\n]*\"[^\"]+\"[\s\n\*,]*\"arguments\"[\s\n\*:].*?\}", "", text, flags=re.DOTALL)
+        if len(json_clean.strip()) < 20 and "{" in text:
+            # If cleaning leaves it empty, it might be that the content WAS the JSON
+            # In that case, we don't clean it here, we let the extraction logic handle it.
+            return text.strip()
+            
+        text = re.sub(r"```json.*?```", "", json_clean, flags=re.DOTALL)
         # Remove empty markdown headers or trailing noise
         text = re.sub(r"^(?:#|\*\*)+\s*$", "", text, flags=re.MULTILINE)
         return text.strip()
@@ -165,6 +171,23 @@ async def proceed_with_plan(pid: str):
             arch_match = re.search(r"(?is)(?:#|\*\*)\s*(?:Architecture|Structure).*?(?=(?:\n\s*Conclusion)|$)", last_msg)
             if arch_match:
                 arch_content = clean_block(arch_match.group(0))
+
+    # 2.5 TOOL-CALL RECOVERY: If plan is still too sparse, search history for filesystem_write calls
+    if len(plan_content) < 50 or len(arch_content) < 50:
+        logger.info("Plan/Arch content too sparse. Checking tool calls in history for recovery...")
+        for msg in reversed(proc.history):
+            if msg.get("role") == "assistant" and msg.get("tool_calls"):
+                for tc in msg["tool_calls"]:
+                    if tc.get("name") == "filesystem_write":
+                        args = tc.get("args") or tc.get("arguments") or {}
+                        fpath = args.get("filepath", "")
+                        content = args.get("content", "")
+                        if "PROJECT_PLAN.md" in fpath and len(content) > len(plan_content):
+                            plan_content = content
+                            logger.info("Recovered PROJECT_PLAN.md from filesystem_write tool call.")
+                        elif "ARCHITECTURE.md" in fpath and len(content) > len(arch_content):
+                            arch_content = content
+                            logger.info("Recovered ARCHITECTURE.md from filesystem_write tool call.")
 
     # 3. Final Fallback: if STILL empty, use the whole message as plan base
     if not plan_content:
@@ -250,8 +273,16 @@ PROJECT_PLAN:
 ARCHITECTURE:
 {arch_content}
 
-### ASSIGNMENT
-Task: {task_hint}
+### ASSIGNMENT (ISOLATED TASK)
+**YOUR CURRENT TASK IS**: {task_hint}
+
+**INSTRUCTIONS**:
+1. READ the `PROJECT_PLAN.md` and `ARCHITECTURE.md` below to understand the context.
+2. PERFORM ONLY the task described in the **ASSIGNMENT** section.
+3. IGNORE any best practices examples that are not part of your current file set. 
+4. DO NOT attempt to "complete" the task until you have written functional code files.
+5. IF the supervisor rejects your task, you MUST read the directory and try again.
+
 (Requirement: Use your tools to implement this specific task. Look at the existing files in SNAPSHOT before creating new ones.)
 """,
         limits=ResourceLimits(allowed_tools=resolved_tools),

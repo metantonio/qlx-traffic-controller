@@ -95,7 +95,9 @@ def inject_skills_into_prompt(base_prompt: str, working_directory: str = None, a
              
     if skills_content:
         injected_prompt += "\n\n=== AUTOMATICALLY INJECTED WORKSPACE SKILLS & RULES ===\n"
-        injected_prompt += "You MUST follow these rules and guidelines strictly during your execution:\n"
+        injected_prompt += "IMPORTANT: The following information is REFERENCE MATERIAL only. It describes best practices, patterns, and guidelines.\n"
+        injected_prompt += "It is NOT your current task assignment. Your specific task is defined in the ASSIGNMENT section below.\n"
+        injected_prompt += "Apply these patterns to your work strictly:\n"
         injected_prompt += "".join(skills_content)
         logger.info(f"Injected {len(skills_content)} skill/rule files into prompt from {resolved_pwd} (Skills: {assigned_skills})")
     
