@@ -57,12 +57,19 @@ async def proceed_with_plan(pid: str):
         project_name_match = re.search(r"(?i)developing\s+([a-zA-Z0-9_\-\s]+)\s+(?:game|app|system|project|software)", last_msg)
     
     # Fallback 2: Check history for successful list_directory calls if naming fails
-    audited_path = None
     if not project_name_match:
         for msg in reversed(proc.history):
-            if msg.get("role") == "tool" and "name" in msg and msg["name"] == "list_directory":
-                # If we see a successful list_directory, we might be able to infer the folder
-                pass # Logic could be added here to extract the CWD or folder
+            if msg.get("role") == "assistant" and msg.get("tool_calls"):
+                for tc in msg["tool_calls"]:
+                    # Look for list_directory or filesystem_read to the workspace
+                    if tc.get("name") in ["list_directory", "filesystem_list"]:
+                        args = tc.get("args") or tc.get("arguments") or {}
+                        path = args.get("path") or args.get("directory_path")
+                        if path and "workspace" in path.lower():
+                            audited_path = path
+                            logger.info(f"Recovered audited path from history: {audited_path}")
+                            break
+                if audited_path: break
         
     project_folder = None
     if project_name_match:
@@ -73,6 +80,9 @@ async def proceed_with_plan(pid: str):
     
     # FAIL-SAFE ws_dir logic
     ws_dir = project_folder
+    if not ws_dir and audited_path:
+        ws_dir = audited_path
+        
     if not ws_dir:
         ws_dir = "workspace/default_project"
              
@@ -142,6 +152,12 @@ async def proceed_with_plan(pid: str):
     # 3. Final Fallback: if STILL empty, use the whole message as plan base
     if not plan_content:
         plan_content = last_msg.strip()
+    
+    # 4. FINAL CLEANUP: Remove any JSON tool-call-like blocks from the final plan
+    # This prevents specialists from seeing Architect tool calls as their "Project Plan"
+    plan_content = re.sub(r"\{[\s\n]*\"name\"[\s\n]*:[\s\n]*\"[^\"]+\"[\s\n\*,]*\"arguments\"[\s\n\*:].*?\}", "", plan_content, flags=re.DOTALL)
+    plan_content = re.sub(r"```json.*?```", "", plan_content, flags=re.DOTALL)
+    plan_content = plan_content.strip()
 
     # Save files directly to avoid empty files
     if plan_content and len(plan_content) > 10: # Only save if we found actual content
