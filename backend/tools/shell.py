@@ -1,4 +1,6 @@
 import asyncio
+from typing import Tuple, Dict
+import re
 import sys
 from backend.tools.mcp_registry import MCPTool, system_registry
 from backend.core.security import SafetyValidator
@@ -33,7 +35,59 @@ def needs_approval(command: str) -> bool:
                 
     return False
 
-from backend.tools.filesystem import detect_placeholder_path, get_placeholder_error
+from backend.tools.filesystem import detect_placeholder_path, get_placeholder_error, is_file_forbidden
+
+def filter_shell_command(command: str) -> Tuple[bool, str]:
+    """Provides shell-level filtering for sensitive files and operations."""
+    # 1. Block access to forbidden files via shell (cat, tail, nano, echo >>)
+    low_cmd = command.lower()
+    from backend.tools.filesystem import FORBIDDEN_FILENAMES
+    for forbidden in FORBIDDEN_FILENAMES:
+        if forbidden in low_cmd:
+            # We check if it looks like a file path or direct mention
+            # Using regex or simple check for now
+            if re.search(fr"\b{re.escape(forbidden)}\b", low_cmd):
+                return False, f"SECURITY ERROR: Interactive access to '{forbidden}' is forbidden via shell."
+
+    # 2. Block environment manipulation
+    forbidden_tokens = {"export", "set", "env", "unset", "alias", "source", "."}
+    try:
+        tokens = shlex.split(command)
+        if tokens and tokens[0].lower() in forbidden_tokens:
+            return False, f"SECURITY ERROR: Environment manipulation command '{tokens[0]}' is forbidden."
+    except Exception:
+        pass
+
+    # 3. Block nested shell execution/eval
+    if "eval" in low_cmd or "exec" in low_cmd:
+        return False, "SECURITY ERROR: Eval/Exec patterns are forbidden."
+
+    return True, ""
+
+def get_safe_env() -> Dict[str, str]:
+    """Returns a scrubbed environment for sub-processes."""
+    import os
+    # whitelist approach is safer
+    safe_keys = {
+        "PATH", "SystemRoot", "SystemDrive", "TEMP", "TMP", 
+        "USERPROFILE", "USERNAME", "COMPUTERNAME", "LANG", "LC_ALL"
+    }
+    env = {k: v for k, v in os.environ.items() if k in safe_keys}
+    
+    # 2. SANITIZE PATH: Remove '.' and relative paths to prevent binary squatting
+    if "PATH" in env:
+        path_sep = ";" if os.name == "nt" else ":"
+        paths = env["PATH"].split(path_sep)
+        # Remove empty strings, '.', and any path that doesn't start with a drive letter or /
+        safe_paths = [p for p in paths if p and p != "." and os.path.isabs(p)]
+        env["PATH"] = path_sep.join(safe_paths)
+
+    # 3. Strictly remove dangerous vars
+    blacklisted_vars = {"NODE_OPTIONS", "PYTHONPATH", "PYTHONHOME", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"}
+    for var in blacklisted_vars:
+        env.pop(var, None)
+        
+    return env
 
 async def execute_shell_command(command: str) -> dict:
     """Executes a shell command after validating it securely."""
@@ -62,9 +116,12 @@ async def execute_shell_command(command: str) -> dict:
         }
     
     is_safe, message = validator.validate_command(command)
-    
     if not is_safe:
         return {"error": "SECURITY BLOCK", "reason": message}
+    
+    is_shell_safe, shell_error = filter_shell_command(command)
+    if not is_shell_safe:
+        return {"error": "SECURITY BLOCK", "reason": shell_error}
         
     cwd = None
     try:
@@ -93,7 +150,8 @@ async def execute_shell_command(command: str) -> dict:
         command,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
-        cwd=cwd
+        cwd=cwd,
+        env=get_safe_env()
     )
     
     stdout, stderr = await process.communicate()

@@ -1,40 +1,26 @@
-# ARCHITECTURE.md
+### Architecture Overview
+The game architecture will be based on Clean Architecture and Domain-Driven Design principles to ensure separation of concerns and maintainability.
 
-## Architecture Overview
-
-### Clean Architecture
-
-- **Use Cases**: Separate business logic from infrastructure.
-- **Entities**: Represent the core concepts of the game (PlayerShip, EnemyShip, Bullet).
-- **Repository**: Abstract data access layer.
-- **Infrastructure**: External services and utilities (e.g., collision detection, scoring).
+### Layers
+1. **Presentation Layer (Frontend)**
+   - Handles user interface and user input.
+2. **Application Layer (Backend)**
+   - Manages business logic and interaction with the presentation layer.
+3. **Infrastructure Layer (Backend)**
+   - Handles database and other external services.
 
 ### Components
+1. **PlayerShip**
+   - Part of the Presentation Layer.
+2. **EnemyShips**
+   - Part of the Presentation Layer.
+3. **Bullet**
+   - Part of the Presentation Layer.
+4. **GameLogic**
+   - Part of the Application Layer.
+5. **Database**
+   - Part of the Infrastructure Layer.
 
-1. **PlayerShip Component**
-   - Responsibilities: Handle player movement and shooting.
-   - Dependencies: None.
-
-2. **EnemyShip Component**
-   - Responsibilities: Handle enemy movement and shooting.
-   - Dependencies: None.
-
-3. **Bullet Component**
-   - Responsibilities: Handle bullet movement.
-   - Dependencies: None.
-
-4. **GameLoop Component**
-   - Responsibilities: Manage game state and update logic.
-   - Dependencies: PlayerShip, EnemyShip, Bullet.
-
-5. **Collision Detection Component**
-   - Responsibilities: Detect collisions between entities.
-   - Dependencies: PlayerShip, EnemyShip, Bullet.
-
-6. **Scoring and Lives Component**
-   - Responsibilities: Manage scoring and lives.
-   - Dependencies: None.
-
----
-
-Please review the above project plan and architecture. If approved, I will proceed with the next steps.
+### Dependencies
+- Presentation Layer -> Application Layer
+- Application Layer -> Infrastructure Layer

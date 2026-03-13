@@ -20,6 +20,29 @@ def detect_placeholder_path(path: str) -> bool:
     path_low = path.lower()
     return any(p.lower() in path_low for p in placeholders)
 
+# --- SECURITY BLOCKLIST ---
+FORBIDDEN_FILENAMES = {
+    ".env", ".bashrc", ".profile", ".bash_profile", ".npmrc", 
+    ".zshrc", ".zprofile", ".netrc", ".ssh", "id_rsa", "config"
+}
+
+def is_file_forbidden(path: str) -> bool:
+    """Checks if the filename or any part of the path is in the forbidden list."""
+    filename = os.path.basename(path).lower()
+    if filename in FORBIDDEN_FILENAMES:
+        return True
+    
+    # Also check if it's a hidden sensitive directory like .ssh
+    parts = path.replace('\\', '/').split('/')
+    for part in parts:
+        if part.lower() in FORBIDDEN_FILENAMES:
+            return True
+            
+    return False
+
+def get_forbidden_error(path: str) -> str:
+    return f"SECURITY ERROR: Access to '{os.path.basename(path)}' is strictly FORBIDDEN by system kernel policy. This incident has been logged."
+
 def get_placeholder_error(path: str) -> str:
     """Returns a corrective error message for hallucinated paths."""
     pid = "unknown"
@@ -135,6 +158,10 @@ async def filesystem_read(path: str) -> str:
     """Reads a file and returns its content. Supports global fallback to 'workspace'."""
     if detect_placeholder_path(path):
         return get_placeholder_error(path)
+    
+    if is_file_forbidden(path):
+        logger.warning(f"SECURITY BLOCK: Agent attempted to read forbidden file: {path}")
+        return get_forbidden_error(path)
         
     resolved_path = _resolve_path(path)
     
@@ -255,6 +282,10 @@ async def append_to_file(filepath: str, content: str) -> str:
     """Appends text to a file safely. Creates the file if it doesn't exist."""
     if detect_placeholder_path(filepath):
         return get_placeholder_error(filepath)
+    
+    if is_file_forbidden(filepath):
+        logger.warning(f"SECURITY BLOCK: Agent attempted to append to forbidden file: {filepath}")
+        return get_forbidden_error(filepath)
         
     filepath = _resolve_path(filepath)
     print(f"Appending to {filepath}")
@@ -276,6 +307,10 @@ async def write_file_safe(filepath: str, content: str) -> str:
     """Writes/Overwrites text content to a specified file safely. Creates parent directories if needed."""
     if detect_placeholder_path(filepath):
         return get_placeholder_error(filepath)
+        
+    if is_file_forbidden(filepath):
+        logger.warning(f"SECURITY BLOCK: Agent attempted to write forbidden file: {filepath}")
+        return get_forbidden_error(filepath)
         
     filepath = _resolve_path(filepath)
     print(f"Writing to {filepath}")
