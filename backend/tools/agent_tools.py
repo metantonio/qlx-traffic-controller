@@ -16,9 +16,10 @@ async def delegate_to_agent(agent_id: str, task: str) -> str:
     pid = current_pid.get()
     logger.info(f"Agent {pid} delegating to {agent_id}: {task}")
     
-    agent = agent_manager.get_agent(agent_id)
     if not agent and agent_id.lower() != "kernel":
-        return f"Error: Agent or Skill '{agent_id}' not found. Use list_available_agents to see what exists."
+        available = agent_manager.list_agents()
+        ids = [a.id for a in available]
+        return f"Error: Agent or Skill '{agent_id}' not found. Valid IDs: {', '.join(ids)}. STOP hallucinating and use one of these."
     
     # Construction of the new process
     # If it's a custom agent, we resolve its tools
