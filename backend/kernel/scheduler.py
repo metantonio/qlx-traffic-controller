@@ -179,6 +179,7 @@ class TaskScheduler:
                     }
                     logger.info(f"Matched enabled servers for agent: {list(enabled_for_agent.keys())}")
                     
+                    failed_mcp_servers = []
                     if enabled_for_agent:
                         from langchain_mcp_adapters.client import MultiServerMCPClient
                         def fix_command(cmd):
@@ -202,10 +203,21 @@ class TaskScheduler:
                                 all_loaded_tools.extend(server_tools)
                                 logger.info(f"Success: Loaded {len(server_tools)} tools from {s_id}")
                             except Exception as sub_e:
-                                logger.error(f"Failed to load tools specifically from MCP server {s_id}: {sub_e}")
+                                error_msg = str(sub_e)
+                                logger.error(f"Failed to load tools specifically from MCP server {s_id}: {error_msg}")
+                                failed_mcp_servers.append(f"{s_id} (Error: {error_msg[:100]}...)")
                         
                         dynamic_mcp_tools = all_loaded_tools
                         logger.info(f"Process {process.pid} finally loaded {len(dynamic_mcp_tools)} dynamic tools total.")
+                        
+                        if failed_mcp_servers:
+                            degradation_alert = "\n\n### SYSTEM ALERT: TOOL DEGRADATION\n"
+                            degradation_alert += "The following MCP servers (and their tools) FAILED to load and are currently UNAVAILABLE:\n"
+                            for fail in failed_mcp_servers:
+                                degradation_alert += f"- {fail}\n"
+                            degradation_alert += "Do not attempt to use tools from these servers. If the user task requires them, explain the failure and propose an alternative or delegate if possible.\n"
+                            system_prompt = degradation_alert + system_prompt
+
                 except Exception as e:
                     logger.warning(f"Could not load dynamic MCP tools for agent: {e}")
             

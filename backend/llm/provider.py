@@ -3,6 +3,7 @@ from langchain_ollama import ChatOllama
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, ToolMessage
 from langchain_core.tools import BaseTool
 from backend.core.config import settings
+from backend.kernel.lock_manager import system_lock_manager
 import logging
 import json
 import re
@@ -224,150 +225,155 @@ class LLMProvider:
         Unified agent loop that works with any LangChain BaseTool objects.
         """
         from backend.kernel.memory_bus import system_memory_bus, MessagePayload
-        
         from backend.kernel.process import system_process_table, ProcessState
         
-        tool_map = {t.name: t for t in tools}
-        tool_names = set(tool_map.keys())
-        
-        # Anthropic/Google handle tool binding slightly differently but bind_tools is standard in LangChain
-        llm_with_tools = self._client.bind_tools(tools) if tools else self._client
-        
-        if tools:
-            tool_desc = "\n".join([f"- {t.name}: {t.description}" for t in tools])
-            capability_block = (
-                f"You have access to the following real system tools:\n{tool_desc}\n\n"
-                "USE A TOOL when the task requires filesystem or shell interaction. \n"
-                "Do not say you cannot do something if a tool can help."
-            )
-        else:
-            capability_block = "NO TOOLS ARE CURRENTLY AUTHORIZED for this session."
+        proc = system_process_table.get(source_pid)
+        if proc and proc.working_directory:
+            await system_lock_manager.acquire(source_pid, proc.working_directory)
             
-        full_system = f"{system_prompt}\n\n{capability_block}"
-        
-        # Build message history
-        messages = []
-        if initial_history:
-            for m in initial_history:
-                role = m.get("role")
-                content = m.get("content")
-                if role == "system": continue 
-                elif role == "user": messages.append(HumanMessage(content=content))
-                elif role == "assistant": 
-                    tc = m.get("tool_calls")
-                    messages.append(AIMessage(content=content, tool_calls=tc or []))
-                elif role == "tool":
-                    messages.append(ToolMessage(content=content, tool_call_id=m.get("tool_call_id")))
+        try:
+            tool_map = {t.name: t for t in tools}
+            tool_names = set(tool_map.keys())
             
-            messages.insert(0, SystemMessage(content=full_system))
-            if user_prompt and (not messages or messages[-1].content != user_prompt):
-                messages.append(HumanMessage(content=user_prompt))
-        else:
-            messages = [
-                SystemMessage(content=full_system),
-                HumanMessage(content=user_prompt)
-            ]
-        
-        def _msgs_to_dicts(msgs):
-            dicts = []
-            for m in msgs:
-                if isinstance(m, SystemMessage): dicts.append({"role": "system", "content": m.content})
-                elif isinstance(m, HumanMessage): dicts.append({"role": "user", "content": m.content})
-                elif isinstance(m, AIMessage): 
-                    dicts.append({
-                        "role": "assistant", 
-                        "content": m.content,
-                        "tool_calls": getattr(m, "tool_calls", [])
-                    })
-                elif isinstance(m, ToolMessage): 
-                    dicts.append({
-                        "role": "tool", 
-                        "content": m.content, 
-                        "tool_call_id": m.tool_call_id
-                    })
-            return dicts
-
-        for iteration in range(10): # Increased iteration count for more complex tasks
-            response = await llm_with_tools.ainvoke(messages)
-            messages.append(response)
-            content = response.content or ""
+            # Anthropic/Google handle tool binding slightly differently but bind_tools is standard in LangChain
+            llm_with_tools = self._client.bind_tools(tools) if tools else self._client
             
-            if response.tool_calls:
-                for tc in response.tool_calls:
-                    tool_name = tc["name"]
-                    tool_args = tc.get("args", {})
-                    tool_call_id = tc["id"]
-                    
-                    logger.info(f"[{source_pid}][Native] Iter {iteration+1}: {tool_name}({tool_args})")
-                    
-                    await system_memory_bus.publish(MessagePayload(
-                        source_pid=source_pid, target_pid="BROADCAST",
-                        event_type="tool_requested", data={"tool": tool_name, "arguments": tool_args}
-                    ))
-                    
-                    if tool_name not in tool_map:
-                        result_str = f"Error: tool '{tool_name}' not found."
-                    else:
-                        token = current_pid.set(source_pid)
-                        try:
-                            result = await tool_map[tool_name].arun(tool_args)
-                            result_str = self._format_tool_result(result)
-                        except Exception as e:
-                            result_str = f"Tool error: {str(e)}"
-                        finally:
-                            current_pid.reset(token)
-                    
-                    messages.append(ToolMessage(content=result_str, tool_call_id=tool_call_id))
+            if tools:
+                tool_desc = "\n".join([f"- {t.name}: {t.description}" for t in tools])
+                capability_block = (
+                    f"You have access to the following real system tools:\n{tool_desc}\n\n"
+                    "USE A TOOL when the task requires filesystem or shell interaction. \n"
+                    "Do not say you cannot do something if a tool can help."
+                )
+            else:
+                capability_block = "NO TOOLS ARE CURRENTLY AUTHORIZED for this session."
                 
-                # Check for termination after native tool call execution
-                proc = system_process_table.get(source_pid)
-                if proc and proc.state in [ProcessState.COMPLETED, ProcessState.FAILED, ProcessState.TERMINATED]:
-                    logger.info(f"Agent execution loop terminating early for {source_pid} (native) due to state: {proc.state.value}")
-                    return content or "Task complete.", _msgs_to_dicts(messages)
-                    
-                continue
+            full_system = f"{system_prompt}\n\n{capability_block}"
             
-            # Text based fallback for Ollama
-            if self.provider == "ollama":
-                parsed_calls = self._parse_text_tool_calls(content, tool_names)
-                if parsed_calls:
-                    for tool_name, tool_args in parsed_calls:
-                        tool = tool_map[tool_name]
-                        kwargs = tool_args if isinstance(tool_args, dict) else {"input": str(tool_args)}
+            # Build message history
+            messages = []
+            if initial_history:
+                for m in initial_history:
+                    role = m.get("role")
+                    content = m.get("content")
+                    if role == "system": continue 
+                    elif role == "user": messages.append(HumanMessage(content=content))
+                    elif role == "assistant": 
+                        tc = m.get("tool_calls")
+                        messages.append(AIMessage(content=content, tool_calls=tc or []))
+                    elif role == "tool":
+                        messages.append(ToolMessage(content=content, tool_call_id=m.get("tool_call_id")))
+                
+                messages.insert(0, SystemMessage(content=full_system))
+                if user_prompt and (not messages or messages[-1].content != user_prompt):
+                    messages.append(HumanMessage(content=user_prompt))
+            else:
+                messages = [
+                    SystemMessage(content=full_system),
+                    HumanMessage(content=user_prompt)
+                ]
+            
+            def _msgs_to_dicts(msgs):
+                dicts = []
+                for m in msgs:
+                    if isinstance(m, SystemMessage): dicts.append({"role": "system", "content": m.content})
+                    elif isinstance(m, HumanMessage): dicts.append({"role": "user", "content": m.content})
+                    elif isinstance(m, AIMessage): 
+                        dicts.append({
+                            "role": "assistant", 
+                            "content": m.content,
+                            "tool_calls": getattr(m, "tool_calls", [])
+                        })
+                    elif isinstance(m, ToolMessage): 
+                        dicts.append({
+                            "role": "tool", 
+                            "content": m.content, 
+                            "tool_call_id": m.tool_call_id
+                        })
+                return dicts
+
+            for iteration in range(10): # Increased iteration count for more complex tasks
+                response = await llm_with_tools.ainvoke(messages)
+                messages.append(response)
+                content = response.content or ""
+                
+                if response.tool_calls:
+                    for tc in response.tool_calls:
+                        tool_name = tc["name"]
+                        tool_args = tc.get("args", {})
+                        tool_call_id = tc["id"]
                         
-                        logger.info(f"[{source_pid}][Text-Fallback] Iter {iteration+1}: {tool_name}({kwargs})")
+                        logger.info(f"[{source_pid}][Native] Iter {iteration+1}: {tool_name}({tool_args})")
+                        
                         await system_memory_bus.publish(MessagePayload(
                             source_pid=source_pid, target_pid="BROADCAST",
-                            event_type="tool_requested", data={"tool": tool_name, "arguments": kwargs}
+                            event_type="tool_requested", data={"tool": tool_name, "arguments": tool_args}
                         ))
-
-                        try:
-                            token = current_pid.set(source_pid)
-                            result = await tool.arun(kwargs)
-                            result_str = self._format_tool_result(result)
-                        except Exception as e:
-                            result_str = f"Tool error: {str(e)}"
-                        finally:
-                            current_pid.reset(token)
                         
-                        pseudo_id = f"text_to_tool_{iteration}_{tool_name}"
-                        # Ensure we don't overwrite tool_calls if something else set it, but here it should be empty
-                        if not response.tool_calls:
-                            response.tool_calls = []
-                        response.tool_calls.append({"name": tool_name, "args": kwargs, "id": pseudo_id})
-                        messages.append(ToolMessage(content=result_str, tool_call_id=pseudo_id))
+                        if tool_name not in tool_map:
+                            result_str = f"Error: tool '{tool_name}' not found."
+                        else:
+                            token = current_pid.set(source_pid)
+                            try:
+                                result = await tool_map[tool_name].arun(tool_args)
+                                result_str = self._format_tool_result(result)
+                            except Exception as e:
+                                result_str = f"Tool error: {str(e)}"
+                            finally:
+                                current_pid.reset(token)
+                        
+                        messages.append(ToolMessage(content=result_str, tool_call_id=tool_call_id))
                     
-                    # AFTER ALL TOOLS (Native or Fallback), check if process completed/failed
-                    proc = system_process_table.get(source_pid)
+                    # Check for termination after native tool call execution
                     if proc and proc.state in [ProcessState.COMPLETED, ProcessState.FAILED, ProcessState.TERMINATED]:
-                        logger.info(f"Agent execution loop terminating early for {source_pid} due to state: {proc.state.value}")
+                        logger.info(f"Agent execution loop terminating early for {source_pid} (native) due to state: {proc.state.value}")
                         return content or "Task complete.", _msgs_to_dicts(messages)
                         
-                    continue # Continue to let it summarize or use more tools
+                    continue
+                
+                # Text based fallback for Ollama
+                if self.provider == "ollama":
+                    parsed_calls = self._parse_text_tool_calls(content, tool_names)
+                    if parsed_calls:
+                        for tool_name, tool_args in parsed_calls:
+                            tool = tool_map[tool_name]
+                            kwargs = tool_args if isinstance(tool_args, dict) else {"input": str(tool_args)}
+                            
+                            logger.info(f"[{source_pid}][Text-Fallback] Iter {iteration+1}: {tool_name}({kwargs})")
+                            await system_memory_bus.publish(MessagePayload(
+                                source_pid=source_pid, target_pid="BROADCAST",
+                                event_type="tool_requested", data={"tool": tool_name, "arguments": kwargs}
+                            ))
 
-            return content or "Agent completed.", _msgs_to_dicts(messages)
-        
-        return "Max iterations hit.", _msgs_to_dicts(messages)
+                            try:
+                                token = current_pid.set(source_pid)
+                                result = await tool.arun(kwargs)
+                                result_str = self._format_tool_result(result)
+                            except Exception as e:
+                                result_str = f"Tool error: {str(e)}"
+                            finally:
+                                current_pid.reset(token)
+                            
+                            pseudo_id = f"text_to_tool_{iteration}_{tool_name}"
+                            # Ensure we don't overwrite tool_calls if something else set it, but here it should be empty
+                            if not response.tool_calls:
+                                response.tool_calls = []
+                            response.tool_calls.append({"name": tool_name, "args": kwargs, "id": pseudo_id})
+                            messages.append(ToolMessage(content=result_str, tool_call_id=pseudo_id))
+                        
+                        # AFTER ALL TOOLS (Native or Fallback), check if process completed/failed
+                        if proc and proc.state in [ProcessState.COMPLETED, ProcessState.FAILED, ProcessState.TERMINATED]:
+                            logger.info(f"Agent execution loop terminating early for {source_pid} due to state: {proc.state.value}")
+                            return content or "Task complete.", _msgs_to_dicts(messages)
+                            
+                        continue # Continue to let it summarize or use more tools
+
+                return content or "Agent completed.", _msgs_to_dicts(messages)
+            
+            return "Max iterations hit.", _msgs_to_dicts(messages)
+        finally:
+            if proc and proc.working_directory:
+                system_lock_manager.release(source_pid, proc.working_directory)
 
     def _format_tool_result(self, result: any) -> str:
         if isinstance(result, dict):

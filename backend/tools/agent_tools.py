@@ -8,6 +8,8 @@ import logging
 import asyncio
 import time
 from backend.core.logger import get_kernel_logger
+from backend.kernel.supervisor import system_supervisor
+from backend.kernel.soul import system_soul_manager
 
 logger = get_kernel_logger("QLX-TC.Tools.Agents")
 
@@ -42,7 +44,7 @@ async def delegate_to_agent(agent_id: str, task: str) -> str:
 
     new_proc = AIProcess(
         agent_name=agent_id,
-        task_description=task,
+        task_description=f"{system_soul_manager.read_soul(working_directory or (parent_proc.working_directory if parent_proc else None))}\n{task}",
         limits=ResourceLimits(allowed_tools=resolved_tools),
         working_directory=working_directory,
         original_request=parent_proc.original_request if parent_proc else None
@@ -73,6 +75,9 @@ async def delegate_to_agent(agent_id: str, task: str) -> str:
         if not parent_proc.has_proceeded:
             logger.warning(f"Architect {pid} attempted auto-delegation before plan approval. Blocking.")
             return "ERROR: Delegation blocked. You must FIRST present your PLAN and ARCHITECTURE to the user. Do not call delegate_to_agent until the user clicks 'Proceed' in the UI. For now, just describe your plan."
+    
+    # Capture initial snapshot for the new process for physical validation
+    system_supervisor.take_snapshot(new_proc.pid, working_directory or new_proc.working_directory)
     
     await system_scheduler.submit(new_proc, Priority.MEDIUM)
     
@@ -128,7 +133,8 @@ async def list_available_agents() -> str:
     
     result = "Available Specialized Agents & Skills:\n"
     for agent in agents:
-        result += f"- {agent.id}: {agent.name} ({agent.description})\n"
+        skills_str = f", Skills: {', '.join(agent.skills)}" if agent.skills else ""
+        result += f"- {agent.id}: {agent.name} ({agent.description}{skills_str})\n"
     
     if authorized_ids:
         result += "\nNote: As the Architect, your view is focused on the core development assembly line."
@@ -148,9 +154,35 @@ async def task_complete(reason: str = "Task finished successfully.") -> str:
     from backend.kernel.process import system_process_table, ProcessState
     proc = system_process_table.get(pid)
     if proc:
+        # SUPERVISOR GATE: Physical truth check
+        is_valid, validation_msg = system_supervisor.validate_completion(pid, proc.working_directory)
+        if not is_valid:
+            # Reflection Loop Layer
+            retries = proc.memory_context.get("completion_retries", 0)
+            if retries < 3:
+                proc.memory_context["completion_retries"] = retries + 1
+                logger.warning(f"Process {pid} ({proc.agent_name}) completion rejected (Attempt {retries+1}): {validation_msg}")
+                return (
+                    f"{validation_msg}\n\n"
+                    "### AUTONOMOUS REFLECTION REQUIRED\n"
+                    "Your task completion was REJECTED by the Supervisor Kernel truth-layer.\n"
+                    "Reason: No relevant physical changes detected in the workspace.\n"
+                    "ACTION: Reflect on why your previous actions didn't result in code changes. "
+                    "Did you forget to call 'filesystem_write'? Did you only update documentation?\n"
+                    "Please RETRY your work and ensure you produce physical code output before calling 'task_complete' again."
+                )
+            
+            logger.error(f"Process {pid} ({proc.agent_name}) completion rejected after {retries} retries. Failing.")
+            return f"FINAL REJECTION: {validation_msg}. You have failed to produce physical output after multiple attempts. Please explain the blockage to the Architect."
+
         proc.complete()
-        logger.info(f"Process {pid} ({proc.agent_name}) signalled completion: {reason}")
-        return f"TASK_COMPLETE: {reason}"
+        
+        # Soul Update: Distill learnings from completion reason
+        if proc.working_directory:
+            system_soul_manager.update_soul(proc.working_directory, reason)
+
+        logger.info(f"Process {pid} ({proc.agent_name}) signalled completion: {reason} | {validation_msg}")
+        return f"TASK_COMPLETE: {reason} | {validation_msg}"
     return "Error: Process not found."
 
 task_complete_tool = MCPTool(

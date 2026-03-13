@@ -4,6 +4,8 @@ from backend.core.database import get_db
 from backend.kernel.process import system_process_table, AIProcess, ResourceLimits
 from backend.kernel.scheduler import system_scheduler, Priority
 from backend.kernel.agent_manager import agent_manager
+from backend.kernel.supervisor import system_supervisor
+from backend.kernel.soul import system_soul_manager
 from backend.core.logger import get_kernel_logger
 import re
 import os
@@ -226,6 +228,7 @@ async def proceed_with_plan(pid: str):
     resolved_tools = custom_agent.static_tools + [f"mcp:{s}" for s in custom_agent.mcp_servers]
     
     project_snapshot = get_project_snapshot(ws_dir)
+    project_soul = system_soul_manager.read_soul(ws_dir)
 
     new_proc = AIProcess(
         agent_name=target_agent,
@@ -235,6 +238,7 @@ PROJECT_NAME: '{normalized_name if project_name_match else "default_project"}'
 ORIGINAL_GOAL: '{proc.original_request or "N/A"}'
 CURRENT_WD: '{ws_dir}'
 
+{project_soul}
 ### PROJECT SNAPSHOT (CURRENT FILES)
 {project_snapshot}
 
@@ -253,6 +257,9 @@ Task: {task_hint}
         working_directory=ws_dir,
         original_request=proc.original_request
     )
+    
+    # Capture initial snapshot for the new process for physical validation
+    system_supervisor.take_snapshot(new_proc.pid, ws_dir)
     
     new_proc.memory_context["initial_history"] = proc.history
     new_proc.memory_context["llm_provider"] = proc.memory_context.get("llm_provider")
