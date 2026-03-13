@@ -73,6 +73,7 @@ async def proceed_with_plan(pid: str):
                 if audited_path: break
         
     project_folder = None
+    normalized_name = None
     if project_name_match:
         # Normalize: strip, lowercase, and replace spaces/hyphens with underscores
         raw_name = project_name_match.group(1).strip()
@@ -109,6 +110,9 @@ async def proceed_with_plan(pid: str):
         # Remove empty markdown headers or trailing noise
         text = re.sub(r"^(?:#|\*\*)+\s*$", "", text, flags=re.MULTILINE)
         return text.strip()
+
+    plan_content = ""
+    arch_content = ""
 
     # 1. Source of Truth: Look for files on disk FIRST
     plan_path = os.path.join(ws_dir, "PROJECT_PLAN.md")
