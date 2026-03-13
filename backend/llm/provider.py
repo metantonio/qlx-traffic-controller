@@ -151,45 +151,49 @@ class LLMProvider:
     def _parse_text_tool_calls(self, content: str, tool_names: set) -> list[tuple]:
         """Attempt to parse unstructured text output for JSON tool calls (used by fallback models)."""
         calls = []
-        import sys
         
-        print(f"\n[DEBUG PARSER] Input content: '{content}'")
-        print(f"[DEBUG PARSER] Tool names: {tool_names}")
-        
-        # 1. Strip markdown fences if present
-        content = re.sub(r'```json\n', '', content)
-        content = re.sub(r'```\n?', '', content)
-        
-        # 2. Find all starting braces
-        for start in range(len(content)):
-            if content[start] not in ('{', '['): continue
+        # Greedy search for non-overlapping JSON blocks
+        idx = 0
+        while idx < len(content):
+            if content[idx] not in ('{', '['):
+                idx += 1
+                continue
+            
+            found_call = False
+            for end in range(len(content), idx + 1, -1):
+                if content[end-1] not in ('}', ']'):
+                    continue
                 
-            # 3. Try to parse by finding matching closing brace
-            for end in range(len(content), start + 1, -1):
-                if content[end-1] not in ('}', ']'): continue
-
-                    
-                candidate = content[start:end]
                 try:
+                    candidate = content[idx:end]
                     parsed = json.loads(candidate)
                     
                     if isinstance(parsed, dict):
                         call = self._extract_call_from_dict(parsed, tool_names)
                         if call:
                             calls.append(call)
-                            return calls
+                            idx = end # Skip to end of this block
+                            found_call = True
+                            break
                     elif isinstance(parsed, list):
+                        list_calls = []
                         for item in parsed:
                             if isinstance(item, dict):
                                 call = self._extract_call_from_dict(item, tool_names)
                                 if call:
-                                    calls.append(call)
-                        if calls:
-                            return calls
+                                    list_calls.append(call)
+                        if list_calls:
+                            calls.extend(list_calls)
+                            idx = end
+                            found_call = True
+                            break
                 except json.JSONDecodeError:
                     pass
+            
+            if not found_call:
+                idx += 1
         
-        # 4. Fallback for Python-style calls if no JSON found
+        # Fallback for Python-style calls if NO JSON found
         if not calls:
             for tool_name in tool_names:
                 for match in re.finditer(rf'{re.escape(tool_name)}\(["\'](.+?)["\']\)', content):
@@ -315,9 +319,7 @@ class LLMProvider:
                 continue
             
             # Text based fallback for Ollama
-            print(f"[DEBUG MAIN LOOP] self.provider = '{self.provider}'")
             if self.provider == "ollama":
-                print(f"[DEBUG MAIN LOOP] Enter ollama parse...")
                 parsed_calls = self._parse_text_tool_calls(content, tool_names)
                 if parsed_calls:
                     for tool_name, tool_args in parsed_calls:
