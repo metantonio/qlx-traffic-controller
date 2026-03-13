@@ -17,8 +17,11 @@ class DbProcess(Base):
     proposed_plan = Column(JSON, nullable=True) # Metadata for the 'Proceed' UI button
     has_proceeded = Column(Integer, default=0) # 1 if Proceed button was clicked
     
-    # Resource Limits stored as JSON
+    # resource limits
     resource_limits = Column(JSON)
+    
+    memory_context = Column(JSON, nullable=True) # Persistent meta-state
+    original_request = Column(String, nullable=True) # Goal anchor
     
     # Metrics
     tokens_used = Column(Integer, default=0)

@@ -20,16 +20,16 @@ class ResourceLimits(BaseModel):
 class AIProcess:
     """Represents an isolated AI agent execution context."""
     
-    def __init__(self, agent_name: str, task_description: str, limits: ResourceLimits, working_directory: Optional[str] = None):
+    def __init__(self, agent_name: str, task_description: str, limits: ResourceLimits, working_directory: Optional[str] = None, original_request: Optional[str] = None):
         self.pid = str(uuid.uuid4())[:8]  # Short PID for readability
         self.agent_name = agent_name
         self.task_description = task_description
+        self.original_request = original_request
         self.state = ProcessState.QUEUED
         self.working_directory = working_directory
         
         self.resource_limits = limits
         self.capabilities: List[str] = []
-        
         self.metrics = {
             "tokens_used": 0,
             "tools_called": 0,
@@ -93,7 +93,9 @@ class ProcessTable:
                 start_time=process.metrics["start_time"],
                 end_time=process.metrics["end_time"],
                 proposed_plan=process.proposed_plan,
-                has_proceeded=1 if process.has_proceeded else 0
+                has_proceeded=1 if process.has_proceeded else 0,
+                memory_context=process.memory_context,
+                original_request=process.original_request
             )
             db.merge(db_proc)
             db.commit()
@@ -178,6 +180,8 @@ class ProcessTable:
                 proc.proposed_plan = db_proc.proposed_plan
                 proc.has_proceeded = bool(db_proc.has_proceeded)
                 proc.working_directory = db_proc.working_directory
+                proc.memory_context = db_proc.memory_context or {}
+                proc.original_request = db_proc.original_request
                 # Load history from messages table
                 proc.history = [
                     {

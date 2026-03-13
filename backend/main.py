@@ -752,11 +752,15 @@ async def websocket_endpoint(websocket: WebSocket):
                         system_prompt_override = KERNEL_SYSTEM_PROMPT
                         logger.info(f"Using Orchestrator Kernel: dynamically resolved {len(resolved_tools)} tools")
                     
+                    # Goal Anchoring
+                    original_request = msg.get("original_request") or task_text
+                    
                     proc = AIProcess(
                         agent_name=agent_name,
                         task_description=task_text,
                         limits=ResourceLimits(allowed_tools=resolved_tools),
-                        working_directory=working_directory
+                        working_directory=working_directory,
+                        original_request=original_request
                     )
                     
                     from backend.kernel.skill_injector import inject_skills_into_prompt

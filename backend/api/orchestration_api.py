@@ -181,6 +181,7 @@ async def proceed_with_plan(pid: str):
         task_description=f"""### ENVIRONMENT METADATA (MANDATORY)
 PROJECT_DIR: '{ws_dir}'
 PROJECT_NAME: '{normalized_name if project_name_match else "default_project"}'
+ORIGINAL_GOAL: '{proc.original_request or "N/A"}'
 CURRENT_WD: '{ws_dir}'
 
 ### PROJECT SNAPSHOT (CURRENT FILES)
@@ -188,15 +189,10 @@ CURRENT_WD: '{ws_dir}'
 
 ### ASSIGNMENT
 Task: {task_hint}
-
-### WORKFLOW INSTRUCTIONS
-1. Read `PROJECT_PLAN.md` in '{ws_dir}'. 
-2. implement the logical component described in the plan. 
-3. If core files (index.html, package.json, etc.) are missing in the project folder, you MUST create them.
-4. ONLY operate within '{ws_dir}'. Generic placeholders like '/path/to/your/...' are FORBIDDEN and will trigger a system error.
 """,
         limits=ResourceLimits(allowed_tools=resolved_tools),
-        working_directory=ws_dir # Specialists MUST work in the project folder
+        working_directory=ws_dir,
+        original_request=proc.original_request
     )
     
     new_proc.memory_context["initial_history"] = proc.history

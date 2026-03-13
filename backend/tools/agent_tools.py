@@ -35,29 +35,42 @@ async def delegate_to_agent(agent_id: str, task: str) -> str:
         model = agent.model
         working_directory = agent.working_directory
     
+    from backend.kernel.process import system_process_table
+    parent_proc = system_process_table.get(pid) if pid else None
+
     new_proc = AIProcess(
         agent_name=agent_id,
         task_description=task,
         limits=ResourceLimits(allowed_tools=resolved_tools),
-        working_directory=working_directory
+        working_directory=working_directory,
+        original_request=parent_proc.original_request if parent_proc else None
     )
     
     from backend.kernel.skill_injector import inject_skills_into_prompt
     if system_prompt:
         assigned_skills = agent.skills if agent else None
-        new_proc.memory_context["system_prompt"] = inject_skills_into_prompt(system_prompt, working_directory, assigned_skills)
+        # Anchoring the goal in the system prompt via skill injection or direct append
+        base_prompt = inject_skills_into_prompt(system_prompt, working_directory, assigned_skills)
+        if parent_proc and parent_proc.original_request:
+            base_prompt = f"### ORIGINAL USER REQUEST (GOAL ANCHOR):\n{parent_proc.original_request}\n\n{base_prompt}"
+        new_proc.memory_context["system_prompt"] = base_prompt
+    
     if provider:
         new_proc.memory_context["llm_provider"] = provider
     if model:
         new_proc.memory_context["llm_model"] = model
-    
-    from backend.kernel.process import system_process_table
-    parent_proc = system_process_table.get(pid) if pid else None
+        
     if parent_proc and parent_proc.history:
         new_proc.memory_context["initial_history"] = parent_proc.history
         # Carry over provider settings for consistency
         new_proc.memory_context["llm_session_provider"] = parent_proc.memory_context.get("llm_session_provider")
         new_proc.memory_context["llm_session_model"] = parent_proc.memory_context.get("llm_session_model")
+    
+    # --- ARCHITECT APPROVAL GATE ---
+    if parent_proc and parent_proc.agent_name == "software_architect":
+        if not parent_proc.has_proceeded:
+            logger.warning(f"Architect {pid} attempted auto-delegation before plan approval. Blocking.")
+            return "ERROR: Delegation blocked. You must FIRST present your PLAN and ARCHITECTURE to the user. Do not call delegate_to_agent until the user clicks 'Proceed' in the UI. For now, just describe your plan."
     
     await system_scheduler.submit(new_proc, Priority.MEDIUM)
     
