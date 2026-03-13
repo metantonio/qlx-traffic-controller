@@ -57,6 +57,7 @@ async def proceed_with_plan(pid: str):
         project_name_match = re.search(r"(?i)developing\s+([a-zA-Z0-9_\-\s]+)\s+(?:game|app|system|project|software)", last_msg)
     
     # Fallback 2: Check history for successful list_directory calls if naming fails
+    audited_path = None
     if not project_name_match:
         for msg in reversed(proc.history):
             if msg.get("role") == "assistant" and msg.get("tool_calls"):
