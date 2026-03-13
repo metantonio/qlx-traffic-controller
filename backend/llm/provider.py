@@ -225,6 +225,8 @@ class LLMProvider:
         """
         from backend.kernel.memory_bus import system_memory_bus, MessagePayload
         
+        from backend.kernel.process import system_process_table, ProcessState
+        
         tool_map = {t.name: t for t in tools}
         tool_names = set(tool_map.keys())
         
@@ -316,6 +318,13 @@ class LLMProvider:
                             current_pid.reset(token)
                     
                     messages.append(ToolMessage(content=result_str, tool_call_id=tool_call_id))
+                
+                # Check for termination after native tool call execution
+                proc = system_process_table.get(source_pid)
+                if proc and proc.state in [ProcessState.COMPLETED, ProcessState.FAILED, ProcessState.TERMINATED]:
+                    logger.info(f"Agent execution loop terminating early for {source_pid} (native) due to state: {proc.state.value}")
+                    return content or "Task complete.", _msgs_to_dicts(messages)
+                    
                 continue
             
             # Text based fallback for Ollama
@@ -347,6 +356,13 @@ class LLMProvider:
                             response.tool_calls = []
                         response.tool_calls.append({"name": tool_name, "args": kwargs, "id": pseudo_id})
                         messages.append(ToolMessage(content=result_str, tool_call_id=pseudo_id))
+                    
+                    # AFTER ALL TOOLS (Native or Fallback), check if process completed/failed
+                    proc = system_process_table.get(source_pid)
+                    if proc and proc.state in [ProcessState.COMPLETED, ProcessState.FAILED, ProcessState.TERMINATED]:
+                        logger.info(f"Agent execution loop terminating early for {source_pid} due to state: {proc.state.value}")
+                        return content or "Task complete.", _msgs_to_dicts(messages)
+                        
                     continue # Continue to let it summarize or use more tools
 
             return content or "Agent completed.", _msgs_to_dicts(messages)

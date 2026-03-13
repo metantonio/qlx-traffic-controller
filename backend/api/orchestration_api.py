@@ -51,12 +51,18 @@ async def proceed_with_plan(pid: str):
         raise HTTPException(status_code=400, detail="No assistant message found to parse")
 
     # DYNAMIC PROJECT DETECTION
-    # We try to find a project name to avoid cluttering the Architect's home or root workspace
-    # Support spaces and capture common phrasings
-    project_name_match = re.search(r"(?i)Project Name:\s*([a-zA-Z0-9_\-\s]+?)(?:\r?\n|$)", last_msg)
+    project_name_match = re.search(r"(?i)(?:Project Name|Project Plan):\s*([a-zA-Z0-9_\-\s]+?)(?:\r?\n|$)", last_msg)
     if not project_name_match:
-        # Fallback: look for "developing [Name] game" or similar phrasings
+        # Fallback 1: look for "developing [Name] game" or similar phrasings
         project_name_match = re.search(r"(?i)developing\s+([a-zA-Z0-9_\-\s]+)\s+(?:game|app|system|project|software)", last_msg)
+    
+    # Fallback 2: Check history for successful list_directory calls if naming fails
+    audited_path = None
+    if not project_name_match:
+        for msg in reversed(proc.history):
+            if msg.get("role") == "tool" and "name" in msg and msg["name"] == "list_directory":
+                # If we see a successful list_directory, we might be able to infer the folder
+                pass # Logic could be added here to extract the CWD or folder
         
     project_folder = None
     if project_name_match:
@@ -187,8 +193,16 @@ CURRENT_WD: '{ws_dir}'
 ### PROJECT SNAPSHOT (CURRENT FILES)
 {project_snapshot}
 
+### PROJECT GUIDELINES
+PROJECT_PLAN:
+{plan_content}
+
+ARCHITECTURE:
+{arch_content}
+
 ### ASSIGNMENT
 Task: {task_hint}
+(Requirement: Use your tools to implement this specific task. Look at the existing files in SNAPSHOT before creating new ones.)
 """,
         limits=ResourceLimits(allowed_tools=resolved_tools),
         working_directory=ws_dir,
