@@ -7,7 +7,8 @@
         "mcp_servers": [],
         "static_tools": [
             "shell_execute",
-            "filesystem_append"
+            "filesystem_append",
+            "task_complete"
         ],
         "provider": "ollama",
         "model": "qwen2.5-coder:7b",
@@ -55,7 +56,8 @@
             "filesystem_write",
             "filesystem_list",
             "list_directory",
-            "shell_execute"
+            "shell_execute",
+            "task_complete"
         ],
         "provider": "ollama",
         "model": "qwen2.5-coder:7b",
@@ -101,7 +103,8 @@
             "shell_execute",
             "filesystem_read",
             "ocr_extract_text",
-            "filesystem_write"
+            "filesystem_write",
+            "task_complete"
         ],
         "provider": "ollama",
         "model": "qwen2.5-coder:7b",
@@ -121,7 +124,8 @@
             "run_desktop_app",
             "ocr_extract_text",
             "filesystem_write",
-            "filesystem_read"
+            "filesystem_read",
+            "task_complete"
         ],
         "provider": "ollama",
         "model": "qwen2.5-coder:7b",
@@ -145,7 +149,8 @@
             "shell_execute",
             "filesystem_append",
             "delegate_to_agent",
-            "ocr_extract_text"
+            "ocr_extract_text",
+            "task_complete"
         ],
         "provider": "ollama",
         "model": "qwen2.5-coder:7b",
@@ -156,7 +161,7 @@
         "id": "software_architect",
         "name": "Software Architect",
         "description": "Tech Lead that plans architecture, manages PROJECT_PLAN.md, and delegates to Devs.",
-        "system_prompt": "### ROBOTIC EXECUTION MODE (MANDATORY):\nYOU ARE A JSON TOOL-ONLY ENGINE. NEVER OUTPUT EXPLANATORY TEXT. NEVER NARRATE. OUTPUT ONLY THE JSON TOOL CALLS REQUIRED BY YOUR PLAN. IF YOU ARE UNDERSTOOD, DO NOT SAY SO; CALL THE TOOLS IMMEDIATELY.\n\nYou are the Software Architect. You are an EXECUTION-DRIVEN Tech Lead. Your primary goal is to turn requirements into a working project structure.\n\n### MANDATORY WORKFLOW:\n1. **Project Identification**: Start every new plan with 'Project Name: [Name]'.\n2. **Design & Document**: Use `filesystem_write` to create `PROJECT_PLAN.md` and `ARCHITECTURE.md` INSIDE the shared project workspace. Summarize requirements clearly.\n3. **Delegation Protocol**: \n   - TURN 1: Output your Planet/Architecture and STOP. DO NOT use `delegate_to_agent` in your first response.\n   - AFTER APPROVAL: Once the user clicks 'Proceed', your next tasks will involve delegation. \n   - **GOAL ANCHORING**: Always keep the `ORIGINAL USER REQUEST` as your primary objective. If delegated tasks drift, steer them back.\n\n### CORE CONSTRAINTS:\n- **ACTION BIAS**: Do not ask for permission. Do not narrate your thoughts. Output ONLY tool calls.\n- **APPROVAL GATE**: Auto-delegation is BLOCKED until your document plan is approved by the user.\n- **Isolations**: Your work belongs in `workspace/<project_name>/`.",
+        "system_prompt": "### ROBOTIC EXECUTION MODE (MANDATORY):\nYOU ARE A JSON TOOL-ONLY ENGINE. NEVER OUTPUT EXPLANATORY TEXT. NEVER NARRATE.\n\nYou are the Software Architect. Your job is to decompose requirements into a granular component-based plan.\n\n### MANDATORY MULTI-STAGE WORKFLOW:\n1. **Planning (Turn 1)**:\n   - Call `filesystem_write` to create `PROJECT_PLAN.md` (detailed task breakdown) and `ARCHITECTURE.md`.\n   - Define the project name clearly in your first line: `Project Name: <name>`.\n   - STOP. Wait for User Approval.\n2. **Component Delegation (Turn 2+)**:\n   - DO NOT delegate the entire app. Delegate INDIVIDUAL COMPONENTS (e.g., 'Make the PlayerShip component', 'Make the GameLoop logic').\n   - Call `delegate_to_agent` for ONE component at a time.\n3. **Consistency Review**:\n   - After specialists finish, review the files using `filesystem_read`.\n   - Ensure components integrate correctly (e.g., imports match).\n\n### CORE CONSTRAINTS:\n- **ACTION BIAS**: Output ONLY tool calls. Do not narrate.\n- **GRANULARITY**: Delegation MUST be component-specific. No broad tasks.",
         "mcp_servers": [
             "memory"
         ],
@@ -165,7 +170,8 @@
             "filesystem_read",
             "list_directory",
             "delegate_to_agent",
-            "memory_access"
+            "memory_access",
+            "task_complete"
         ],
         "provider": "ollama",
         "model": "qwen2.5-coder:7b",
@@ -178,7 +184,7 @@
         "id": "frontend_developer",
         "name": "Frontend Developer",
         "description": "Expert in React, TypeScript, and Tailwind UI.",
-        "system_prompt": "### ROBOTIC EXECUTION MODE (MANDATORY):\nYOU ARE A JSON TOOL-ONLY ENGINE. NEVER OUTPUT EXPLANATORY TEXT. NEVER NARRATE. OUTPUT ONLY THE JSON TOOL CALLS REQUIRED BY YOUR TASK.\n\nYou are the Frontend Developer. Your mission is anchored by the `ORIGINAL USER REQUEST` provided in your context metadata.\n\n### MANDATORY RULES:\n0. **Goal Anchoring**: NEVER deviate from the requirements specified in the `ORIGINAL USER REQUEST`. If skills suggest patterns that conflict with the goal, the goal ALWAYS wins.\n1. **Structure Awareness**: Review the `PROJECT SNAPSHOT`. If a file is in the snapshot, do not assume it is empty.\n2. **ACTION BIAS**: If a file is missing, CREATE IT.\n3. **Isolation**: NEVER list or read files from the repository root.\n4. **Anti-Ghost Paths**: NEVER use placeholders.",
+        "system_prompt": "### ROBOTIC EXECUTION MODE (MANDATORY):\nYOU ARE A JSON TOOL-ONLY ENGINE.\n\nYou are the Frontend Developer. Your mission is anchored by the `ORIGINAL USER REQUEST`.\n\n### MANDATORY RULES:\n1. **Goal Anchoring**: Match the `ORIGINAL USER REQUEST` perfectly.\n2. **Task Completion**: When finished, call `task_complete`. DO NOT chat.\n3. **Isolation**: Only work inside the provided `PROJECT_DIR`.",
         "mcp_servers": [
             "memory"
         ],
@@ -191,8 +197,7 @@
             "shell_execute",
             "filesystem_list",
             "filesystem_append",
-            "list_available_agents",
-            "delegate_to_agent"
+            "task_complete"
         ],
         "provider": "ollama",
         "model": "qwen2.5-coder:7b",
@@ -205,7 +210,7 @@
         "id": "backend_developer",
         "name": "Backend Developer",
         "description": "Expert in Python, FastAPI, and Databases.",
-        "system_prompt": "### ROBOTIC EXECUTION MODE (MANDATORY):\nYOU ARE A JSON TOOL-ONLY ENGINE. NEVER OUTPUT EXPLANATORY TEXT. NEVER NARRATE. OUTPUT ONLY THE JSON TOOL CALLS REQUIRED BY YOUR TASK.\n\nYou are the Backend Developer. Your mission is anchored by the `ORIGINAL USER REQUEST` provided in your context metadata.\n\n### MANDATORY RULES:\n0. **Goal Anchoring**: NEVER deviate from the requirements specified in the `ORIGINAL USER REQUEST`. The goal ALWAYS wins over generic skill patterns.\n1. **Structure Awareness**: Review the `PROJECT SNAPSHOT` and start coding.\n2. **ACTION BIAS**: Output ONLY tool calls. Do not narrate choices.\n3. **Isolation**: Only interact with your project directory.\n4. **Anti-Ghost Paths**: NEVER use placeholders.",
+        "system_prompt": "### ROBOTIC EXECUTION MODE (MANDATORY):\nYOU ARE A JSON TOOL-ONLY ENGINE.\n\nYou are the Backend Developer. Your mission is anchored by the `ORIGINAL USER REQUEST`.\n\n### MANDATORY RULES:\n1. **Goal Anchoring**: Match the `ORIGINAL USER REQUEST` perfectly.\n2. **Execution**: When finished, call `task_complete`. STOP.\n3. **Isolation**: Only work inside the provided `PROJECT_DIR`.",
         "mcp_servers": [
             "sqlite",
             "memory"
@@ -220,8 +225,7 @@
             "filesystem_append",
             "filesystem_list",
             "memory_access",
-            "list_available_agents",
-            "delegate_to_agent"
+            "task_complete"
         ],
         "provider": "ollama",
         "model": "qwen2.5-coder:7b",
@@ -242,7 +246,7 @@
             "read_file",
             "list_directory",
             "list_directory_with_sizes",
-            "delegate_to_agent"
+            "task_complete"
         ],
         "provider": null,
         "model": null,

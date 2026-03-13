@@ -140,5 +140,29 @@ list_agents_tool = MCPTool(
     handler=list_available_agents
 )
 
+async def task_complete(reason: str = "Task finished successfully.") -> str:
+    """Signals that the agent has completed its assigned task and is ready to exit."""
+    pid = current_pid.get()
+    from backend.kernel.process import system_process_table, ProcessState
+    proc = system_process_table.get(pid)
+    if proc:
+        proc.complete()
+        logger.info(f"Process {pid} ({proc.agent_name}) signalled completion: {reason}")
+        return f"TASK_COMPLETE: {reason}"
+    return "Error: Process not found."
+
+task_complete_tool = MCPTool(
+    name="task_complete",
+    description="Signals that you have finished your assigned task. CALL THIS TOOL as your FINAL ACTION. Do NOT output a concluding message after this.",
+    parameters={
+        "reason": {
+            "type": "string",
+            "description": "Short summary of what was accomplished."
+        }
+    },
+    handler=task_complete
+)
+
+system_registry.register(task_complete_tool)
 system_registry.register(delegate_tool)
 system_registry.register(list_agents_tool)

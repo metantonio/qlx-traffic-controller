@@ -53,7 +53,7 @@ async def proceed_with_plan(pid: str):
     # DYNAMIC PROJECT DETECTION
     # We try to find a project name to avoid cluttering the Architect's home or root workspace
     # Support spaces and capture common phrasings
-    project_name_match = re.search(r"(?i)Project Name:\s*([a-zA-Z0-9_\-\s]+)", last_msg)
+    project_name_match = re.search(r"(?i)Project Name:\s*([a-zA-Z0-9_\-\s]+?)(?:\r?\n|$)", last_msg)
     if not project_name_match:
         # Fallback: look for "developing [Name] game" or similar phrasings
         project_name_match = re.search(r"(?i)developing\s+([a-zA-Z0-9_\-\s]+)\s+(?:game|app|system|project|software)", last_msg)
