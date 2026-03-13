@@ -20,6 +20,22 @@ def detect_placeholder_path(path: str) -> bool:
     path_low = path.lower()
     return any(p.lower() in path_low for p in placeholders)
 
+def sanitize_agent_path(path: str) -> str:
+    """
+    Strips leading slashes, backslashes, and drive letters to prevent os.path.join 
+    from escaping the sandbox.
+    Example: '/workspace/foo' -> 'workspace/foo'
+    Example: 'C:/workspace/foo' -> 'workspace/foo'
+    """
+    # 1. Strip drive letters (e.g., C:/)
+    import re
+    path = re.sub(r'^[a-zA-Z]:[/\\]+', '', path)
+    
+    # 2. Strip leading slashes and backslashes
+    path = path.lstrip('/\\')
+    
+    return path
+
 # --- SECURITY BLOCKLIST ---
 FORBIDDEN_FILENAMES = {
     ".env", ".bashrc", ".profile", ".bash_profile", ".npmrc", 
@@ -63,6 +79,10 @@ def get_placeholder_error(path: str) -> str:
 def _resolve_path(filepath: str) -> str:
     """Resolves relative paths against the current process's working_directory if set."""
     pid = None
+    
+    # Sanitize: never allow an agent to provide an absolute path that escapes the sandbox
+    filepath = sanitize_agent_path(filepath)
+    
     try:
         from backend.core.context import current_pid
         from backend.kernel.process import system_process_table

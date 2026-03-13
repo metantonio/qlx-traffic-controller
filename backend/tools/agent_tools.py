@@ -42,11 +42,26 @@ async def delegate_to_agent(agent_id: str, task: str) -> str:
     from backend.kernel.process import system_process_table
     parent_proc = system_process_table.get(pid) if pid else None
 
+    # WD Inheritance Logic:
+    # 1. Favor explicitly provided 'working_directory' in agent config
+    # 2. BUT, if parent is already in a specific 'workspace/project' folder, 
+    #    inherit that project root as the context for the delegation.
+    effective_wd = working_directory
+    if parent_proc and parent_proc.working_directory:
+        # If parent is in a sub-workspace (like a project folder), and 
+        # the current default is just a generic home, prefer the parent's project context.
+        parent_wd = parent_proc.working_directory
+        if "workspace/" in parent_wd.lower() and parent_wd != "workspace":
+            # If the child agent doesn't have a specific isolated home, 
+            # or if its home is just a top-level category, inherit the project folder.
+            if not effective_wd or effective_wd in ["workspace", "workspace/frontend", "workspace/backend", "workspace/qa_tester"]:
+                effective_wd = parent_wd
+
     new_proc = AIProcess(
         agent_name=agent_id,
-        task_description=f"{system_soul_manager.read_soul(working_directory or (parent_proc.working_directory if parent_proc else None))}\n{task}",
+        task_description=f"{system_soul_manager.read_soul(effective_wd or (parent_proc.working_directory if parent_proc else None))}\n{task}",
         limits=ResourceLimits(allowed_tools=resolved_tools),
-        working_directory=working_directory,
+        working_directory=effective_wd,
         original_request=parent_proc.original_request if parent_proc else None
     )
     
@@ -74,7 +89,7 @@ async def delegate_to_agent(agent_id: str, task: str) -> str:
     if parent_proc and parent_proc.agent_name == "software_architect":
         if not parent_proc.has_proceeded:
             logger.warning(f"Architect {pid} attempted auto-delegation before plan approval. Blocking.")
-            return "ERROR: Delegation blocked. You must FIRST present your PLAN and ARCHITECTURE to the user. Do not call delegate_to_agent until the user clicks 'Proceed' in the UI. For now, just describe your plan."
+            return "ERROR: Delegation blocked. You must FIRST present your PLAN and ARCHITECTURE to the user in a chat message. Do NOT call delegate_to_agent until the user has clicked 'Proceed' in the UI. For now, just describe what you plan to do, write the plan/arch files, and then wait for user feedback."
     
     # Capture initial snapshot for the new process for physical validation
     system_supervisor.take_snapshot(new_proc.pid, working_directory or new_proc.working_directory)

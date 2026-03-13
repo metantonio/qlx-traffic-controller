@@ -233,7 +233,7 @@ async def proceed_with_plan(pid: str):
     new_proc = AIProcess(
         agent_name=target_agent,
         task_description=f"""### ENVIRONMENT METADATA (MANDATORY)
-PROJECT_DIR: '{ws_dir}'
+PROJECT_DIR: '{ws_dir}' (USE RELATIVE PATHS TO THIS FOLDER)
 PROJECT_NAME: '{normalized_name if project_name_match else "default_project"}'
 ORIGINAL_GOAL: '{proc.original_request or "N/A"}'
 CURRENT_WD: '{ws_dir}'
@@ -243,6 +243,7 @@ CURRENT_WD: '{ws_dir}'
 {project_snapshot}
 
 ### PROJECT GUIDELINES
+- **RELATIVE PATHS**: You MUST use paths relative to the `PROJECT_DIR`. Do NOT use leading slashes or drive letters.
 PROJECT_PLAN:
 {plan_content}
 
