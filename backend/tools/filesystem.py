@@ -1,5 +1,6 @@
 import os
 import asyncio
+import re
 from pydantic import BaseModel, Field
 from backend.tools.mcp_registry import MCPTool, system_registry
 from backend.core.database import SessionLocal
