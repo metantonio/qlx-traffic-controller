@@ -93,35 +93,51 @@ async def proceed_with_plan(pid: str):
     plan_content = ""
     arch_content = ""
     
-    # 1. Look for explicit Markdown blocks FIRST (Highest Signal)
-    blocks = re.findall(r"```(?:markdown)?\n(.*?)\n```", last_msg, re.DOTALL)
-    if blocks:
-        for block in blocks:
-            lower_block = block.lower()
-            if "project plan" in lower_block or "step 1" in lower_block:
-                plan_content = block.strip()
-            elif "architecture" in lower_block or "component" in lower_block:
-                arch_content = block.strip()
-                
-        # Fallback if roles weren't identified in blocks
-        if not plan_content and blocks:
-            plan_content = blocks[0].strip()
-        if not arch_content and len(blocks) > 1:
-            arch_content = blocks[1].strip()
-
-    # 2. If no markdown blocks, try header-based extraction (Mid Signal)
-    if not plan_content:
-        # Match from "Step 1" or "Project Plan" or "Requirements" until Architecture or end
-        # We use a broad lookahead to avoid cutting off at words like 'architecture' in lowercase narrative
-        plan_match = re.search(r"(?is)(?:#|\*\*)\s*(?:Step\s+1|Plan|Implementation|Requirements|Developing).*?(?=(?:#|\*\*)\s*Architecture|(?:\n\s*Conclusion)|$)", last_msg)
-        if plan_match:
-            plan_content = plan_match.group(0).strip()
+    # 1. Source of Truth: Look for files on disk FIRST
+    plan_path = os.path.join(ws_dir, "PROJECT_PLAN.md")
+    arch_path = os.path.join(ws_dir, "ARCHITECTURE.md")
+    
+    if os.path.exists(plan_path):
+        with open(plan_path, 'r', encoding='utf-8') as f:
+            plan_content = f.read().strip()
+            logger.info(f"Loaded PROJECT_PLAN from disk at {plan_path}")
             
-    if not arch_content:
-        # Match from "Architecture" header until next header or end
-        arch_match = re.search(r"(?is)(?:#|\*\*)\s*(?:Architecture|Structure).*?(?=(?:\n\s*Conclusion)|$)", last_msg)
-        if arch_match:
-            arch_content = arch_match.group(0).strip()
+    if os.path.exists(arch_path):
+        with open(arch_path, 'r', encoding='utf-8') as f:
+            arch_content = f.read().strip()
+            logger.info(f"Loaded ARCHITECTURE from disk at {arch_path}")
+
+    # 2. Fallback: Parse from message content if disk files are missing or empty
+    if not plan_content or not arch_content:
+        blocks = re.findall(r"```(?:markdown)?\n(.*?)\n```", last_msg, re.DOTALL)
+        if blocks:
+            for block in blocks:
+                # FILTER: Skip blocks that look like JSON tool calls
+                if block.strip().startswith("{") and '"name":' in block:
+                    continue
+                    
+                lower_block = block.lower()
+                if not plan_content and ("project plan" in lower_block or "step 1" in lower_block):
+                    plan_content = block.strip()
+                elif not arch_content and ("architecture" in lower_block or "component" in lower_block):
+                    arch_content = block.strip()
+                    
+            # Final raw fallback (preserving existing logic)
+            if not plan_content and blocks:
+                # Only use as plan if it doesn't look like a tool call
+                if not (blocks[0].strip().startswith("{") and '"name":' in blocks[0]):
+                    plan_content = blocks[0].strip()
+        
+        # Header-based extraction if markdown blocks failed
+        if not plan_content:
+            plan_match = re.search(r"(?is)(?:#|\*\*)\s*(?:Step\s+1|Plan|Implementation|Requirements|Developing).*?(?=(?:#|\*\*)\s*Architecture|(?:\n\s*Conclusion)|$)", last_msg)
+            if plan_match:
+                plan_content = plan_match.group(0).strip()
+                
+        if not arch_content:
+            arch_match = re.search(r"(?is)(?:#|\*\*)\s*(?:Architecture|Structure).*?(?=(?:\n\s*Conclusion)|$)", last_msg)
+            if arch_match:
+                arch_content = arch_match.group(0).strip()
 
     # 3. Final Fallback: if STILL empty, use the whole message as plan base
     if not plan_content:
