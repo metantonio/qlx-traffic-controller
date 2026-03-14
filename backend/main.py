@@ -23,6 +23,7 @@ from backend.kernel.agent_manager import CustomAgent, agent_manager
 from backend.core.command_approvals import command_approval_manager
 from backend.kernel.workflow_manager import Workflow, workflow_manager
 from backend.kernel.workflow_orchestrator import workflow_orchestrator
+from backend.kernel.mission_control import mission_control
 from backend.models.database_models import DbProcess, DbMessage
 from backend.core.database import SessionLocal, get_db, init_db
 from sqlalchemy import desc
@@ -678,6 +679,17 @@ async def websocket_endpoint(websocket: WebSocket):
                         await websocket.send_json({"type": "info", "message": f"Workflow {execution_id} started."})
                     except Exception as e:
                         logger.error(f"Failed to start workflow: {e}")
+                        await websocket.send_json({"type": "error", "message": str(e)})
+                    continue
+
+                if action == "start_mission":
+                    task = msg.get("task")
+                    ws_dir = msg.get("working_directory")
+                    try:
+                        mission_id = await mission_control.start_mission(task, ws_dir)
+                        await websocket.send_json({"type": "info", "message": f"Mission {mission_id} started."})
+                    except Exception as e:
+                        logger.error(f"Failed to start mission: {e}")
                         await websocket.send_json({"type": "error", "message": str(e)})
                     continue
 

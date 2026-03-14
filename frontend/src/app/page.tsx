@@ -67,6 +67,16 @@ export default function Dashboard() {
     currentPid?: string;
   } | null>(null);
 
+  const [activeMission, setActiveMission] = useState<{
+    id: string;
+    status: string;
+    currentIndex: number;
+    totalSteps: number;
+    sequence: string[];
+    activePid?: string;
+    currentAgent?: string;
+  } | null>(null);
+
   const [activeView, setActiveView] = useState<'dashboard' | 'extensions' | 'history' | 'workflows' | 'batches' | 'settings' | 'factory'>('dashboard');
   const [historyPid, setHistoryPid] = useState<string | null>(null);
   const [wsStatus, setWsStatus] = useState<'connected' | 'disconnected' | 'connecting' | 'error'>('connecting');
@@ -96,6 +106,18 @@ export default function Dashboard() {
     wsRef.current.send(JSON.stringify(payload));
     if (!manualTask) setTaskText('');
   }, [taskText, enabledTools, llmProvider, llmModel, selectedAgentId]);
+
+  const handleStartMission = useCallback((task?: string) => {
+    const finalTask = task || taskText;
+    if (!finalTask.trim() || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+
+    wsRef.current.send(JSON.stringify({
+      action: 'start_mission',
+      task: finalTask,
+      working_directory: null // Let kernel decide
+    }));
+    if (!task) setTaskText('');
+  }, [taskText]);
 
   const handleContinue = useCallback((pid: string, followUp: string, history: Message[]) => {
     handleSpawnAgent(followUp, pid, history);
@@ -165,6 +187,20 @@ export default function Dashboard() {
             currentPid: payload.pid || prev?.currentPid
           };
         });
+      } else if (data.type === "mission_progress") {
+        const payload = data.payload;
+        setActiveMission({
+          id: payload.mission_id,
+          status: payload.status,
+          currentIndex: payload.current_index,
+          totalSteps: payload.total_steps,
+          sequence: payload.sequence,
+          activePid: payload.active_pid,
+          currentAgent: payload.current_agent
+        });
+        if (payload.status === "completed" || payload.status === "failed") {
+          setTimeout(() => setActiveMission(null), 5000);
+        }
       } else if (data.action === "command_approval_requested") {
         setPendingApprovals(prev => {
             if (prev.some(p => p.approval_id === data.approval_id)) return prev;
@@ -457,13 +493,14 @@ export default function Dashboard() {
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' && !e.shiftKey) {
                             e.preventDefault();
-                            handleSpawnAgent();
+                            if (activeView === 'factory') handleStartMission();
+                            else handleSpawnAgent();
                           }
                         }}
                       />
                     </div>
                     <button
-                      onClick={() => handleSpawnAgent()}
+                      onClick={() => activeView === 'factory' ? handleStartMission() : handleSpawnAgent()}
                       disabled={wsStatus !== 'connected'}
                       className={`h-16 w-16 rounded-2xl font-bold shadow-lg transition-all transform active:scale-95 flex items-center justify-center group/btn shrink-0 ${wsStatus === 'connected'
                         ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/30'
@@ -535,6 +572,66 @@ export default function Dashboard() {
               <div className="flex items-center gap-2 bg-black/40 p-2 rounded-xl border border-white/5">
                 <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
                 <span className="text-[10px] font-mono text-neutral-400">ACTIVE PID: {activeWorkflow.currentPid}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Mission HUD */}
+      {activeMission && (
+        <div className="fixed bottom-8 right-8 z-40 animate-in slide-in-from-bottom-10 fade-in duration-300">
+          <div className="bg-neutral-900/95 backdrop-blur-2xl border border-emerald-500/30 p-6 rounded-[2rem] shadow-2xl shadow-emerald-500/10 w-96 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Activity className="text-emerald-400" size={18} />
+                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Mission Control</span>
+              </div>
+              <div className="px-2 py-0.5 bg-emerald-500/20 rounded text-[10px] font-bold text-emerald-300 uppercase tracking-tighter">
+                {activeMission.status}
+              </div>
+            </div>
+
+            <div>
+               <div className="flex items-center justify-between mb-1">
+                  <h4 className="text-white font-bold text-sm truncate">Mission {activeMission.id}</h4>
+                  <span className="text-[10px] font-mono text-neutral-500">STEP {activeMission.currentIndex + 1}/{activeMission.totalSteps}</span>
+               </div>
+               
+               {/* Visual Sequence Chain */}
+               <div className="flex items-center gap-1 mt-2 mb-3">
+                  {activeMission.sequence.map((agent, i) => (
+                    <div key={i} className="flex items-center gap-1">
+                      <div className={`h-1.5 w-6 rounded-full ${i <= activeMission.currentIndex ? 'bg-emerald-500' : 'bg-neutral-800'}`} />
+                      {i < activeMission.sequence.length - 1 && <div className="text-[8px] text-neutral-700 font-bold">\u2192</div>}
+                    </div>
+                  ))}
+               </div>
+               
+               <p className="text-neutral-400 text-[10px] font-medium leading-tight">
+                  <span className="text-emerald-400/70 mr-1">CURRENT:</span> {activeMission.currentAgent?.toUpperCase()}
+               </p>
+            </div>
+
+            <div className="relative h-2 w-full bg-neutral-800/50 rounded-full overflow-hidden border border-white/5">
+              <div
+                className="absolute top-0 left-0 h-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(16,185,129,0.4)]"
+                style={{ width: `${((activeMission.currentIndex + 1) / activeMission.totalSteps) * 100}%` }}
+              />
+            </div>
+
+            {activeMission.activePid && (
+              <div className="flex items-center justify-between bg-black/40 p-3 rounded-2xl border border-white/5">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                  <span className="text-[10px] font-mono text-neutral-300">THREAD: {activeMission.activePid}</span>
+                </div>
+                <button 
+                  onClick={() => setSelectedPid(activeMission.activePid!)}
+                  className="text-[9px] font-black uppercase tracking-widest text-blue-400 hover:text-blue-300 transition-colors"
+                >
+                  View Terminal
+                </button>
               </div>
             )}
           </div>

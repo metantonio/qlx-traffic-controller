@@ -10,6 +10,8 @@ from backend.core.logger import get_kernel_logger
 import re
 import os
 import json
+from typing import Optional
+from backend.kernel.mission_control import mission_control
 
 logger = get_kernel_logger("QLX-TC.Orchestration")
 
@@ -279,9 +281,10 @@ ARCHITECTURE:
 **INSTRUCTIONS**:
 1. READ the `PROJECT_PLAN.md` and `ARCHITECTURE.md` below to understand the context.
 2. PERFORM ONLY the task described in the **ASSIGNMENT** section.
-3. IGNORE any best practices examples that are not part of your current file set. 
-4. DO NOT attempt to "complete" the task until you have written functional code files.
-5. IF the supervisor rejects your task, you MUST read the directory and try again.
+3. **NEVER use placeholders** like '/path/to/your/project/'. Use ONLY relative paths.
+4. IGNORE any best practices examples that are not part of your current file set. 
+5. DO NOT attempt to "complete" the task until you have written functional code files.
+6. IF the supervisor rejects your task, you MUST read the directory and try again.
 
 (Requirement: Use your tools to implement this specific task. Look at the existing files in SNAPSHOT before creating new ones.)
 """,
@@ -322,3 +325,34 @@ async def get_pending_plans():
                 "task": proc.task_description
             })
     return {"pending": pending, "count": len(pending)}
+
+@router.post("/missions")
+async def start_mission(task: str, working_directory: Optional[str] = None):
+    """
+    Starts an autonomous Mission using MissionControl (OpenClaw style).
+    This handles planning and multi-agent execution automatically.
+    """
+    try:
+        mission_id = await mission_control.start_mission(task, working_directory)
+        return {"mission_id": mission_id, "status": "started"}
+    except Exception as e:
+        logger.error(f"Failed to start mission: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/missions/{mission_id}")
+async def get_mission_status(mission_id: str):
+    """
+    Returns the current status of a Mission.
+    """
+    mission = mission_control.active_missions.get(mission_id)
+    if not mission:
+        raise HTTPException(status_code=404, detail="Mission not found or already archived")
+        
+    return {
+        "mission_id": mission.id,
+        "status": mission.status,
+        "current_index": mission.current_index,
+        "total_steps": len(mission.sequence),
+        "sequence": mission.sequence,
+        "active_pid": mission.active_pid
+    }

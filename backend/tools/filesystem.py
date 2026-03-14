@@ -35,9 +35,10 @@ def sanitize_agent_path(path: str) -> str:
     if "PROJECT_DIR" in path:
         path = path.replace("PROJECT_DIR/", "").replace("PROJECT_DIR", ".")
     
-    # 2. Hallucination Strip: Remove /home/user/project/ or similar prefixes
-    # These often leak from LLMs trained on generic Linux environments.
+    # 2. Hallucination Strip: Remove common AI prefixes
+    # These often leak from LLMs trained on generic Linux environments or boilerplate docs.
     path = re.sub(r'^(?:/)?home/user/(?:project/)?', '', path, flags=re.IGNORECASE)
+    path = re.sub(r'^(?:/)?path/to/(?:your/)?(?:project|app|myapp|software)/', '', path, flags=re.IGNORECASE)
         
     # 3. Strip drive letters (e.g., C:/)
     path = re.sub(r'^[a-zA-Z]:[/\\]+', '', path)
@@ -187,8 +188,10 @@ def get_file_lock(filepath: str) -> asyncio.Lock:
 
 async def filesystem_read(path: str) -> str:
     """Reads a file and returns its content. Supports global fallback to 'workspace'."""
-    if detect_placeholder_path(path):
-        return get_placeholder_error(path)
+    resolved_path = _resolve_path(path)
+    
+    if detect_placeholder_path(resolved_path):
+        return get_placeholder_error(resolved_path)
     
     if is_file_forbidden(path):
         logger.warning(f"SECURITY BLOCK: Agent attempted to read forbidden file: {path}")
@@ -311,14 +314,10 @@ system_registry.register(list_directory_sizes_tool)
 
 async def append_to_file(filepath: str, content: str) -> str:
     """Appends text to a file safely. Creates the file if it doesn't exist."""
+    filepath = _resolve_path(filepath)
+    
     if detect_placeholder_path(filepath):
         return get_placeholder_error(filepath)
-    
-    if is_file_forbidden(filepath):
-        logger.warning(f"SECURITY BLOCK: Agent attempted to append to forbidden file: {filepath}")
-        return get_forbidden_error(filepath)
-        
-    filepath = _resolve_path(filepath)
     print(f"Appending to {filepath}")
     
     if not is_path_allowed(filepath):
@@ -336,14 +335,10 @@ async def append_to_file(filepath: str, content: str) -> str:
 
 async def write_file_safe(filepath: str, content: str) -> str:
     """Writes/Overwrites text content to a specified file safely. Creates parent directories if needed."""
+    filepath = _resolve_path(filepath)
+    
     if detect_placeholder_path(filepath):
         return get_placeholder_error(filepath)
-        
-    if is_file_forbidden(filepath):
-        logger.warning(f"SECURITY BLOCK: Agent attempted to write forbidden file: {filepath}")
-        return get_forbidden_error(filepath)
-        
-    filepath = _resolve_path(filepath)
     print(f"Writing to {filepath}")
     
     if not is_path_allowed(filepath):
@@ -381,10 +376,10 @@ filesystem_write_tool = MCPTool(
 
 async def create_directory(path: str) -> str:
     """Creates a new directory in the agent workspace."""
-    if detect_placeholder_path(path):
-        return get_placeholder_error(path)
-        
     resolved_path = _resolve_path(path)
+
+    if detect_placeholder_path(resolved_path):
+        return get_placeholder_error(resolved_path)
     if not is_path_allowed(resolved_path):
         return f"Permission Error: Path '{resolved_path}' is unauthorized."
     
