@@ -48,49 +48,57 @@ class PlannerAgent:
         
         return sequence
 
-    async def analyze_request(self, request: str) -> List[str]:
+    async def analyze_request(self, request: str) -> Dict[str, Any]:
         """
-        Analyzes a user request and returns a list of agent IDs to execute in order.
+        Analyzes a user request and returns a dict with 'sequence' and 'project_name'.
         """
         specialists = self._get_specialist_definitions()
         
         system_prompt = f"""You are the Lead Project Planner (Mission Control). 
-Your job is to break down complex user requests into a sequence of specialist AI agents.
+Your job is to break down complex user requests into a sequence of specialist AI agents AND identify a logical project name.
 
 AVAILABLE SPECIALISTS:
 {specialists}
 
 PLANNING STRATEGY:
 1. For ANY new project or significant feature:
+   - Identify a concise, descriptive project name (e.g., "space_invaders", "traffic_api").
+   - Anchoring: You MUST assume the project will live in 'workspace/project_name'.
    - Start with 'software_architect' to define the plan and architecture.
    - Follow with the relevant developers ('frontend_developer', 'backend_developer').
    - Finish with 'qa_tester' for verification.
 
-2. For UI/Frontend requests:
-   - Route to 'frontend_developer'.
-   - Follow with 'qa_tester'.
-
-3. For Data/API/Logic requests:
-   - Route to 'backend_developer'.
-   - Follow with 'qa_tester'.
+2. Norms:
+   - Project name should be lowercase and use underscores (snake_case).
+   - If no new project is needed (e.g., simple file edit), project_name can be null.
 
 OUTPUT FORMAT:
-Return ONLY a comma-separated list of agent IDs in execution order.
-Do NOT include explanations or extra text.
-Example: software_architect, backend_developer, frontend_developer, qa_tester
-Example: frontend_developer, qa_tester
+Return ONLY a JSON object literal. No extra text.
+Format:
+{{
+  "sequence": ["agent_id1", "agent_id2"],
+  "project_name": "normalized_project_name"
+}}
 """
         
-        user_prompt = f"Identify the optimal agent sequence for this request: {request}"
+        user_prompt = f"Analyze and plan for this request: {request}"
         
         try:
             response = await self.llm.agenerate(system_prompt, user_prompt)
-            # Remove markdown formatting if present
-            response = response.replace("`", "").replace("json", "").strip()
+            # Find the JSON block
+            json_match = re.search(r"({.*})", response, re.DOTALL)
+            if json_match:
+                data = json.loads(json_match.group(1))
+            else:
+                # Fallback to loose parsing if LLM failed JSON literal
+                logger.warning(f"Planner response was not a JSON literal: {response}")
+                return {"sequence": ["software_architect"], "project_name": "default_project"}
+
+            raw_sequence = data.get("sequence", [])
+            project_name = data.get("project_name", "default_project")
             
-            # Clean and parse sequence
-            cleaned = re.sub(r'[^a-zA-Z0-9,\-_]', '', response)
-            sequence = [s.strip().lower() for s in cleaned.split(",") if s.strip()]
+            # Normalize sequence
+            sequence = [s.strip().lower() for s in raw_sequence if isinstance(s, str)]
             
             # Filter against actual agent IDs
             all_agent_ids = {a.id for a in agent_manager.list_agents()}
@@ -100,15 +108,18 @@ Example: frontend_developer, qa_tester
             final_sequence = self._apply_hardcoded_rules(request, validated_sequence)
             
             if not final_sequence:
-                logger.warning(f"Planner failed to generate valid sequence for: {request}. Falling back to architect.")
-                return ["software_architect"]
+                logger.warning(f"Planner failed to generate valid sequence for: {request}.")
+                final_sequence = ["software_architect"]
                 
-            logger.info(f"Mission Plan for '{request[:30]}...': {final_sequence}")
-            return final_sequence
+            logger.info(f"Mission Plan for '{request[:30]}...': {final_sequence} -> Project: {project_name}")
+            return {
+                "sequence": final_sequence,
+                "project_name": project_name
+            }
             
         except Exception as e:
             logger.error(f"Planner error: {e}")
-            return ["software_architect"]
+            return {"sequence": ["software_architect"], "project_name": "default_project"}
 
 # Singleton instance
 planner_agent = PlannerAgent()

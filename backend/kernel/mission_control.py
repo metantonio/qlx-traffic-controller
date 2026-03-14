@@ -52,12 +52,18 @@ class MissionControl:
     async def _plan_and_execute(self, mission: Mission):
         """Background task to handle planning and kick off the first specialist."""
         try:
-            sequence = await planner_agent.analyze_request(mission.task)
-            mission.sequence = sequence
+            plan_data = await planner_agent.analyze_request(mission.task)
+            mission.sequence = plan_data.get("sequence", [])
+            project_name = plan_data.get("project_name")
             
+            # Workspace Anchoring: If no WD set, use workspace/{project_name}
+            if not mission.working_directory and project_name:
+                mission.working_directory = f"workspace/{project_name}"
+                logger.info(f"Mission {mission.id} anchored to: {mission.working_directory}")
+
             logger.info(f"Mission {mission.id} planned. Sequence: {mission.sequence}")
             
-            if not sequence:
+            if not mission.sequence:
                 logger.error(f"Mission {mission.id} planning failed: empty sequence.")
                 mission.status = "failed"
                 await self._broadcast_mission_update(mission)
