@@ -87,7 +87,9 @@ async def delegate_to_agent(agent_id: str, task: str) -> str:
     
     # --- ARCHITECT APPROVAL GATE ---
     if parent_proc and parent_proc.agent_name == "software_architect":
-        if not parent_proc.has_proceeded:
+        # Bypass if mission or manually proceeded
+        is_mission = parent_proc.memory_context.get("mission_id") is not None
+        if not parent_proc.has_proceeded and not is_mission:
             logger.warning(f"Architect {pid} attempted auto-delegation before plan approval. Blocking.")
             return "ERROR: Delegation blocked. You must FIRST present your PLAN and ARCHITECTURE to the user in a chat message. Do NOT call delegate_to_agent until the user has clicked 'Proceed' in the UI. For now, just describe what you plan to do, write the plan/arch files, and then wait for user feedback."
     
@@ -170,7 +172,7 @@ async def task_complete(reason: str = "Task finished successfully.") -> str:
     proc = system_process_table.get(pid)
     if proc:
         # SUPERVISOR GATE: Physical truth check
-        is_valid, validation_msg = system_supervisor.validate_completion(pid, proc.working_directory)
+        is_valid, validation_msg = system_supervisor.validate_completion(pid, proc.working_directory, proc.agent_name)
         if not is_valid:
             # Reflection Loop Layer
             retries = proc.memory_context.get("completion_retries", 0)
