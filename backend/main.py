@@ -552,6 +552,7 @@ async def get_process_details(pid: str):
         "state": proc.state.value,
         "history": proc.history,
         "metrics": proc.metrics,
+        "has_proceeded": proc.has_proceeded,
         "allowed_tools": proc.resource_limits.allowed_tools
     }
 

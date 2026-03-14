@@ -126,6 +126,7 @@ class MissionControl:
         proc.memory_context["initial_history"] = mission.cumulative_history
         
         # Register in system table
+        proc.has_proceeded = True  # Missions are autonomous by default
         system_process_table.register(proc)
         
         mission.active_pid = proc.pid
@@ -164,6 +165,9 @@ class MissionControl:
         # Advance mission: Accumulate history and increment index
         mission.cumulative_history = proc.history
         mission.current_index += 1
+        
+        # Mark as proceeded so the UI doesn't show a "Pending Plan" button for missions
+        proc.has_proceeded = True
         
         # Execute next step
         await self._run_next_step(mission)
